@@ -11,7 +11,6 @@ class DefineExposureWidget(QWidget):
         self.initUI()
 
     def initUI(self):
-
         layout = QHBoxLayout()
 
         #  create exposure widget as label and QDoubleSpinBox
@@ -26,7 +25,6 @@ class DefineExposureWidget(QWidget):
         #  add label and spinbox as widgets in horizontal child layout
         layout.addWidget(exposure_label, 1, Qt.AlignRight)
         layout.addWidget(exposure_input, 1, Qt.AlignLeft)
-
 
         self.setLayout(layout)
 
