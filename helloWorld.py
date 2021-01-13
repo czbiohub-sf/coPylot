@@ -28,8 +28,8 @@ class MainTestWindow(QMainWindow):
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
-        layout.setContentsMargins(10,10,10,10)
-        
+        layout.setContentsMargins(10, 10, 10, 10)
+
         label = QLabel()
         label.setText("Luke's UI")
         font = label.font()
@@ -42,11 +42,12 @@ class MainTestWindow(QMainWindow):
         layout.addWidget(checkbox)
 
         slider = QSlider(Qt.Horizontal)
-        slider.setMinimum(10)
-        slider.setMaximum(30)
-        slider.setValue(20)
+        slider.setMinimum(-100)
+        slider.setMaximum(100)
+        slider.setValue(0)
         slider.setTickPosition(slider.TicksBelow)
         slider.setTickInterval(1)
+
         layout.addWidget(slider)
 
         textbox = QLineEdit("add your text here")
