@@ -72,12 +72,15 @@ class InitializeSliderTextB(QWidget):
         spinbox.setSizeIncrement(self.increment, self.increment)
         spinbox.setRange(self.min_range, self.max_range)
         spinbox.setValue(self.default)
-        spinbox.setMaximumSize(80, 27)
+        #spinbox.setMaximumSize(80, 27)
+        spinbox.setFixedSize(65, 27)
 
         # layout to hold slider and spinbox for alignment with one another
         controls_layout = QHBoxLayout()
-        controls_layout.addWidget(spinbox, 1, Qt.AlignLeft)
+        controls_layout.addWidget(spinbox, 1, Qt.AlignRight)
         controls_layout.addWidget(slider, 1, Qt.AlignRight)
+        controls_layout.setContentsMargins(0, 0, 0, 0)
+        controls_layout.setSpacing(5)
 
         #  add widgets / layouts in horizontal child layout
         layout.addWidget(label, 1, Qt.AlignLeft)
