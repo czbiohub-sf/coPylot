@@ -14,5 +14,5 @@ git clone https://github.com/royerlab/widgets.git
 ```
 conda create -n widgets python=3.7
 conda install --file requirements.txt
-conda activate dexp
+conda activate widgets
 ```
