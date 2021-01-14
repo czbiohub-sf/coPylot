@@ -2,7 +2,6 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import custom_sliders
 
 
 class MainTestWindow(QMainWindow):
@@ -49,6 +48,11 @@ class MainTestWindow(QMainWindow):
         layout.addWidget(lcd)
         layout.addWidget(lcdMonitor)
 
+        @pyqtSlot(int)
+        def scaleToInt(value):
+            print(value)
+
+        slider.valueChanged.connect(scaleToInt)
         slider.valueChanged.connect(lcd.display)
         slider.valueChanged.connect(spinbox.setValue)
         spinbox.valueChanged.connect(slider.setValue)

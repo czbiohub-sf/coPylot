@@ -2,54 +2,82 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import custom_sliders
+from math import log10
 
 
 class InitializeSliderTextB(QWidget):
     def __init__(self, parent, widget_name, min_range, max_range, data_type, increment, default=0):
         super(QWidget, self).__init__(parent)
 
-        self.increment = increment
-        self.default = default
-        self.data_type = data_type
+        self.widget_name = widget_name
         self.max_range = max_range
         self.min_range = min_range
-        self.widget_name = widget_name
+        self.data_type = data_type
+        self.increment = increment
+        self.default = default
+
+        self.numDecimals = -log10(self.increment)
+        self._max_int = 10 ** self.numDecimals
 
         self.initUI()
 
     def initUI(self):
         layout = QHBoxLayout()
 
-        #  label widget
-        widget_label = QLabel(self.widget_name)
-        print(self.data_type)
-        #  text box widget
-        widget_textbox = QSpinBox() if (self.data_type == int) else QDoubleSpinBox()
+        @pyqtSlot(float)
+        def floatToScaledInt(value):
+            slider.setValue(int(value * self._max_int))
 
-        widget_textbox.setSizeIncrement(self.increment, self.increment)
-        widget_textbox.setRange(self.min_range, self.max_range)
-        widget_textbox.setValue(self.default)
-        widget_textbox.setMaximumSize(52, 27)
+        @pyqtSlot(int)
+        def intToScaledFloat(value):
+            spinbox.setValue(float(value / self._max_int))
+
+        #  parameter name widget
+        label = QLabel(self.widget_name)
 
         #  slider widget 
-        widget_slider = QSlider(Qt.Horizontal)
-        widget_slider.setMaximum(self.max_range)
-        widget_slider.setMinimum(self.min_range)
-        widget_slider.setValue(self.default)
+        slider = QSlider(Qt.Horizontal)
 
-        #  synchronize text box and slider widget values
-        widget_slider.valueChanged.connect(widget_textbox.setValue)
-        widget_textbox.valueChanged.connect(widget_slider.setValue)
+        #  set widget parameters and whether to use custom slots based on data type
+        if self.data_type == int:
+            spinbox = QSpinBox()
+            slider.setMaximum(self.max_range)
+            slider.setMinimum(self.min_range)
+            slider.setValue(self.default)
+            
+            #  synchronize text box and slider widget values
+            slider.valueChanged.connect(spinbox.setValue)
+            spinbox.valueChanged.connect(slider.setValue)
 
-        #  add label and spinbox as widgets in horizontal child layout
-        layout.addWidget(widget_label, 1, Qt.AlignRight)
-        layout.addWidget(widget_textbox, 1, Qt.AlignLeft)
-        layout.addWidget(widget_slider, 1, Qt.AlignLeft)
+        elif self.data_type == float:
+            spinbox = QDoubleSpinBox()
+            spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+            spinbox.setDecimals(self.numDecimals)
+
+            # scale inputs to integer range based on number of decimal points of smallest increment
+            slider.setMaximum(self.max_range * self._max_int)
+            slider.setMinimum(self.min_range * self._max_int)
+            slider.setValue(self.default * self._max_int)
+
+            #  synchronize text box and slider widget values
+            slider.valueChanged.connect(intToScaledFloat)
+            spinbox.valueChanged.connect(floatToScaledInt)
+
+        else:
+            raise TypeError("Only integers or floats acceptable for Spinbox objects")
+
+        #  set universal spinbox parameters
+        spinbox.setSizeIncrement(self.increment, self.increment)
+        spinbox.setRange(self.min_range, self.max_range)
+        spinbox.setValue(self.default)
+        spinbox.setMaximumSize(80, 27)
+
+        #  add widgets in horizontal child layout
+        layout.addWidget(label, 1, Qt.AlignRight)
+        layout.addWidget(spinbox, 1, Qt.AlignLeft)
+        layout.addWidget(slider, 1, Qt.AlignLeft)
 
         self.setLayout(layout)
-
-        self.show()
 
 
 if __name__ == '__main__':
