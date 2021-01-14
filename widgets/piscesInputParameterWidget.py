@@ -29,7 +29,7 @@ class MainWidgetWindow(QMainWindow):
 
         right_window_layout = QVBoxLayout()
         right_window_layout.setAlignment(Qt.AlignTop)
-        right_window_layout.addWidget(QPushButton())
+        right_window_layout.addWidget(QPushButton("Live Mode"))
 
         left_window_layout = QVBoxLayout()
         left_window_layout.setAlignment(Qt.AlignTop)
@@ -77,7 +77,7 @@ class MainWidgetWindow(QMainWindow):
         left_window_layout.addWidget(TextBox_and_Slider.InitializeSliderTextB(None, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58))
         left_window_layout.addWidget(custom_decorations.LineBreak())
 
-        #  create container for left_window_layout that can be added to main_window_layout
+        #  create container for left_window_layout that can be contained by scroll bar widget
         left_widget = QWidget()  # QWidget() acts as a container for the laid out widgets - base class for all widgets
         left_widget.setLayout(left_window_layout)
 
