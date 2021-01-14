@@ -83,10 +83,10 @@ class MainWidgetWindow(QMainWindow):
 
         #  add scroll bar area that contains left window widget
         left_scroll_bar = QScrollArea()
-        left_scroll_bar.setMaximumWidth(self.width / 2)
+        left_scroll_bar.setMaximumWidth(350)
         left_scroll_bar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         left_scroll_bar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        left_scroll_bar.setWidgetResizable(True)
+        left_scroll_bar.setWidgetResizable(False)
         left_scroll_bar.setStyleSheet("background : lightgray;")
         left_scroll_bar.setWidget(left_widget)
 

@@ -23,6 +23,8 @@ class InitializeSliderTextB(QWidget):
 
     def initUI(self):
         layout = QHBoxLayout()
+        layout.setSpacing(3)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         @pyqtSlot(float)
         def floatToScaledInt(value):
@@ -72,10 +74,14 @@ class InitializeSliderTextB(QWidget):
         spinbox.setValue(self.default)
         spinbox.setMaximumSize(80, 27)
 
-        #  add widgets in horizontal child layout
-        layout.addWidget(label, 1, Qt.AlignRight)
-        layout.addWidget(spinbox, 1, Qt.AlignLeft)
-        layout.addWidget(slider, 1, Qt.AlignLeft)
+        # layout to hold slider and spinbox for alignment with one another
+        controls_layout = QHBoxLayout()
+        controls_layout.addWidget(spinbox, 1, Qt.AlignLeft)
+        controls_layout.addWidget(slider, 1, Qt.AlignRight)
+
+        #  add widgets / layouts in horizontal child layout
+        layout.addWidget(label, 1, Qt.AlignLeft)
+        layout.addLayout(controls_layout)
 
         self.setLayout(layout)
 
