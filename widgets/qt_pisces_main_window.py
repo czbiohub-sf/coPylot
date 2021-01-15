@@ -31,6 +31,10 @@ class main_widgetWindow(QMainWindow):
         right_window_layout.setAlignment(Qt.AlignTop)
         right_window_layout.addWidget(QPushButton("Live Mode"))
 
+        # combo box widgets in right window
+        right_window_layout.addWidget(QComboBox())
+        right_window_layout.addWidget(QComboBox())
+
         left_window_layout = QVBoxLayout()
         left_window_layout.setAlignment(Qt.AlignTop)
 
