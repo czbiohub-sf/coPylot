@@ -23,7 +23,6 @@ class InitializeSliderTextB(QWidget):
 
     def initUI(self):
         layout = QHBoxLayout()
-        layout.setSpacing(3)
         layout.setContentsMargins(0, 0, 0, 0)
 
         @pyqtSlot(float)
