@@ -5,9 +5,10 @@ from PyQt5.QtGui import *
 
 
 class LineBreak(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, alignment, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.alignment = alignment
         self.initUI()
 
     def initUI(self):
@@ -16,8 +17,7 @@ class LineBreak(QWidget):
         hline_break = QFrame()
         hline_break.setFrameShape(QFrame.HLine)
         hline_break.setFrameShadow(QFrame.Sunken)
-        line_break_layout.setAlignment(Qt.AlignTop)
-
+        line_break_layout.setAlignment(self.alignment)
         line_break_layout.addWidget(hline_break, 0)
         self.setLayout(line_break_layout)
 
