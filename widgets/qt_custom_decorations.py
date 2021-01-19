@@ -19,6 +19,7 @@ class LineBreak(QWidget):
         hline_break.setFrameShadow(QFrame.Sunken)
         line_break_layout.setAlignment(self.alignment)
         line_break_layout.addWidget(hline_break, 0)
+
         self.setLayout(line_break_layout)
 
 
