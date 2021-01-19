@@ -118,8 +118,10 @@ class InitializeSliderTextB(QWidget):
         for i in range_layout_list:
             i.setRange(-100000, 100000)  # beyond realistic range for any parameter
             i.setFixedSize(65, 27)
-            i.setValue(self.max_range)
             i.setSizeIncrement(self.increment, self.increment)
+
+        min_input_box.setValue(self.min_range)
+        max_input_box.setValue(self.max_range)
 
         # add spinboxes with a label to a horizontal box layout
         max_range_layout.addWidget(QLabel("max range"))

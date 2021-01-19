@@ -28,13 +28,13 @@ class MainWidgetWindow(QMainWindow):
         @pyqtSlot()
         def toggleState():
             self.button_state = not self.button_state
-            for i in range(1, timelapse_layout.count()):
-                if i != 1:
-                    timelapse_layout.itemAt(i).widget().setDisabled(self.button_state)
+            for j in range(1, timelapse_layout.count()):
+                if j != 1:
+                    timelapse_layout.itemAt(j).widget().setDisabled(self.button_state)
 
-            for i in range(0, 2 * len(parameter_list)):  # all widgets in left window (+1 due to no final line break)
-                if i % 2 == 0:
-                    left_window_layout.itemAt(i).widget().setDisabled(self.button_state)
+            for k in range(0, 2 * len(parameter_list)):  # all widgets in left window (+1 due to no final line break)
+                if k % 2 == 0:
+                    left_window_layout.itemAt(k).widget().setDisabled(self.button_state)
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -133,6 +133,7 @@ class MainWidgetWindow(QMainWindow):
         testCount = timelapse_layout.count()
         test_children = timelapse_layout.children()
         test_return = timelapse_layout.itemAt(2).widget()
+
         print(test_return)
         print(test_children)
         print(testCount)
