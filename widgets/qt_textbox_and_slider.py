@@ -94,9 +94,12 @@ class InitializeSliderTextB(QWidget):
             raise TypeError("Only integers or floats acceptable for Spinbox objects")
 
         #  set slider parameters based on data type (by value of slider_scaler)
+        #slider_layout = QHBoxLayout()
         slider.setMaximum(self.max_range * slider_scaler)
         slider.setMinimum(self.min_range * slider_scaler)
         slider.setValue(self.default * slider_scaler)
+
+        #slider_layout.addWidget(slider)
 
         #  set universal spinbox parameters
         spinbox.setSizeIncrement(self.increment, self.increment)
@@ -124,10 +127,11 @@ class InitializeSliderTextB(QWidget):
         max_input_box.setValue(self.max_range)
 
         # add spinboxes with a label to a horizontal box layout
-        max_range_layout.addWidget(QLabel("max range"))
-        max_range_layout.addWidget(max_input_box)
-        min_range_layout.addWidget(QLabel("min range"))
-        min_range_layout.addWidget(min_input_box)
+
+        #max_range_layout.addWidget(QLabel("max range"))
+        #max_range_layout.addWidget(max_input_box)
+        #min_range_layout.addWidget(QLabel("min range"))
+        #min_range_layout.addWidget(min_input_box)
 
         # add min and max layouts to vertical master layout
         range_input_layout.addLayout(max_range_layout)
@@ -138,14 +142,16 @@ class InitializeSliderTextB(QWidget):
         max_input_box.valueChanged.connect(changeMaxRange)
 
         # layout to hold slider and spinbox for alignment with one another
-        controls_layout = QVBoxLayout()
+        controls_layout = QHBoxLayout()
         controls_layout.addWidget(spinbox, 1, Qt.AlignHCenter)
+        controls_layout.addWidget(min_input_box)
         controls_layout.addWidget(slider, 1, Qt.AlignHCenter)
+        controls_layout.addWidget(max_input_box)
 
         #  add widgets / layouts in horizontal child layout
         layout.addWidget(label, 1, Qt.AlignLeft)
         layout.addLayout(controls_layout)
-        layout.addLayout(range_input_layout)
+        #layout.addLayout(range_input_layout)
 
         self.setLayout(layout)
 

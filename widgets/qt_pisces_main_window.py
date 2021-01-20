@@ -72,78 +72,70 @@ class MainWidgetWindow(QMainWindow):
 
         #  add scroll bar area that contains left window widget
         left_scroll_bar = QScrollArea()
-        left_scroll_bar.setMaximumWidth(420)
+        #left_scroll_bar.setMaximumWidth(420)
         left_scroll_bar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         left_scroll_bar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         left_scroll_bar.setWidgetResizable(False)
-        left_scroll_bar.setStyleSheet("background : lightgray;")
+        left_scroll_bar.setStyleSheet("background : lightgray")
         left_scroll_bar.setWidget(left_widget)
 
         # Right window
         right_window_layout = QVBoxLayout()
-        # right_window_layout.setAlignment(Qt.AlignTop)
-
+        #right_window_layout.setAlignment(Qt.AlignTop)
+        #
         #######################################################
-
-        # View control section
-        view_layout = QVBoxLayout()
-        view_layout.setAlignment(Qt.AlignTop)
-        view_button = QPushButton("View")
-        view_layout.addWidget(view_button)
-
-        # placeholders for future selection options
-        view_combobox_view = QComboBox()
-        view_combobox_view.addItem("view 1")
-        view_combobox_view.addItem("view 2")
-        view_layout.addWidget(view_combobox_view)
-
-        laser_combobox_view = QComboBox()
-        laser_combobox_view.addItem("...Hz laser")
-        laser_combobox_view.addItem("...Hz laser")
-        view_layout.addWidget(laser_combobox_view)
-
-        right_window_layout.addLayout(view_layout)
-
-        #######################################################
-
-        # Timelapse control section
-        timelapse_layout = QVBoxLayout()
-        timelapse_layout.setAlignment(Qt.AlignTop)
-
-        timelapse_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
-
-        timelapse_button = QPushButton("Timelapse")
-        timelapse_layout.addWidget(timelapse_button)
-
-        timelapse_button.pressed.connect(toggleState)
-
-        # placeholders for future selection options
-        view_combobox_timelapse = QComboBox()
-        view_combobox_timelapse.addItem("view 1")
-        view_combobox_timelapse.addItem("view 2")
-        timelapse_layout.addWidget(view_combobox_timelapse)
-
-        laser_combobox_timelapse = QComboBox()
-        laser_combobox_timelapse.addItem("...Hz laser")
-        laser_combobox_timelapse.addItem("...Hz laser")
-        timelapse_layout.addWidget(laser_combobox_timelapse)
-
-        right_window_layout.addLayout(timelapse_layout)
-
-        testCount = timelapse_layout.count()
-        test_children = timelapse_layout.children()
-        test_return = timelapse_layout.itemAt(2).widget()
-
-        print(test_return)
-        print(test_children)
-        print(testCount)
+        #
+        ## View control section
+        #view_layout = QVBoxLayout()
+        #view_layout.setAlignment(Qt.AlignTop)
+        #view_button = QPushButton("View")
+        #view_layout.addWidget(view_button)
+        #
+        ## placeholders for future selection options
+        #view_combobox_view = QComboBox()
+        #view_combobox_view.addItem("view 1")
+        #view_combobox_view.addItem("view 2")
+        #view_layout.addWidget(view_combobox_view)
+        #
+        #laser_combobox_view = QComboBox()
+        #laser_combobox_view.addItem("...Hz laser")
+        #laser_combobox_view.addItem("...Hz laser")
+        #view_layout.addWidget(laser_combobox_view)
+        #
+        #right_window_layout.addLayout(view_layout)
+        #
+        ########################################################
+        #
+        ## Timelapse control section
+        #timelapse_layout = QVBoxLayout()
+        #timelapse_layout.setAlignment(Qt.AlignTop)
+        #
+        #timelapse_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+        #
+        #timelapse_button = QPushButton("Timelapse")
+        #timelapse_layout.addWidget(timelapse_button)
+        #
+        #timelapse_button.pressed.connect(toggleState)
+        #
+        ## placeholders for future selection options
+        #view_combobox_timelapse = QComboBox()
+        #view_combobox_timelapse.addItem("view 1")
+        #view_combobox_timelapse.addItem("view 2")
+        #timelapse_layout.addWidget(view_combobox_timelapse)
+        #
+        #laser_combobox_timelapse = QComboBox()
+        #laser_combobox_timelapse.addItem("...Hz laser")
+        #laser_combobox_timelapse.addItem("...Hz laser")
+        #timelapse_layout.addWidget(laser_combobox_timelapse)
+        #
+        #right_window_layout.addLayout(timelapse_layout)
 
         # add instances of qt_view_laser_mode widget with custom button name and whether a line break is needed
-        # view_window = qt_view_laser_mode.InitializeComboButton(None, "View")
-        # laser_window = qt_view_laser_mode.InitializeComboButton(None, "Timelapse", True, True)
+        view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
+        laser_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
 
-        # right_window_layout.addWidget(view_window)
-        # right_window_layout.addWidget(laser_window)
+        right_window_layout.addWidget(view_window)
+        right_window_layout.addWidget(laser_window)
 
         # add left and right window components to main window (left is a widget due to scroll bar)
         window_layout.addWidget(left_scroll_bar)

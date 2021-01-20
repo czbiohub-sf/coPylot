@@ -9,6 +9,7 @@ class InitializeComboButton(QWidget):
     def __init__(self, parent, button_name, add_line_break=False, can_disable=False):
         super(QWidget, self).__init__(parent)
 
+        self.parent = parent
         self.button_name = button_name
         self.add_line_break = add_line_break
         self.can_disable = can_disable
@@ -20,12 +21,12 @@ class InitializeComboButton(QWidget):
 
     def initUI(self):
 
-        @pyqtSlot()
-        def toggleDisabled():
-            if self.can_disable:
-                self.button_state = not self.button_state
-                view_combobox.setDisabled(self.button_state)
-                laser_combobox.setDisabled(self.button_state)
+        #@pyqtSlot()
+        #def toggleDisabled():
+        #    if self.can_disable:
+        #        self.button_state = not self.button_state
+        #        view_combobox.setDisabled(self.button_state)
+        #        laser_combobox.setDisabled(self.button_state)
 
         #toggle_disabled = pyqtSignal(bool, "testSignalName")
 
@@ -37,7 +38,8 @@ class InitializeComboButton(QWidget):
 
         # add labeled button that, if can_disable = True, disables the comboboxes, preventing input change
         section_button = QPushButton(self.button_name)
-        section_button.pressed.connect(toggleDisabled)
+        #section_button.pressed.connect(toggleDisabled)
+        section_button.pressed.connect(self.parent.toggleState)
 
         layout.addWidget(section_button)
 

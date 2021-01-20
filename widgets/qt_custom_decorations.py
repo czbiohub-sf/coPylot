@@ -13,6 +13,7 @@ class LineBreak(QWidget):
 
     def initUI(self):
         line_break_layout = QHBoxLayout()
+        line_break_layout.setContentsMargins(0, 0, 0, 0)
 
         hline_break = QFrame()
         hline_break.setFrameShape(QFrame.HLine)
