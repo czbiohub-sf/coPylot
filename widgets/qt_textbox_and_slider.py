@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from math import log10
+import custom_sliders
 
 
 class InitializeSliderTextB(QWidget):
@@ -16,6 +17,25 @@ class InitializeSliderTextB(QWidget):
         self.increment = increment
         self.default = default
 
+        # self.slider widget
+        self.slider = custom_sliders.DoubleClickableSlider(self)
+
+        # initialize layouts
+        self.layout = QHBoxLayout()
+        self.controls_layout = QHBoxLayout()
+
+        if self.data_type == int:
+            self.spinbox = QSpinBox()
+            self.max_input_box = QSpinBox()
+            self.min_input_box = QSpinBox()
+
+        elif self.data_type == float:
+            self.spinbox = QDoubleSpinBox()
+            self.max_input_box = QDoubleSpinBox()
+            self.min_input_box = QDoubleSpinBox()
+
+        self.range_visible = False
+
         self.numDecimals = -log10(self.increment)
         self._max_int = 10 ** self.numDecimals
 
@@ -25,135 +45,109 @@ class InitializeSliderTextB(QWidget):
 
         @pyqtSlot(float)
         def floatToScaledInt(value):
-            slider.setValue(int(value * self._max_int))
+            self.slider.setValue(int(value * self._max_int))
 
         @pyqtSlot(int)
         def intToScaledFloat(value):
-            spinbox.setValue(float(value / self._max_int))
+            self.spinbox.setValue(float(value / self._max_int))
 
         @pyqtSlot(float)
-        def changeMinRange(value):
+        def change_min_range(value):
+            self.max_input_box.setMinimum(value)
             self.min_range = value
-            spinbox.setRange(self.min_range, self.max_range)
+            self.spinbox.setRange(self.min_range, self.max_range)
             if self.data_type == int:
-                slider.setMinimum(self.min_range)
+                self.slider.setMinimum(self.min_range)
             elif self.data_type == float:
-                slider.setMinimum(self.min_range * self._max_int)
+                self.slider.setMinimum(self.min_range * self._max_int)
 
         @pyqtSlot(float)
-        def changeMaxRange(value):
+        def change_max_range(value):
+            self.min_input_box.setMaximum(value)
             self.max_range = value
-            spinbox.setRange(self.min_range, self.max_range)
+            self.spinbox.setRange(self.min_range, self.max_range)
             if self.data_type == int:
-                slider.setMaximum(self.max_range)
+                self.slider.setMaximum(self.max_range)
             elif self.data_type == float:
-                slider.setMaximum(self.max_range * self._max_int)
+                self.slider.setMaximum(self.max_range * self._max_int)
 
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(5)
+        # override layout margins
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(8)
 
-        #  parameter name widget
+        #  parameter name
         label = QLabel(self.widget_name)
-
-        #  slider widget 
-        slider = QSlider(Qt.Horizontal)
 
         #  set data-type dependent widget parameters and whether to use custom slots
         if self.data_type == int:
-            spinbox = QSpinBox()
-            max_input_box = QSpinBox()
-            min_input_box = QSpinBox()
+            slider_scaler = 1  # makes scaling in self.slider parameter have no effect
 
-            # makes scaling in slider parameter have no effect
-            slider_scaler = 1
-
-            #  synchronize text box and slider widget values
-            slider.valueChanged.connect(spinbox.setValue)
-            spinbox.valueChanged.connect(slider.setValue)
+            #  synchronize text box and self.slider widget values
+            self.slider.valueChanged.connect(self.spinbox.setValue)
+            self.spinbox.valueChanged.connect(self.slider.setValue)
 
         elif self.data_type == float:
-            spinbox = QDoubleSpinBox()
-            max_input_box = QDoubleSpinBox()
-            min_input_box = QDoubleSpinBox()
-
-            spinbox_list = [spinbox, max_input_box, min_input_box]
+            spinbox_list = [self.spinbox, self.max_input_box, self.min_input_box]
 
             for i in spinbox_list:
                 i.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
                 i.setDecimals(self.numDecimals)
 
-            # scale slider parameters into integer range
-            slider_scaler = self._max_int
+            slider_scaler = self._max_int  # scale self.slider parameters into integer range
 
-            #  synchronize text box and slider widget values
-            slider.valueChanged.connect(intToScaledFloat)
-            spinbox.valueChanged.connect(floatToScaledInt)
+            self.slider.valueChanged.connect(intToScaledFloat)
+            self.spinbox.valueChanged.connect(floatToScaledInt)
 
         else:
-            raise TypeError("Only integers or floats acceptable for Spinbox objects")
+            raise TypeError("Only integers or floats acceptable for self.spinbox objects")
 
-        #  set slider parameters based on data type (by value of slider_scaler)
-        #slider_layout = QHBoxLayout()
-        slider.setMaximum(self.max_range * slider_scaler)
-        slider.setMinimum(self.min_range * slider_scaler)
-        slider.setValue(self.default * slider_scaler)
+        #  set self.slider parameters based on data type (by value of self.slider_scaler)
+        self.slider.setMaximum(self.max_range * slider_scaler)
+        self.slider.setMinimum(self.min_range * slider_scaler)
+        self.slider.setValue(self.default * slider_scaler)
 
-        #slider_layout.addWidget(slider)
+        #  set universal self.spinbox parameters
+        self.spinbox.setSizeIncrement(self.increment, self.increment)
+        self.spinbox.setRange(self.min_range, self.max_range)
+        self.spinbox.setValue(self.default)
+        self.spinbox.setFixedSize(65, 27)
 
-        #  set universal spinbox parameters
-        spinbox.setSizeIncrement(self.increment, self.increment)
-        spinbox.setRange(self.min_range, self.max_range)
-        spinbox.setValue(self.default)
-        spinbox.setFixedSize(65, 27)
-
-        # addition of a maximum and minimum parameter range input widget
-        range_input_layout = QVBoxLayout()
-        range_input_layout.setContentsMargins(0, 0, 0, 0)
-        range_input_layout.setSpacing(2)
-
-        # define range input spinboxes
-        max_range_layout = QHBoxLayout()
-        min_range_layout = QHBoxLayout()
-
-        range_layout_list = [min_input_box, max_input_box]  # defined earlier based on input data type
+        # set features of range selection self.spinboxes
+        range_layout_list = [self.min_input_box, self.max_input_box]  # defined earlier based on input data type
 
         for i in range_layout_list:
             i.setRange(-100000, 100000)  # beyond realistic range for any parameter
             i.setFixedSize(65, 27)
             i.setSizeIncrement(self.increment, self.increment)
 
-        min_input_box.setValue(self.min_range)
-        max_input_box.setValue(self.max_range)
+        self.min_input_box.setValue(self.min_range)
+        self.max_input_box.setValue(self.max_range)
 
-        # add spinboxes with a label to a horizontal box layout
+        # link change in range self.spinboxes with slots to change self.slider and main value input ranges
+        self.min_input_box.valueChanged.connect(change_min_range)
+        self.max_input_box.valueChanged.connect(change_max_range)
 
-        #max_range_layout.addWidget(QLabel("max range"))
-        #max_range_layout.addWidget(max_input_box)
-        #min_range_layout.addWidget(QLabel("min range"))
-        #min_range_layout.addWidget(min_input_box)
-
-        # add min and max layouts to vertical master layout
-        range_input_layout.addLayout(max_range_layout)
-        range_input_layout.addLayout(min_range_layout)
-
-        # link change in range spinboxes with slots to change slider and main value input ranges
-        min_input_box.valueChanged.connect(changeMinRange)
-        max_input_box.valueChanged.connect(changeMaxRange)
-
-        # layout to hold slider and spinbox for alignment with one another
-        controls_layout = QHBoxLayout()
-        controls_layout.addWidget(spinbox, 1, Qt.AlignHCenter)
-        controls_layout.addWidget(min_input_box)
-        controls_layout.addWidget(slider, 1, Qt.AlignHCenter)
-        controls_layout.addWidget(max_input_box)
+        # layout to hold self.slider and self.spinbox for alignment with one another
+        self.controls_layout.addWidget(self.spinbox, 1, Qt.AlignHCenter)
+        self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
 
         #  add widgets / layouts in horizontal child layout
-        layout.addWidget(label, 1, Qt.AlignLeft)
-        layout.addLayout(controls_layout)
-        #layout.addLayout(range_input_layout)
+        self.layout.addWidget(label, 1, Qt.AlignLeft)
+        self.layout.addLayout(self.controls_layout)
 
-        self.setLayout(layout)
+        self.setLayout(self.layout)
+
+    @pyqtSlot()
+    def toggle_range_widgets(self):
+        self.range_visible = not self.range_visible
+        if self.range_visible:
+            self.min_input_box.setParent(None)
+            self.max_input_box.setParent(None)
+        elif not self.range_visible:
+            self.controls_layout.removeWidget(self.slider)
+            self.controls_layout.addWidget(self.min_input_box)
+            self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
+            self.controls_layout.addWidget(self.max_input_box)
 
 
 if __name__ == '__main__':

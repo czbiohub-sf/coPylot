@@ -2,9 +2,11 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+import qdarkstyle
 import qt_textbox_and_slider
 import qt_custom_decorations
 import qt_view_laser_mode
+import custom_sliders
 
 
 class MainWidgetWindow(QMainWindow):
@@ -15,36 +17,31 @@ class MainWidgetWindow(QMainWindow):
         self.title = "Pisces Parameter Controller"
         self.left = 10
         self.top = 10
-        self.width = 800
+        self.width = 550
         self.height = 500
-        self.button_state = False
+        self.button_state = True
+
+        # initialize layouts
+        self.window_layout = QHBoxLayout()
+        self.left_window_layout = QVBoxLayout()
+        self.right_window_layout = QVBoxLayout()
+
+        # initialize right window widgets
+        self.view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
+        self.timelapse_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
 
         self.initUI()
+        self.toggleState()
 
         self.show()  # not shown by default
 
     def initUI(self):  # Window properties are set in the initUI() method
 
-        @pyqtSlot()
-        def toggleState():
-            self.button_state = not self.button_state
-            for j in range(1, timelapse_layout.count()):
-                if j != 1:
-                    timelapse_layout.itemAt(j).widget().setDisabled(self.button_state)
-
-            for k in range(0, 2 * len(parameter_list)):  # all widgets in left window (+1 due to no final line break)
-                if k % 2 == 0:
-                    left_window_layout.itemAt(k).widget().setDisabled(self.button_state)
-
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        #  initialize layout
-        window_layout = QHBoxLayout()
-
         # Left window
-        left_window_layout = QVBoxLayout()
-        left_window_layout.setAlignment(Qt.AlignTop)
+        self.left_window_layout.setAlignment(Qt.AlignTop)
 
         parameter_list = [[None, "exposure", 0.001, 1, float, 0.001, 0.02],
                           [None, "nb_timepoints", 1, 10000, int, 1, 600],
@@ -63,92 +60,44 @@ class MainWidgetWindow(QMainWindow):
 
         # add instances of qt_textbox_and_slider widget with parameters from list to vertical master layout
         for i in parameter_list:
-            left_window_layout.addWidget(qt_textbox_and_slider.InitializeSliderTextB(*i))
-            left_window_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
-
-        #  create container for left_window_layout that can be contained by scroll bar widget
-        left_widget = QWidget()
-        left_widget.setLayout(left_window_layout)
-
-        #  add scroll bar area that contains left window widget
-        left_scroll_bar = QScrollArea()
-        #left_scroll_bar.setMaximumWidth(420)
-        left_scroll_bar.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        left_scroll_bar.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        left_scroll_bar.setWidgetResizable(False)
-        left_scroll_bar.setStyleSheet("background : lightgray")
-        left_scroll_bar.setWidget(left_widget)
+            self.left_window_layout.addWidget(qt_textbox_and_slider.InitializeSliderTextB(*i))
+            self.left_window_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
 
         # Right window
-        right_window_layout = QVBoxLayout()
-        #right_window_layout.setAlignment(Qt.AlignTop)
-        #
-        #######################################################
-        #
-        ## View control section
-        #view_layout = QVBoxLayout()
-        #view_layout.setAlignment(Qt.AlignTop)
-        #view_button = QPushButton("View")
-        #view_layout.addWidget(view_button)
-        #
-        ## placeholders for future selection options
-        #view_combobox_view = QComboBox()
-        #view_combobox_view.addItem("view 1")
-        #view_combobox_view.addItem("view 2")
-        #view_layout.addWidget(view_combobox_view)
-        #
-        #laser_combobox_view = QComboBox()
-        #laser_combobox_view.addItem("...Hz laser")
-        #laser_combobox_view.addItem("...Hz laser")
-        #view_layout.addWidget(laser_combobox_view)
-        #
-        #right_window_layout.addLayout(view_layout)
-        #
-        ########################################################
-        #
-        ## Timelapse control section
-        #timelapse_layout = QVBoxLayout()
-        #timelapse_layout.setAlignment(Qt.AlignTop)
-        #
-        #timelapse_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
-        #
-        #timelapse_button = QPushButton("Timelapse")
-        #timelapse_layout.addWidget(timelapse_button)
-        #
-        #timelapse_button.pressed.connect(toggleState)
-        #
-        ## placeholders for future selection options
-        #view_combobox_timelapse = QComboBox()
-        #view_combobox_timelapse.addItem("view 1")
-        #view_combobox_timelapse.addItem("view 2")
-        #timelapse_layout.addWidget(view_combobox_timelapse)
-        #
-        #laser_combobox_timelapse = QComboBox()
-        #laser_combobox_timelapse.addItem("...Hz laser")
-        #laser_combobox_timelapse.addItem("...Hz laser")
-        #timelapse_layout.addWidget(laser_combobox_timelapse)
-        #
-        #right_window_layout.addLayout(timelapse_layout)
+        self.right_window_layout.addWidget(self.view_window)
+        self.right_window_layout.addWidget(self.timelapse_window)
 
-        # add instances of qt_view_laser_mode widget with custom button name and whether a line break is needed
-        view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
-        laser_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
+        # add left and right window components to main window
+        left_widget = QWidget()
+        left_widget.setMaximumWidth(440)  # max width as sliders are otherwise too far from label
+        left_widget.setLayout(self.left_window_layout)
 
-        right_window_layout.addWidget(view_window)
-        right_window_layout.addWidget(laser_window)
-
-        # add left and right window components to main window (left is a widget due to scroll bar)
-        window_layout.addWidget(left_scroll_bar)
-        window_layout.addLayout(right_window_layout)
+        self.window_layout.addWidget(left_widget)
+        self.window_layout.addLayout(self.right_window_layout)
 
         # container for main window layout that can be set as central widget
         main_widget = QWidget()
-        main_widget.setLayout(window_layout)
+        main_widget.setLayout(self.window_layout)
 
         self.setCentralWidget(main_widget)
+
+    @pyqtSlot()
+    def toggleState(self):
+        """
+        slot decorated function to disable all input widgets when button to enter timelapse mode is pressed
+        """
+        self.button_state = not self.button_state
+        for j in range(1, self.timelapse_window.layout().count()):
+            if j != 1:
+                self.timelapse_window.layout().itemAt(j).widget().setDisabled(self.button_state)
+
+        for k in range(0, 27):
+            if k % 2 == 0:
+                self.left_window_layout.itemAt(k).widget().setDisabled(self.button_state)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWidgetWindow()
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())

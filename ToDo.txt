@@ -1,0 +1,7 @@
+- make range boxes visually different to value input box
+- try making boxes only appear on right click
+- reformat to remove need for scroll bar
+- stop min range box from being set higher than max range //
+
+Notes:
+difference in range step size is due to adaptive step size in setStepType assignment
