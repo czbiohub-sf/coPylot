@@ -6,7 +6,6 @@ import qdarkstyle
 import qt_textbox_and_slider
 import qt_custom_decorations
 import qt_view_laser_mode
-import custom_sliders
 
 
 class MainWidgetWindow(QMainWindow):
@@ -17,7 +16,7 @@ class MainWidgetWindow(QMainWindow):
         self.title = "Pisces Parameter Controller"
         self.left = 10
         self.top = 10
-        self.width = 550
+        self.width = 650
         self.height = 500
         self.button_state = True
 
@@ -25,6 +24,8 @@ class MainWidgetWindow(QMainWindow):
         self.window_layout = QHBoxLayout()
         self.left_window_layout = QVBoxLayout()
         self.right_window_layout = QVBoxLayout()
+        self.label_layout = QHBoxLayout()
+        self.controls_label_layout = QHBoxLayout()
 
         # initialize right window widgets
         self.view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
@@ -43,6 +44,35 @@ class MainWidgetWindow(QMainWindow):
         # Left window
         self.left_window_layout.setAlignment(Qt.AlignTop)
 
+        # column labels
+        myFont = QFont()
+        myFont.setBold(True)
+
+        # define spacing such that titles are justified to widgets they describe
+        self.label_layout.setContentsMargins(0, 0, 0, 0)
+        self.controls_label_layout.setContentsMargins(135, 0, 0, 0)
+        self.controls_label_layout.setSpacing(22)
+
+        # create label objects and set bold
+        parameter_label = QLabel("Parameters")
+        parameter_label.setFont(myFont)
+        value_label = QLabel("Values")
+        value_label.setFont(myFont)
+        slider_label = QLabel("Sliders")
+        slider_label.setFont(myFont)
+
+        self.label_layout.addWidget(parameter_label)
+        self.controls_label_layout.addWidget(value_label)
+        self.controls_label_layout.addWidget(slider_label)
+
+        self.controls_label_layout.setAlignment(Qt.AlignLeft)
+        self.label_layout.addLayout(self.controls_label_layout)
+
+        self.left_window_layout.addLayout(self.label_layout)
+        self.label_layout.addStretch(1)
+        self.left_window_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+
+        # add instances of qt_textbox_and_slider widget with parameters from list to vertical master layout
         parameter_list = [[None, "exposure", 0.001, 1, float, 0.001, 0.02],
                           [None, "nb_timepoints", 1, 10000, int, 1, 600],
                           [None, "scan_step", 0.01, 1, float, 0.01, 0.1],
@@ -58,7 +88,6 @@ class MainWidgetWindow(QMainWindow):
                           [None, "stripe_reduction_range", 0, 10, float, 0.01, 0.1],
                           [None, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58]]
 
-        # add instances of qt_textbox_and_slider widget with parameters from list to vertical master layout
         for i in parameter_list:
             self.left_window_layout.addWidget(qt_textbox_and_slider.InitializeSliderTextB(*i))
             self.left_window_layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
@@ -69,7 +98,7 @@ class MainWidgetWindow(QMainWindow):
 
         # add left and right window components to main window
         left_widget = QWidget()
-        left_widget.setMaximumWidth(440)  # max width as sliders are otherwise too far from label
+        left_widget.setFixedWidth(500)
         left_widget.setLayout(self.left_window_layout)
 
         self.window_layout.addWidget(left_widget)
@@ -91,8 +120,8 @@ class MainWidgetWindow(QMainWindow):
             if j != 1:
                 self.timelapse_window.layout().itemAt(j).widget().setDisabled(self.button_state)
 
-        for k in range(0, 27):
-            if k % 2 == 0:
+        for k in range(0, 29):
+            if k % 2 == 0 and k != 0:
                 self.left_window_layout.itemAt(k).widget().setDisabled(self.button_state)
 
 
