@@ -9,5 +9,10 @@
 - addition of button to trigger range input (double click slider still works)
 - addition of column labels. Could not synchronize them with contents, so size of parameter input widget was fixed
 
+- refactor left window into separate class?
+- make DoubleClickableSlider reusable?
+- improve file naming
+-
+
 Notes:
 difference in range step size is due to adaptive step size in setStepType assignment
