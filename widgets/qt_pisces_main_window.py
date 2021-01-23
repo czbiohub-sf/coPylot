@@ -10,7 +10,6 @@ import qt_left_window
 
 
 class MainWidgetWindow(QMainWindow):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # run the init of QMainWindow
 
@@ -19,32 +18,24 @@ class MainWidgetWindow(QMainWindow):
         self.top = 10
         self.width = 650
         self.height = 500
-        self.button_state = True
+
+        self.setWindowTitle(self.title)
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.button_state = False
 
         # initialize layouts
         self.window_layout = QHBoxLayout()
         self.right_window_layout = QVBoxLayout()
 
-        # initialize right window widgets
-
-        self.initUI()
-        self.toggleState()
-
-        self.show()  # not shown by default
-
-    def initUI(self):  # Window properties are set in the initUI() method
-
-        self.setWindowTitle(self.title)
-        self.setGeometry(self.left, self.top, self.width, self.height)
-
         # Right window
         self.view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
         self.timelapse_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
+        print(type(self.timelapse_window))
 
         self.right_window_layout.addWidget(self.view_window)
         self.right_window_layout.addWidget(self.timelapse_window)
 
-        # self.window_layout.addWidget(self.left_widget)
         self.window_layout.addWidget(qt_left_window.left_window(self))  # left window
         self.window_layout.addLayout(self.right_window_layout)
 
@@ -54,6 +45,8 @@ class MainWidgetWindow(QMainWindow):
 
         self.setCentralWidget(self.main_widget)
 
+        self.show()  # not shown by default
+
     @pyqtSlot()
     def toggleState(self):
         """
@@ -61,15 +54,11 @@ class MainWidgetWindow(QMainWindow):
         """
         self.button_state = not self.button_state
         for j in range(1, self.timelapse_window.layout().count()):
+            print(self.timelapse_window.layout().count())
             if j != 1:
                 self.timelapse_window.layout().itemAt(j).widget().setDisabled(self.button_state)
 
-        for k in range(0, 29):
-            if k % 2 == 0 and k != 0:
-                #self.window_layout.itemAt(k).widget().setDisabled(self.button_state)
-                print(self.window_layout)
-                print("second loop activated")
-        pass
+        self.window_layout.itemAt(0).widget().setDisabled(self.button_state)
 
 
 if __name__ == '__main__':

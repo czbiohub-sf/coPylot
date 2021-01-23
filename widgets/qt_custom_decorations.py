@@ -9,22 +9,14 @@ class LineBreak(QWidget):
         super().__init__(*args, **kwargs)
 
         self.alignment = alignment
-        self.initUI()
 
-    def initUI(self):
-        line_break_layout = QHBoxLayout()
-        line_break_layout.setContentsMargins(0, 0, 0, 0)
+        self.line_break_layout = QHBoxLayout()
+        self.line_break_layout.setContentsMargins(0, 0, 0, 0)
 
-        hline_break = QFrame()
-        hline_break.setFrameShape(QFrame.HLine)
-        hline_break.setFrameShadow(QFrame.Sunken)
-        line_break_layout.setAlignment(self.alignment)
-        line_break_layout.addWidget(hline_break, 0)
+        self.hline_break = QFrame()
+        self.hline_break.setFrameShape(QFrame.HLine)
+        self.hline_break.setFrameShadow(QFrame.Sunken)
+        self.line_break_layout.setAlignment(self.alignment)
+        self.line_break_layout.addWidget(self.hline_break, 0)
 
-        self.setLayout(line_break_layout)
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    line_break = LineBreak()
-    sys.exit(app.exec())
+        self.setLayout(self.line_break_layout)

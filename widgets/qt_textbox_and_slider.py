@@ -17,50 +17,41 @@ class InitializeSliderTextB(QWidget):
         self.increment = increment
         self.default = default
 
+        self.range_visible = True
+
         # init widgets accessed by slot member functions
         self.slider = qt_custom_sliders.DoubleClickableSlider(self)
         self.toggle_button = QPushButton("set range")
         self.min_input_line = QLineEdit()
         self.max_input_line = QLineEdit()
 
+        self.label = QLabel(self.widget_name)
+
         # initialize layouts
         self.layout = QHBoxLayout()
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(8)
+
         self.controls_layout = QHBoxLayout()
-
-        if self.data_type == int:
-            self.spinbox = QSpinBox()
-
-        elif self.data_type == float:
-            self.spinbox = QDoubleSpinBox()
-
-        self.range_visible = True
 
         self.numDecimals = -log10(self.increment)
         self._max_int = 10 ** self.numDecimals
 
-        self.initUI()
-
-    def initUI(self):
-        # override layout margins
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(8)
-
-        #  parameter name
-        label = QLabel(self.widget_name)
-
-        #  connect spinbox and slider based on input data type
+        # set spinbox type and connection based on data type
         if self.data_type == int:
-            slider_scaler = 1  # makes scaling in self.slider parameter have no effect
+            self.spinbox = QSpinBox()
+            self.slider_scaler = 1  # makes scaling in self.slider parameter have no effect
 
             #  synchronize text box and self.slider widget values
             self.slider.valueChanged.connect(self.spinbox.setValue)
             self.spinbox.valueChanged.connect(self.slider.setValue)
 
         elif self.data_type == float:
+            self.spinbox = QDoubleSpinBox()
             self.spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
             self.spinbox.setDecimals(self.numDecimals)
 
-            slider_scaler = self._max_int  # scale self.slider parameters into integer range
+            self.slider_scaler = self._max_int  # scale self.slider parameters into integer range
 
             self.slider.valueChanged.connect(self.intToScaledFloat)
             self.spinbox.valueChanged.connect(self.floatToScaledInt)
@@ -68,16 +59,16 @@ class InitializeSliderTextB(QWidget):
         else:
             raise TypeError("Only integers or floats acceptable for self.spinbox objects")
 
-        #  set slider parameters based on data type (by value of slider_scaler)
-        self.slider.setMaximum(self.max_range * slider_scaler)
-        self.slider.setMinimum(self.min_range * slider_scaler)
-        self.slider.setValue(self.default * slider_scaler)
-
         #  set universal spinbox parameters
         self.spinbox.setSizeIncrement(self.increment, self.increment)
         self.spinbox.setRange(self.min_range, self.max_range)
         self.spinbox.setValue(self.default)
         self.spinbox.setFixedSize(65, 27)
+
+        #  set slider parameters based on data type (by value of self.slider_scaler)
+        self.slider.setMaximum(self.max_range * self.slider_scaler)
+        self.slider.setMinimum(self.min_range * self.slider_scaler)
+        self.slider.setValue(self.default * self.slider_scaler)
 
         # set range input default values and connect to update slot
         self.min_input_line.setText(str(self.min_range))
@@ -98,7 +89,7 @@ class InitializeSliderTextB(QWidget):
         self.controls_layout.addWidget(self.toggle_button)
 
         #  add widgets / layouts in horizontal child layout
-        self.layout.addWidget(label, 1, Qt.AlignLeft)
+        self.layout.addWidget(self.label, 1, Qt.AlignLeft)
         self.layout.addLayout(self.controls_layout)
 
         self.setLayout(self.layout)
@@ -161,9 +152,3 @@ class InitializeSliderTextB(QWidget):
     @pyqtSlot(int)
     def intToScaledFloat(self, value):
         self.spinbox.setValue(float(value / self._max_int))
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    dataInWidget = InitializeSliderTextB(None, "testWidget", -100, 100, int, 1, 10)
-    sys.exit(app.exec())
