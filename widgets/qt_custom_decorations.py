@@ -5,24 +5,18 @@ from PyQt5.QtGui import *
 
 
 class LineBreak(QWidget):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, alignment, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.initUI()
+        self.alignment = alignment
 
-    def initUI(self):
-        line_break_layout = QHBoxLayout()
+        self.line_break_layout = QHBoxLayout()
+        self.line_break_layout.setContentsMargins(0, 0, 0, 0)
 
-        hline_break = QFrame()
-        hline_break.setFrameShape(QFrame.HLine)
-        hline_break.setFrameShadow(QFrame.Sunken)
-        line_break_layout.setAlignment(Qt.AlignTop)
+        self.hline_break = QFrame()
+        self.hline_break.setFrameShape(QFrame.HLine)
+        self.hline_break.setFrameShadow(QFrame.Sunken)
+        self.line_break_layout.setAlignment(self.alignment)
+        self.line_break_layout.addWidget(self.hline_break, 0)
 
-        line_break_layout.addWidget(hline_break, 0)
-        self.setLayout(line_break_layout)
-
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    line_break = LineBreak()
-    sys.exit(app.exec())
+        self.setLayout(self.line_break_layout)
