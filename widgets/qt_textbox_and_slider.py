@@ -20,7 +20,7 @@ class InitializeSliderTextB(QWidget):
 
         # widgets accessed by slot member functions
         self.slider = QSlider(Qt.Horizontal)
-        self.slider.mouseDoubleClickEvent = self.myDoubleClickEvent
+        self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
 
         self.toggle_button = QPushButton("set range")
         self.min_input_line = QLineEdit()
@@ -154,5 +154,5 @@ class InitializeSliderTextB(QWidget):
     def intToScaledFloat(self, value):
         self.spinbox.setValue(float(value / self._max_int))
 
-    def myDoubleClickEvent(self, event):
+    def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()
