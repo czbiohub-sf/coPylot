@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from math import log10
-import qt_custom_sliders
 
 
 class InitializeSliderTextB(QWidget):
@@ -19,8 +18,10 @@ class InitializeSliderTextB(QWidget):
 
         self.range_visible = True
 
-        # init widgets accessed by slot member functions
-        self.slider = qt_custom_sliders.DoubleClickableSlider(self)
+        # widgets accessed by slot member functions
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
+
         self.toggle_button = QPushButton("set range")
         self.min_input_line = QLineEdit()
         self.max_input_line = QLineEdit()
@@ -152,3 +153,6 @@ class InitializeSliderTextB(QWidget):
     @pyqtSlot(int)
     def intToScaledFloat(self, value):
         self.spinbox.setValue(float(value / self._max_int))
+
+    def mouseDoubleClickEvent(self, event):
+        self.toggle_range_widgets()
