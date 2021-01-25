@@ -17,35 +17,31 @@ class InitializeComboButton(QWidget):
         if self.can_disable:
             self.button_state = False
 
-        self.initUI()
-
-    def initUI(self):
-
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
+        self.layout = QVBoxLayout()
+        self.layout.setAlignment(Qt.AlignTop)
 
         if self.add_line_break:
-            layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+            self.layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
 
         # add labeled button that, if can_disable = True, disables the comboboxes, preventing input change
-        section_button = QPushButton(self.button_name)
+        self.section_button = QPushButton(self.button_name)
         if self.can_disable:
-            section_button.pressed.connect(self.parent.toggleState)
+            self.section_button.pressed.connect(self.parent.toggleState)
 
-        layout.addWidget(section_button)
+        self.layout.addWidget(self.section_button)
 
         # placeholders for future selection options
-        view_combobox = QComboBox()
-        view_combobox.addItem("view 1")
-        view_combobox.addItem("view 2")
-        layout.addWidget(view_combobox)
+        self.view_combobox = QComboBox()
+        self.view_combobox.addItem("view 1")
+        self.view_combobox.addItem("view 2")
+        self.layout.addWidget(self.view_combobox)
 
-        laser_combobox = QComboBox()
-        laser_combobox.addItem("...Hz laser")
-        laser_combobox.addItem("...Hz laser")
-        layout.addWidget(laser_combobox)
+        self.laser_combobox = QComboBox()
+        self.laser_combobox.addItem("...Hz laser")
+        self.laser_combobox.addItem("...Hz laser")
+        self.layout.addWidget(self.laser_combobox)
 
-        self.setLayout(layout)
+        self.setLayout(self.layout)
 
 
 if __name__ == '__main__':
