@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 import qt_line_break
 
 
-class LiveModeControl(QWidget):
+class MicroscopeModeControl(QWidget):
     def __init__(self, parent, button_name, add_line_break=False, can_disable=False):
         super(QWidget, self).__init__(parent)
 

@@ -5,11 +5,11 @@ from PyQt5.QtGui import *
 import qdarkstyle
 import qt_textbox_and_slider
 import qt_line_break
-import qt_live_mode_control
+import qt_microscope_mode_control
 import qt_left_window
 
 
-class PiscesMainWindow(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # run the init of QMainWindow
 
@@ -29,8 +29,8 @@ class PiscesMainWindow(QMainWindow):
         self.right_window_layout = QVBoxLayout()
 
         # Right window
-        self.view_window = qt_live_mode_control.LiveModeControl(self, "View")
-        self.timelapse_window = qt_live_mode_control.LiveModeControl(self, "Timelapse", True, True)
+        self.view_window = qt_microscope_mode_control.MicroscopeModeControl(self, "View")
+        self.timelapse_window = qt_microscope_mode_control.MicroscopeModeControl(self, "Timelapse", True, True)
 
         self.right_window_layout.addWidget(self.view_window)
         self.right_window_layout.addWidget(self.timelapse_window)
@@ -61,6 +61,6 @@ class PiscesMainWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = PiscesMainWindow()
+    window = MainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())
