@@ -4,12 +4,12 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qdarkstyle
 import qt_textbox_and_slider
-import qt_custom_decorations
-import qt_view_laser_mode
+import qt_line_break
+import qt_live_mode_control
 import qt_left_window
 
 
-class MainWidgetWindow(QMainWindow):
+class PiscesMainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # run the init of QMainWindow
 
@@ -29,13 +29,13 @@ class MainWidgetWindow(QMainWindow):
         self.right_window_layout = QVBoxLayout()
 
         # Right window
-        self.view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
-        self.timelapse_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
+        self.view_window = qt_live_mode_control.LiveModeControl(self, "View")
+        self.timelapse_window = qt_live_mode_control.LiveModeControl(self, "Timelapse", True, True)
 
         self.right_window_layout.addWidget(self.view_window)
         self.right_window_layout.addWidget(self.timelapse_window)
 
-        self.window_layout.addWidget(qt_left_window.left_window(self))  # left window
+        self.window_layout.addWidget(qt_left_window.LeftWindow(self))  # left window
         self.window_layout.addLayout(self.right_window_layout)
 
         # container for main window layout that can be set as central widget
@@ -61,6 +61,6 @@ class MainWidgetWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWidgetWindow()
+    window = PiscesMainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())
