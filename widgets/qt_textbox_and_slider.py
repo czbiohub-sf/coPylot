@@ -34,8 +34,8 @@ class InitializeSliderTextB(QWidget):
 
         self.controls_layout = QHBoxLayout()
 
-        self.numDecimals = -log10(self.increment)
-        self._max_int = 10 ** self.numDecimals
+        self.num_decimals = -log10(self.increment)
+        self._max_int = 10 ** self.num_decimals
 
         # set spinbox type and connection based on data type
         if self.data_type == int:
@@ -49,7 +49,7 @@ class InitializeSliderTextB(QWidget):
         elif self.data_type == float:
             self.spinbox = QDoubleSpinBox()
             self.spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
-            self.spinbox.setDecimals(self.numDecimals)
+            self.spinbox.setDecimals(self.num_decimals)
 
             self.slider_scaler = self._max_int  # scale self.slider parameters into integer range
 
