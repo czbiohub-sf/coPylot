@@ -2,10 +2,10 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import qt_custom_decorations
+import qt_line_break
 
 
-class InitializeComboButton(QWidget):
+class MicroscopeModeControl(QWidget):
     def __init__(self, parent, button_name, add_line_break=False, can_disable=False):
         super(QWidget, self).__init__(parent)
 
@@ -21,7 +21,7 @@ class InitializeComboButton(QWidget):
         self.layout.setAlignment(Qt.AlignTop)
 
         if self.add_line_break:
-            self.layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+            self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
         # add labeled button that, if can_disable = True, disables the comboboxes, preventing input change
         self.section_button = QPushButton(self.button_name)
@@ -43,8 +43,3 @@ class InitializeComboButton(QWidget):
 
         self.setLayout(self.layout)
 
-
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    testWidget = InitializeComboButton("test")
-    sys.exit(app.exec())

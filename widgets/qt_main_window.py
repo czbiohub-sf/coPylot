@@ -6,7 +6,7 @@ import qdarkstyle
 import qt_main_widget
 
 
-class MainWidgetWindow(QMainWindow):
+class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)  # run the init of QMainWindow
 
@@ -26,6 +26,6 @@ class MainWidgetWindow(QMainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWidgetWindow()
+    window = MainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())

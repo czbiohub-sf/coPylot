@@ -3,10 +3,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qt_textbox_and_slider
-import qt_custom_decorations
+import qt_line_break
 
 
-class left_window(QWidget):
+class LeftWindow(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
 
@@ -27,11 +27,11 @@ class left_window(QWidget):
 
         # create label objects and set bold
         self.parameter_label = QLabel("Parameters")
-        self.parameter_label.setFont(self.myFont)
+        self.parameter_label.setFont(self.my_font)
         self.value_label = QLabel("Values")
-        self.value_label.setFont(self.myFont)
+        self.value_label.setFont(self.my_font)
         self.slider_label = QLabel("Sliders")
-        self.slider_label.setFont(self.myFont)
+        self.slider_label.setFont(self.my_font)
 
         self.label_layout.addWidget(self.parameter_label)
         self.controls_label_layout.addWidget(self.value_label)
@@ -42,7 +42,7 @@ class left_window(QWidget):
 
         self.layout.addLayout(self.label_layout)
         self.label_layout.addStretch(1)
-        self.layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+        self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
         # parameters
 
@@ -63,7 +63,7 @@ class left_window(QWidget):
                                [self, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58]]
 
         for i in self.parameter_list:
-            self.layout.addWidget(qt_textbox_and_slider.InitializeSliderTextB(*i))
-            self.layout.addWidget(qt_custom_decorations.LineBreak(Qt.AlignTop))
+            self.layout.addWidget(qt_textbox_and_slider.TextboxAndSlider(*i))
+            self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
         self.setLayout(self.layout)

@@ -5,7 +5,7 @@ from PyQt5.QtGui import *
 from math import log10
 
 
-class InitializeSliderTextB(QWidget):
+class TextboxAndSlider(QWidget):
     def __init__(self, parent, widget_name, min_range, max_range, data_type, increment, default=0):
         super(QWidget, self).__init__(parent)
 

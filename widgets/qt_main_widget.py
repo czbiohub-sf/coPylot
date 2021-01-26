@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-import qt_view_laser_mode
+import qt_microscope_mode_control
 import qt_left_window
 
 
@@ -17,13 +17,13 @@ class MainWidget(QWidget):
         self.right_window_layout = QVBoxLayout()
 
         # Right window
-        self.view_window = qt_view_laser_mode.InitializeComboButton(self, "View")
-        self.timelapse_window = qt_view_laser_mode.InitializeComboButton(self, "Timelapse", True, True)
+        self.view_window = qt_microscope_mode_control.MicroscopeModeControl(self, "View")
+        self.timelapse_window = qt_microscope_mode_control.MicroscopeModeControl(self, "Timelapse", True, True)
 
         self.right_window_layout.addWidget(self.view_window)
         self.right_window_layout.addWidget(self.timelapse_window)
 
-        self.window_layout.addWidget(qt_left_window.left_window(self))  # left window
+        self.window_layout.addWidget(qt_left_window.LeftWindow(self))  # left window
         self.window_layout.addLayout(self.right_window_layout)
 
         self.setLayout(self.window_layout)
