@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from math import log10
-import qt_custom_sliders
 
 
 class TextboxAndSlider(QWidget):
@@ -19,8 +18,10 @@ class TextboxAndSlider(QWidget):
 
         self.range_visible = True
 
-        # init widgets accessed by slot member functions
-        self.slider = qt_custom_sliders.DoubleClickableSlider(self)
+        # widgets accessed by slot member functions
+        self.slider = QSlider(Qt.Horizontal)
+        self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
+
         self.toggle_button = QPushButton("set range")
         self.min_input_line = QLineEdit()
         self.max_input_line = QLineEdit()
@@ -34,8 +35,8 @@ class TextboxAndSlider(QWidget):
 
         self.controls_layout = QHBoxLayout()
 
-        self.numDecimals = -log10(self.increment)
-        self._max_int = 10 ** self.numDecimals
+        self.num_decimals = -log10(self.increment)
+        self._max_int = 10 ** self.num_decimals
 
         # set spinbox type and connection based on data type
         if self.data_type == int:
@@ -49,7 +50,7 @@ class TextboxAndSlider(QWidget):
         elif self.data_type == float:
             self.spinbox = QDoubleSpinBox()
             self.spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
-            self.spinbox.setDecimals(self.numDecimals)
+            self.spinbox.setDecimals(self.num_decimals)
 
             self.slider_scaler = self._max_int  # scale self.slider parameters into integer range
 
@@ -152,3 +153,6 @@ class TextboxAndSlider(QWidget):
     @pyqtSlot(int)
     def intToScaledFloat(self, value):
         self.spinbox.setValue(float(value / self._max_int))
+
+    def mouseDoubleClickEvent(self, event):
+        self.toggle_range_widgets()

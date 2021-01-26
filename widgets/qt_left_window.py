@@ -17,8 +17,8 @@ class LeftWindow(QWidget):
         self.label_layout = QHBoxLayout()
         self.controls_label_layout = QHBoxLayout()
 
-        self.myFont = QFont()
-        self.myFont.setBold(True)
+        self.my_font = QFont()
+        self.my_font.setBold(True)
 
         # define spacing such that titles are justified to widgets they describe
         self.label_layout.setContentsMargins(0, 0, 0, 0)
@@ -27,11 +27,11 @@ class LeftWindow(QWidget):
 
         # create label objects and set bold
         self.parameter_label = QLabel("Parameters")
-        self.parameter_label.setFont(self.myFont)
+        self.parameter_label.setFont(self.my_font)
         self.value_label = QLabel("Values")
-        self.value_label.setFont(self.myFont)
+        self.value_label.setFont(self.my_font)
         self.slider_label = QLabel("Sliders")
-        self.slider_label.setFont(self.myFont)
+        self.slider_label.setFont(self.my_font)
 
         self.label_layout.addWidget(self.parameter_label)
         self.controls_label_layout.addWidget(self.value_label)
