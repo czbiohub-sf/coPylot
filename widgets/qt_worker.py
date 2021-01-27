@@ -1,15 +1,18 @@
 import sys
 import traceback
+import logging
+import time
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+logging.basicConfig(format="%(message)s", level=logging.INFO)
+
 
 class Worker(QRunnable):
-    def __init__(self, fn, *args, **kwargs):
+    def __init__(self, name, *args, **kwargs):
         super(Worker, self).__init__()
-
-        self.fn = fn
+        self.name = name
         self.args = args
         self.kwargs = kwargs
 
@@ -18,4 +21,9 @@ class Worker(QRunnable):
         """
         Initialise the runner function with passed args, kwargs.
         """
-        self.fn(*self.args, **self.kwargs)
+        logging.info(f"{self.name} started")
+        for i in range(0, 10):
+            logging.info(f"{self.name} running")
+            time.sleep(1)
+
+        logging.info(f"{self.name} complete")
