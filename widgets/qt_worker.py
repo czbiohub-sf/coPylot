@@ -2,6 +2,7 @@ import sys
 import traceback
 import logging
 import time
+import qt_worker_signals
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -15,15 +16,25 @@ class Worker(QRunnable):
         self.name = name
         self.args = args
         self.kwargs = kwargs
+        self.thread_active = True
+
+        self.signals = qt_worker_signals.WorkerSignals()
+        self.kwargs["finished_callback"] = self.signals.finished
+        self.kwargs["interrupted_callback"] = self.signals.interrupted
+        self.kwargs["progress_callback"] = self.signals.progress
 
     @pyqtSlot()
     def run(self):
-        """
-        Initialise the runner function with passed args, kwargs.
-        """
         logging.info(f"{self.name} started")
-        for i in range(0, 10):
-            logging.info(f"{self.name} running")
-            time.sleep(1)
+        counter = 0
+        while self.thread_active and counter < 10:
+            time.sleep(0.5)
+            counter += 1
+            self.signals.progress.emit(counter)
+        if counter == 10:
+            self.signals.finished.emit()
 
-        logging.info(f"{self.name} complete")
+    def stop(self):
+        self.thread_active = False
+        self.signals.interrupted.emit()
+

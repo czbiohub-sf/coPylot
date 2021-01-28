@@ -1,10 +1,14 @@
 import sys
 import traceback
+import logging
+import time
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qt_worker
 import qdarkstyle
+
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class ThreadRunner(QMainWindow):
@@ -23,17 +27,20 @@ class ThreadRunner(QMainWindow):
         self.main_window_layout = QVBoxLayout()
         self.main_window_layout.setAlignment(Qt.AlignTop)
 
-        self.start_button = QPushButton("Launch Thread!")
-        self.start_button.pressed.connect(self.launch_thread)
-
-        self.thread_name_input = QLineEdit()
-        self.thread_name_input.setText("thread name")
-
-        self.main_window_layout.addWidget(self.start_button)
-        self.main_window_layout.addWidget(self.thread_name_input)
-
         self.qthreadpool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.qthreadpool.maxThreadCount())
+
+        self.worker = qt_worker.Worker("test")
+
+        self.start_button = QPushButton("Stop Thread")
+        self.main_window_layout.addWidget(self.start_button)
+
+        self.start_button.pressed.connect(self.worker.stop)
+        self.worker.signals.finished.connect(self.thread_complete)
+        self.worker.signals.progress.connect(self.log_progress)
+        self.worker.signals.interrupted.connect(self.thread_interrupted)
+
+        self.qthreadpool.start(self.worker)
 
         widget = QWidget()
         widget.setLayout(self.main_window_layout)
@@ -42,10 +49,14 @@ class ThreadRunner(QMainWindow):
 
         self.show()  # not shown by default
 
-    def launch_thread(self):
-        name = self.thread_name_input.text()
-        new_worker = qt_worker.Worker(name)
-        self.qthreadpool.start(new_worker)
+    def thread_complete(self):
+        logging.info("thread complete")
+
+    def thread_interrupted(self):
+        logging.info("thread interrupted")
+
+    def log_progress(self, int):
+        logging.info(f"looped {int} times")
 
 
 if __name__ == '__main__':
