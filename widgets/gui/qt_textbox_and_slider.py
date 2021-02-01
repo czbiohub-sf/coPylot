@@ -15,6 +15,7 @@ class TextboxAndSlider(QWidget):
         self.data_type = data_type
         self.increment = increment
         self.default = default
+        self.parent = parent
 
         self.range_visible = True
 
@@ -65,6 +66,7 @@ class TextboxAndSlider(QWidget):
         self.spinbox.setRange(self.min_range, self.max_range)
         self.spinbox.setValue(self.default)
         self.spinbox.setFixedSize(65, 27)
+        #self.spinbox.valueChanged.connect(self.parent.update_parameters)  # commented out until @property is in use
 
         #  set slider parameters based on data type (by value of self.slider_scaler)
         self.slider.setMaximum(self.max_range * self.slider_scaler)
@@ -88,6 +90,8 @@ class TextboxAndSlider(QWidget):
         self.controls_layout.addWidget(self.spinbox, 1, Qt.AlignHCenter)
         self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
         self.controls_layout.addWidget(self.toggle_button)
+
+        # added here to prevent trigger on startup
 
         #  add widgets / layouts in horizontal child layout
         self.layout.addWidget(self.label, 1, Qt.AlignLeft)
@@ -156,3 +160,5 @@ class TextboxAndSlider(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()
+
+

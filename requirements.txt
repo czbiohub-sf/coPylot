@@ -1,2 +1,3 @@
 pyqt5==5.15.2
 qdarkstyle==2.8
+nidaqmx==0.5.7

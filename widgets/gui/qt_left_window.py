@@ -9,6 +9,9 @@ import qt_line_break
 class LeftWindow(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
+        self.parent = parent
+        self.parameter_vals = []  # list to hold parameter values. Updated by update_parameters and fetched by
+        # main_widget
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -63,7 +66,21 @@ class LeftWindow(QWidget):
                                [self, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58]]
 
         for i in self.parameter_list:
-            self.layout.addWidget(qt_textbox_and_slider.TextboxAndSlider(*i))
+            textbox_and_slider = qt_textbox_and_slider.TextboxAndSlider(*i)
+            self.layout.addWidget(textbox_and_slider)
             self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
+            self.parameter_vals.append(textbox_and_slider)
+
         self.setLayout(self.layout)
+
+        # not in property for testing purposes
+        for i in range(0, 14):
+            print(self.parameter_vals[i].layout.itemAt(1).itemAt(0).widget.Value)
+
+
+    #@property
+    #def update_parameters(self):
+    #    for i in range(0, 14):
+    #        print(self.parameter_vals[i])
+    #        pass

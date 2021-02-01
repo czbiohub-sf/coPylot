@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qt_line_break
+from widgets.hardware.control import NIDaq
 
 
 class MicroscopeModeControl(QWidget):
@@ -13,6 +14,9 @@ class MicroscopeModeControl(QWidget):
         self.button_name = button_name
         self.add_line_break = add_line_break
         self.can_disable = can_disable
+        self.color_tracker = True
+
+        self.daq_card = 0
 
         if self.can_disable:
             self.button_state = False
@@ -26,7 +30,10 @@ class MicroscopeModeControl(QWidget):
         # add labeled button that, if can_disable = True, disables the comboboxes, preventing input change
         self.section_button = QPushButton(self.button_name)
         if self.can_disable:
-            self.section_button.pressed.connect(self.parent.toggleState)
+            self.section_button.clicked.connect(self.parent.toggle_state)
+
+        self.section_button.clicked.connect(self.launch_nidaq_instance)
+        self.section_button.clicked.connect(self.button_color_change)
 
         self.layout.addWidget(self.section_button)
 
@@ -42,4 +49,15 @@ class MicroscopeModeControl(QWidget):
         self.layout.addWidget(self.laser_combobox)
 
         self.setLayout(self.layout)
+
+    def launch_nidaq_instance(self, parameters):
+        parameters = self.parent.parameter_values
+        self.daq_card = NIDaq(*parameters)
+
+    def button_color_change(self):
+        if self.color_tracker:
+            self.section_button.setStyleSheet("background-color: red")
+        else:
+            self.section_button.setStyleSheet("")
+        self.color_tracker = not self.color_tracker
 
