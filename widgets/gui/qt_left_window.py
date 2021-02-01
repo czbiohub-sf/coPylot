@@ -1,4 +1,3 @@
-import sys
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -10,8 +9,6 @@ class LeftWindow(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
         self.parent = parent
-        self.parameter_vals = []  # list to hold parameter values. Updated by update_parameters and fetched by
-        # main_widget
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -48,8 +45,9 @@ class LeftWindow(QWidget):
         self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
         # parameters
+        self.parameter_objects = []  # list to hold parameter widgets.
 
-        # add instances of qt_textbox_and_slider widget with parameters from list to vertical master layout
+        # add instances of qt_textbox_and_slider widget with parameters from list to vertical layout
         self.parameter_list = [[self, "exposure", 0.001, 1, float, 0.001, 0.02],
                                [self, "nb_timepoints", 1, 10000, int, 1, 600],
                                [self, "scan_step", 0.01, 1, float, 0.01, 0.1],
@@ -70,17 +68,14 @@ class LeftWindow(QWidget):
             self.layout.addWidget(textbox_and_slider)
             self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
-            self.parameter_vals.append(textbox_and_slider)
+            self.parameter_objects.append(textbox_and_slider)
 
         self.setLayout(self.layout)
 
-        # not in property for testing purposes
+    @property
+    def update_parameters(self):
+        parameter_vals = []
         for i in range(0, 14):
-            for QSpinBox in self.parameter_vals[i].layout.itemAt(1).children():
-                print(QSpinBox)
+            parameter_vals.append(self.parameter_objects[i].spinbox.value())
 
-    #@property
-    #def update_parameters(self):
-    #    for i in range(0, 14):
-    #        print(self.parameter_vals[i])
-    #        pass
+        return parameter_vals
