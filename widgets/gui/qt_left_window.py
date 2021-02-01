@@ -76,8 +76,8 @@ class LeftWindow(QWidget):
 
         # not in property for testing purposes
         for i in range(0, 14):
-            print(self.parameter_vals[i].layout.itemAt(1).itemAt(0).widget.Value)
-
+            for QSpinBox in self.parameter_vals[i].layout.itemAt(1).children():
+                print(QSpinBox)
 
     #@property
     #def update_parameters(self):
