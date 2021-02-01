@@ -13,6 +13,8 @@ class LeftWindow(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
 
+        self.parameter_objects = []  # list to hold parameter widgets. Defined here due to set range button location
+
         # column labels
         self.label_layout = QHBoxLayout()
         self.controls_label_layout = QHBoxLayout()
@@ -22,7 +24,7 @@ class LeftWindow(QWidget):
 
         # define spacing such that titles are justified to widgets they describe
         self.label_layout.setContentsMargins(0, 0, 0, 0)
-        self.controls_label_layout.setContentsMargins(135, 0, 0, 0)
+        self.controls_label_layout.setContentsMargins(215, 0, 0, 0)
         self.controls_label_layout.setSpacing(20)
 
         # create label objects and set bold
@@ -45,8 +47,6 @@ class LeftWindow(QWidget):
         self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
         # parameters
-        self.parameter_objects = []  # list to hold parameter widgets.
-
         # add instances of qt_textbox_and_slider widget with parameters from list to vertical layout
         self.parameter_list = [[self, "exposure", 0.001, 1, float, 0.001, 0.02],
                                [self, "nb_timepoints", 1, 10000, int, 1, 600],
@@ -69,6 +69,13 @@ class LeftWindow(QWidget):
             self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
 
             self.parameter_objects.append(textbox_and_slider)
+
+        # addition of button to toggle visibility of parameter range input boxes
+        self.toggle_button = QPushButton("set range")
+        for obj in self.parameter_objects:
+            self.toggle_button.pressed.connect(obj.toggle_range_widgets)
+
+        self.layout.addWidget(self.toggle_button)
 
         self.setLayout(self.layout)
 

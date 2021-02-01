@@ -12,17 +12,16 @@ class MainWidget(QWidget):
 
         self.parent = parent
         self.button_state = False
-        self.parameter_values = []  # to hold parameter values sent from left window. To be fetched on button press
 
         # initialize layouts
         self.window_layout = QHBoxLayout()
         self.right_window_layout = QVBoxLayout()
 
         # Right window
-        self.view_window = qt_live_control.LiveControl(self, "Live")
+        self.live_window = qt_live_control.LiveControl(self, "Live")
         self.timelapse_window = qt_timelapse_control.TimelapseControl(self, "Timelapse")
 
-        self.right_window_layout.addWidget(self.view_window)
+        self.right_window_layout.addWidget(self.live_window)
         self.right_window_layout.addWidget(self.timelapse_window)
 
         # left window
@@ -37,12 +36,15 @@ class MainWidget(QWidget):
     @pyqtSlot()
     def toggle_state(self):
         """
-        slot decorated function to disable all input widgets when button to enter timelapse mode is pressed
+        function to disable all input widgets when button to enter timelapse mode is pressed
         """
         self.button_state = not self.button_state
-        for j in range(1, self.timelapse_window.layout.count()):
-            if j != 1:
-                self.timelapse_window.layout.itemAt(j).widget().setDisabled(self.button_state)
 
-        self.window_layout.itemAt(0).widget().setDisabled(self.button_state)
+        self.timelapse_window.view_combobox.setDisabled(self.button_state)
+        self.timelapse_window.laser_combobox.setDisabled(self.button_state)
+        self.live_window.setDisabled(self.button_state)
+
+        for parameter_object in self.left_window.parameter_objects:
+            parameter_object.spinbox.setDisabled(self.button_state)
+            parameter_object.slider.setDisabled(self.button_state)
 

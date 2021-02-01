@@ -24,11 +24,13 @@ class LiveControl(QWidget):
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.layout.addWidget(self.view_combobox)
+        self.view_combobox.activated.connect(self.launch_nidaq_instance)
 
         self.laser_combobox = QComboBox()
-        self.laser_combobox.addItem("...Hz laser")
-        self.laser_combobox.addItem("...Hz laser")
+        self.laser_combobox.addItem("488")
+        self.laser_combobox.addItem("561")
         self.layout.addWidget(self.laser_combobox)
+        self.laser_combobox.activated.connect(self.launch_nidaq_instance)
 
         self.setLayout(self.layout)
 
@@ -49,5 +51,6 @@ class LiveControl(QWidget):
                          view2_galvo2=parameters[11],
                          stripe_reduction_range=parameters[12],
                          stripe_reduction_offset=parameters[13])
-        daq_card.select_view(1)
-        daq_card.select_channel_remove_stripes(488)
+
+        daq_card.select_view(int(self.view_combobox.currentText()[5]))
+        daq_card.select_channel_remove_stripes(int(self.laser_combobox.currentText()))

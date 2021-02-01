@@ -36,8 +36,8 @@ class TimelapseControl(QWidget):
         self.layout.addWidget(self.view_combobox)
 
         self.laser_combobox = QComboBox()
-        self.laser_combobox.addItem("...Hz laser")
-        self.laser_combobox.addItem("...Hz laser")
+        self.laser_combobox.addItem("488")
+        self.laser_combobox.addItem("561")
         self.layout.addWidget(self.laser_combobox)
 
         self.setLayout(self.layout)
@@ -45,7 +45,7 @@ class TimelapseControl(QWidget):
     def launch_nidaq_instance(self):
         parameters = self.parent.left_window.update_parameters
         print("launched with: ", parameters)
-        #self.daq_card = NIDaq(parameters)
+        # not yet implemented
 
     def button_color_change(self):
         if self.color_tracker:

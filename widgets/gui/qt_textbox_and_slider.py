@@ -22,7 +22,6 @@ class TextboxAndSlider(QWidget):
         self.slider = QSlider(Qt.Horizontal)
         self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
 
-        self.toggle_button = QPushButton("set range")
         self.min_input_line = QLineEdit()
         self.max_input_line = QLineEdit()
 
@@ -81,16 +80,12 @@ class TextboxAndSlider(QWidget):
         self.min_input_line.editingFinished.connect(self.update_min_range)
         self.max_input_line.editingFinished.connect(self.update_max_range)
 
-        # connect button for alternate range input box toggling
-        self.toggle_button.pressed.connect(self.toggle_range_widgets)
-
         # layout to hold self.slider and self.spinbox for alignment with one another
         self.controls_layout.addWidget(self.spinbox, 1, Qt.AlignHCenter)
         self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
-        self.controls_layout.addWidget(self.toggle_button)
 
         # added here to prevent trigger on startup
-        self.spinbox.valueChanged.connect(self.parent.parent.view_window.launch_nidaq_instance)
+        self.spinbox.valueChanged.connect(self.parent.parent.live_window.launch_nidaq_instance)
 
         #  add widgets / layouts in horizontal child layout
         self.layout.addWidget(self.label, 1, Qt.AlignLeft)
@@ -105,12 +100,10 @@ class TextboxAndSlider(QWidget):
             self.min_input_line.setParent(None)
             self.max_input_line.setParent(None)
         elif not self.range_visible:
-            self.controls_layout.removeWidget(self.toggle_button)
             self.controls_layout.removeWidget(self.slider)
             self.controls_layout.addWidget(self.min_input_line)
             self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
             self.controls_layout.addWidget(self.max_input_line)
-            self.controls_layout.addWidget(self.toggle_button)
 
     @pyqtSlot()
     def update_min_range(self):
