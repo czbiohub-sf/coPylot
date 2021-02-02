@@ -12,8 +12,7 @@ class TimelapseControl(QWidget):
         self.parent = parent
         self.button_name = button_name
 
-        self.button_state = False  # allows timelapse mode to be turned off and on
-        self.color_tracker = True  # tracker to set new background color when timelapse mode is on
+        self.state_tracker = False  # tracker to set new background color when timelapse mode is on
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -23,9 +22,8 @@ class TimelapseControl(QWidget):
         # add launch button that disables parameter input, preventing input change
         self.section_button = QPushButton(self.button_name)
 
-        self.section_button.pressed.connect(self.parent.toggle_state)
+        self.section_button.pressed.connect(self.button_state_change)
         self.section_button.pressed.connect(self.launch_nidaq_instance)
-        self.section_button.pressed.connect(self.button_color_change)
 
         self.layout.addWidget(self.section_button)
 
@@ -43,14 +41,19 @@ class TimelapseControl(QWidget):
         self.setLayout(self.layout)
 
     def launch_nidaq_instance(self):
-        parameters = self.parent.left_window.update_parameters
-        print("launched with: ", parameters)
-        # not yet implemented
+        if not self.parent.live_window.state_tracker and self.state_tracker:
+            parameters = self.parent.left_window.update_parameters
+            print("launched with:", parameters, self.view_combobox.currentText(), "and channel", self.laser_combobox.currentText())
+            # not yet implemented
 
-    def button_color_change(self):
-        if self.color_tracker:
-            self.section_button.setStyleSheet("background-color: red")
-        else:
-            self.section_button.setStyleSheet("")
-        self.color_tracker = not self.color_tracker
+    def button_state_change(self):
+        if not self.parent.live_window.state_tracker:
+
+            self.state_tracker = not self.state_tracker
+            self.parent.toggle_state()
+
+            if self.state_tracker:
+                self.section_button.setStyleSheet("background-color: red")
+            else:
+                self.section_button.setStyleSheet("")
 
