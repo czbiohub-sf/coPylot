@@ -1,10 +1,14 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+
+from widgets.gui import qt_nidaq_worker
 from widgets.hardware.control import NIDaq
 
 
 class LiveControl(QWidget):
+    trigger_stop = pyqtSignal()
+
     def __init__(self, parent, button_name):
         super(QWidget, self).__init__(parent)
 
@@ -12,6 +16,7 @@ class LiveControl(QWidget):
         self.button_name = button_name
 
         self.state_tracker = False  # tracks if live mode is on
+        self.daq_card_thread: QRunnable
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -37,32 +42,39 @@ class LiveControl(QWidget):
 
         self.setLayout(self.layout)
 
+        self.q_thread_pool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
+
     def launch_nidaq_instance(self):
         if self.state_tracker:
-            parameters = self.parent.left_window.update_parameters
-            print("launched with:", parameters, self.view_combobox.currentText(), "and channel", self.laser_combobox.currentText())
-            daq_card = NIDaq(exposure=parameters[0],
-                             nb_timepoints=parameters[1],
-                             scan_step=parameters[2],
-                             stage_scan_range=parameters[3],
-                             vertical_pixels=parameters[4],
-                             num_samples=parameters[5],
-                             offset_view1=parameters[6],
-                             offset_view2=parameters[7],
-                             view1_galvo1=parameters[8],
-                             view1_galvo2=parameters[9],
-                             view2_galvo1=parameters[10],
-                             view2_galvo2=parameters[11],
-                             stripe_reduction_range=parameters[12],
-                             stripe_reduction_offset=parameters[13])
+            self.trigger_stop.emit()  # does nothing on first iteration before thread is made.
+            # Stops thread before new one is launched
 
-            #daq_card.select_view(int(self.view_combobox.currentText()[5]))
-            #daq_card.select_channel_remove_stripes(int(self.laser_combobox.currentText()))
+            parameters = self.parent.left_window.update_parameters
+            view = self.view_combobox.currentText()
+            channel = self.laser_combobox.currentText()
+
+            print("called with:", parameters, self.view_combobox.currentText(), "and channel",
+                  self.laser_combobox.currentText())
+
+            # launch worker thread with newest parameters
+            daq_card_thread = qt_nidaq_worker.NIDaqWorker(parameters, view, channel)
+            self.q_thread_pool.start(daq_card_thread)
+
+            # connect
+            self.trigger_stop.connect(daq_card_thread.stop)
+
+        else:
+            self.trigger_stop.emit()  # launch_nidaq_instance is called from button_state_change,
+            # so function is called one more time after live mode is turned off,
+            # with state_tracker = False, killing final thread
 
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
-            self.launch_nidaq_instance()
+            self.launch_nidaq_instance()  #
         else:
             self.section_button.setStyleSheet("")
+            self.launch_nidaq_instance()
+
