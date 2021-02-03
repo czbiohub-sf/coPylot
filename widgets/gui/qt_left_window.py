@@ -48,7 +48,7 @@ class LeftWindow(QWidget):
                                [self, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58]]
 
         self.row_counter = 1
-        self.parameter_objects = []  # list to hold parameter widgets. Defined here due to set range button location
+        self.parameter_objects = []
 
         for i in self.parameter_list:
             textbox_and_slider = qt_textbox_and_slider.TextboxAndSlider(*i, self.row_counter)
