@@ -6,7 +6,7 @@ from widgets.hardware.control import NIDaq
 
 
 class LiveControl(QWidget):
-    trigger_stop = pyqtSignal()
+    trigger_stop_live = pyqtSignal()
 
     def __init__(self, parent, button_name):
         super(QWidget, self).__init__(parent)
@@ -46,34 +46,34 @@ class LiveControl(QWidget):
 
     def launch_nidaq_instance(self):
         if self.state_tracker:
-            self.trigger_stop.emit()  # does nothing on first iteration before thread is made.
-            # Stops thread before new one is launched
+            self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
+            # Stops thread before new one is launched. Needed when instanced on parameter change.
+            # Not needed in timelapse
 
             parameters = self.parent.left_window.update_parameters
             view = self.view_combobox.currentText()
             channel = self.laser_combobox.currentText()
 
-            print("called with:", parameters, self.view_combobox.currentText(), "and channel",
-                  self.laser_combobox.currentText())
+            print("called with:", parameters, view, "and channel",
+                  channel)
 
             # launch worker thread with newest parameters
             daq_card_thread = qt_nidaq_worker.NIDaqWorker(parameters, view, channel)
             self.q_thread_pool.start(daq_card_thread)
 
             # connect
-            self.trigger_stop.connect(daq_card_thread.stop)
+            self.trigger_stop_live.connect(daq_card_thread.stop)
 
         else:
-            self.trigger_stop.emit()  # launch_nidaq_instance is called from button_state_change,
+            self.trigger_stop_live.emit()  # launch_nidaq_instance is called from button_state_change,
             # so function is called one more time after live mode is turned off,
             # with state_tracker = False, killing final thread
 
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
+        self.launch_nidaq_instance()
+
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
-            self.launch_nidaq_instance()
         else:
             self.section_button.setStyleSheet("")
-            self.launch_nidaq_instance()
-
