@@ -10,22 +10,12 @@ class LeftWindow(QWidget):
         super(QWidget, self).__init__(parent)
         self.parent = parent
 
-        self.layout = QVBoxLayout()
-        self.layout.setAlignment(Qt.AlignTop)
-
-        self.parameter_objects = []  # list to hold parameter widgets. Defined here due to set range button location
-
-        # column labels
-        self.label_layout = QHBoxLayout()
-        self.controls_label_layout = QHBoxLayout()
+        self.grid_layout = QGridLayout()
+        self.setLayout(self.grid_layout)
+        self.grid_layout.setAlignment(Qt.AlignTop)
 
         self.my_font = QFont()
         self.my_font.setBold(True)
-
-        # define spacing such that titles are justified to widgets they describe
-        self.label_layout.setContentsMargins(0, 0, 0, 0)
-        self.controls_label_layout.setContentsMargins(215, 0, 0, 0)
-        self.controls_label_layout.setSpacing(20)
 
         # create label objects and set bold
         self.parameter_label = QLabel("Parameters")
@@ -35,16 +25,10 @@ class LeftWindow(QWidget):
         self.slider_label = QLabel("Sliders")
         self.slider_label.setFont(self.my_font)
 
-        self.label_layout.addWidget(self.parameter_label)
-        self.controls_label_layout.addWidget(self.value_label)
-        self.controls_label_layout.addWidget(self.slider_label)
-
-        self.controls_label_layout.setAlignment(Qt.AlignLeft)
-        self.label_layout.addLayout(self.controls_label_layout)
-
-        self.layout.addLayout(self.label_layout)
-        self.label_layout.addStretch(1)
-        self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
+        self.grid_layout.addWidget(self.parameter_label, 0, 0)
+        self.grid_layout.addWidget(self.value_label, 0, 1)
+        self.grid_layout.addWidget(self.slider_label, 0, 3)
+        self.slider_label.setAlignment(Qt.AlignHCenter)
 
         # parameters
         # add instances of qt_textbox_and_slider widget with parameters from list to vertical layout
@@ -63,21 +47,22 @@ class LeftWindow(QWidget):
                                [self, "stripe_reduction_range", 0, 10, float, 0.01, 0.1],
                                [self, "stripe_reduction_offset", -10, 10, float, 0.01, 0.58]]
 
+        self.row_counter = 1
+        self.parameter_objects = []  # list to hold parameter widgets. Defined here due to set range button location
+
         for i in self.parameter_list:
-            textbox_and_slider = qt_textbox_and_slider.TextboxAndSlider(*i)
-            self.layout.addWidget(textbox_and_slider)
-            self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))
-
+            textbox_and_slider = qt_textbox_and_slider.TextboxAndSlider(*i, self.row_counter)
             self.parameter_objects.append(textbox_and_slider)
+            self.grid_layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop), self.row_counter + 1, 0, 1, 5)
 
+            self.row_counter += 2
+            
         # addition of button to toggle visibility of parameter range input boxes
         self.toggle_button = QPushButton("set range")
         for obj in self.parameter_objects:
             self.toggle_button.pressed.connect(obj.toggle_range_widgets)
 
-        self.layout.addWidget(self.toggle_button)
-
-        self.setLayout(self.layout)
+        self.grid_layout.addWidget(self.toggle_button, self.row_counter, 0, 1, 5)
 
     @property
     def update_parameters(self):

@@ -5,18 +5,19 @@ from math import log10
 
 
 class TextboxAndSlider(QWidget):
-    def __init__(self, parent, widget_name, min_range, max_range, data_type, increment, default=0):
+    def __init__(self, parent, widget_name, min_range, max_range, data_type, increment, default=0, row=0):
         super(QWidget, self).__init__(parent)
 
+        self.parent = parent
         self.widget_name = widget_name
         self.max_range = max_range
         self.min_range = min_range
         self.data_type = data_type
         self.increment = increment
         self.default = default
-        self.parent = parent
+        self.row = row
 
-        self.range_visible = True
+        self.range_visible = False
 
         # widgets accessed by slot member functions
         self.slider = QSlider(Qt.Horizontal)
@@ -26,13 +27,6 @@ class TextboxAndSlider(QWidget):
         self.max_input_line = QLineEdit()
 
         self.label = QLabel(self.widget_name)
-
-        # initialize layouts
-        self.layout = QHBoxLayout()
-        self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(8)
-
-        self.controls_layout = QHBoxLayout()
 
         self.num_decimals = -log10(self.increment)
         self._max_int = 10 ** self.num_decimals
@@ -57,7 +51,7 @@ class TextboxAndSlider(QWidget):
             self.spinbox.valueChanged.connect(self.floatToScaledInt)
 
         else:
-            raise TypeError("Only integers or floats acceptable for self.spinbox objects")
+            raise TypeError("Only integers or floats acceptable for QSpinBox objects")
 
         #  set universal spinbox parameters
         self.spinbox.setSizeIncrement(self.increment, self.increment)
@@ -80,30 +74,27 @@ class TextboxAndSlider(QWidget):
         self.min_input_line.editingFinished.connect(self.update_min_range)
         self.max_input_line.editingFinished.connect(self.update_max_range)
 
-        # layout to hold self.slider and self.spinbox for alignment with one another
-        self.controls_layout.addWidget(self.spinbox, 1, Qt.AlignHCenter)
-        self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
+        self.parent.grid_layout.addWidget(self.label, self.row, 0)
+        self.parent.grid_layout.addWidget(self.spinbox, self.row, 1)
+        self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
         # added here to prevent trigger on startup
         self.spinbox.valueChanged.connect(self.parent.parent.live_window.launch_nidaq_instance)
-
-        #  add widgets / layouts in horizontal child layout
-        self.layout.addWidget(self.label, 1, Qt.AlignLeft)
-        self.layout.addLayout(self.controls_layout)
-
-        self.setLayout(self.layout)
 
     @pyqtSlot()
     def toggle_range_widgets(self):
         self.range_visible = not self.range_visible
         if self.range_visible:
+            self.parent.grid_layout.removeWidget(self.slider)
+            self.parent.grid_layout.addWidget(self.min_input_line, self.row, 2)
+            self.parent.grid_layout.addWidget(self.slider, self.row, 3)
+            self.parent.grid_layout.addWidget(self.max_input_line, self.row, 4)
+
+        elif not self.range_visible:
+            self.parent.grid_layout.removeWidget(self.slider)
             self.min_input_line.setParent(None)
             self.max_input_line.setParent(None)
-        elif not self.range_visible:
-            self.controls_layout.removeWidget(self.slider)
-            self.controls_layout.addWidget(self.min_input_line)
-            self.controls_layout.addWidget(self.slider, 1, Qt.AlignHCenter)
-            self.controls_layout.addWidget(self.max_input_line)
+            self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
     @pyqtSlot()
     def update_min_range(self):
