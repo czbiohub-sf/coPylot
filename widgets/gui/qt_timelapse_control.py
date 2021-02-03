@@ -56,4 +56,3 @@ class TimelapseControl(QWidget):
                 self.section_button.setStyleSheet("background-color: red")
             else:
                 self.section_button.setStyleSheet("")
-

@@ -1,7 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-
 from widgets.gui import qt_nidaq_worker
 from widgets.hardware.control import NIDaq
 
@@ -23,15 +22,15 @@ class LiveControl(QWidget):
 
         # add instance launching button
         self.section_button = QPushButton(self.button_name)
+
         self.layout.addWidget(self.section_button)
+        self.section_button.pressed.connect(self.button_state_change)
 
         # placeholders for future selection options
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.layout.addWidget(self.view_combobox)
-
-        self.section_button.pressed.connect(self.button_state_change)
         self.view_combobox.activated.connect(self.launch_nidaq_instance)
 
         self.laser_combobox = QComboBox()
@@ -73,7 +72,7 @@ class LiveControl(QWidget):
         self.state_tracker = not self.state_tracker
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
-            self.launch_nidaq_instance()  #
+            self.launch_nidaq_instance()
         else:
             self.section_button.setStyleSheet("")
             self.launch_nidaq_instance()
