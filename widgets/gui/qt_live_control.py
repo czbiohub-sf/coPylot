@@ -59,10 +59,12 @@ class LiveControl(QWidget):
 
             # launch worker thread with newest parameters
             daq_card_thread = qt_nidaq_worker.NIDaqWorker(parameters, view, channel)
-            self.q_thread_pool.start(daq_card_thread)
-
             # connect
             self.trigger_stop_live.connect(daq_card_thread.stop)
+
+            self.q_thread_pool.start(daq_card_thread)
+
+
 
         else:
             self.trigger_stop_live.emit()  # launch_nidaq_instance is called from button_state_change,
