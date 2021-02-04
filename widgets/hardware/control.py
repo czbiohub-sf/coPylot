@@ -371,7 +371,7 @@ class NIDaq:
         task.start()
         task_ctr.start()
         print("type s to abort:")
-        while input() != "s":
+        while input() != "s" or not self.stop_now:
             time.sleep(0.05)
 
         task.stop()
@@ -397,7 +397,7 @@ class NIDaq:
         task_ao.start()
         task_ctr.start()
         print("type s to abort:")
-        while input() != "s" or not self.stop_now:
+        while input() != "s":
             time.sleep(0.05)
 
         task_do.stop()
@@ -441,10 +441,10 @@ if __name__ == "__main__":
 
     # for 561
     # daq_card.select_channel(561)
-    # daq_card.select_view(1)
-    # daq_card.select_channel_remove_stripes(488)
+    daq_card.select_view(1)
+    daq_card.select_channel_remove_stripes(488)
 
     # time lapse mode
-    daq_card.acquire_stacks(channels=[488], view=0)
+    # daq_card.acquire_stacks(channels=[488], view=0)
     # daq_card.acquire_stacks(channels=[561], view=2)
     # daq_card.acquire_stacks(channels=[488, 561], view=0)
