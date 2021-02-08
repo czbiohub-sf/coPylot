@@ -44,7 +44,7 @@ class TimelapseControl(QWidget):
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
     def launch_nidaq_instance(self):
-        if not self.parent.live_window.state_tracker and self.state_tracker:
+        if self.state_tracker:
 
             parameters = self.parent.left_window.update_parameters
             view = self.view_combobox.currentText()
@@ -62,14 +62,12 @@ class TimelapseControl(QWidget):
             self.trigger_stop_timelapse.emit()
 
     def button_state_change(self):
-        if not self.parent.live_window.state_tracker:
 
-            self.state_tracker = not self.state_tracker
-            self.launch_nidaq_instance()
+        self.state_tracker = not self.state_tracker
+        self.launch_nidaq_instance()
 
-            self.parent.toggle_state()
-            if self.state_tracker:
-                self.section_button.setStyleSheet("background-color: red")
-            else:
-                self.section_button.setStyleSheet("")
-
+        self.parent.toggle_disabled("timelapse")
+        if self.state_tracker:
+            self.section_button.setStyleSheet("background-color: red")
+        else:
+            self.section_button.setStyleSheet("")
