@@ -3,7 +3,6 @@ from PyQt5.QtCore import *
 
 from widgets.hardware.alternative_control import NIdaq
 
-
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
@@ -22,7 +21,6 @@ class NIDaqWorker(QRunnable):
     @pyqtSlot()
     def run(self):
         logging.info(f"NIDaq Instance launched")
-
         self.daq_card = NIdaq(exposure=self.parameters[0],
                               nb_timepoints=self.parameters[1],
                               scan_step=self.parameters[2],
@@ -38,8 +36,8 @@ class NIDaqWorker(QRunnable):
                               stripe_reduction_range=self.parameters[12],
                               stripe_reduction_offset=self.parameters[13])
 
-        self.daq_card.select_view(1)
-        self.daq_card.select_channel_remove_stripes(488)
+        self.daq_card.select_view(self.view)
+        self.daq_card.select_channel_remove_stripes(self.channel)
 
     def stop(self):
         self.daq_card.stop_now = True
