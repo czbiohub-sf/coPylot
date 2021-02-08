@@ -89,6 +89,8 @@ class NIDaq:
 
         # TODO: add missing docstrings for rest of the optional arguments.
         """
+        self.stop_now = False
+
         self.exposure = exposure
         self.nb_timepoints = nb_timepoints
         self.scan_step = scan_step
@@ -151,7 +153,7 @@ class NIDaq:
         if len(channels) == 1:
             nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
             data = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
-            return [data]
+            return data
         elif len(channels) == 2:
             nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
             nb_off_sample = round(self.readout_time * self.sampling_rate)
@@ -369,7 +371,7 @@ class NIDaq:
         task.start()
         task_ctr.start()
         print("type s to abort:")
-        while input() != "s":
+        while input() != "s" or not self.stop_now:
             time.sleep(0.05)
 
         task.stop()
