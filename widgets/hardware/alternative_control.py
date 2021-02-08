@@ -179,8 +179,6 @@ class NIdaq:
         while not self.stop_now:
             time.sleep(0.05)
 
-    # def stop(self):
-
         print("in right place")
 
         self.task_do.stop()
