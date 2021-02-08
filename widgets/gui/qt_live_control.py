@@ -64,8 +64,6 @@ class LiveControl(QWidget):
 
             self.q_thread_pool.start(daq_card_thread)
 
-
-
         else:
             self.trigger_stop_live.emit()  # launch_nidaq_instance is called from button_state_change,
             # so function is called one more time after live mode is turned off,
