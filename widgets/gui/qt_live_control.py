@@ -73,6 +73,7 @@ class LiveControl(QWidget):
         self.state_tracker = not self.state_tracker
         self.launch_nidaq_instance()
 
+        self.parent.toggle_disabled("live")
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
         else:
