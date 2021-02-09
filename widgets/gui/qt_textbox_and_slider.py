@@ -79,7 +79,7 @@ class TextboxAndSlider(QWidget):
         self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
         # added here to prevent trigger on startup
-        self.spinbox.valueChanged.connect(self.parent.parent.live_window.launch_nidaq_instance)
+        self.spinbox.valueChanged.connect(self.parent.parent.mode_widget.live_window.launch_nidaq_instance)
 
     @pyqtSlot()
     def toggle_range_widgets(self):

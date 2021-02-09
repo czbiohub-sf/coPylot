@@ -5,7 +5,7 @@ import qt_textbox_and_slider
 import qt_line_break
 
 
-class LeftWindow(QWidget):
+class ParametersWidget(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
         self.parent = parent

@@ -1,5 +1,6 @@
 import logging
 from PyQt5.QtCore import *
+import time
 
 from widgets.hardware.alternative_control import NIdaq
 
@@ -15,7 +16,7 @@ class NIDaqWorker(QRunnable):
         self.channel = int(channel)
         self.args = args
         self.kwargs = kwargs
-
+        
         self.daq_card = None
 
     @pyqtSlot()

@@ -46,7 +46,7 @@ class TimelapseControl(QWidget):
     def launch_nidaq_instance(self):
         if not self.parent.live_window.state_tracker and self.state_tracker:
 
-            parameters = self.parent.left_window.update_parameters
+            parameters = self.parent.parent.parameters_widget.update_parameters
             view = self.view_combobox.currentText()
             channel = self.laser_combobox.currentText()
 

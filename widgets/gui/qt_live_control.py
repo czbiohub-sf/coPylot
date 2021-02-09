@@ -50,7 +50,7 @@ class LiveControl(QWidget):
             # Stops thread before new one is launched. Needed when instanced on parameter change.
             # Not needed in timelapse
 
-            parameters = self.parent.left_window.update_parameters
+            parameters = self.parent.parent.parameters_widget.update_parameters
             view = self.view_combobox.currentText()
             channel = self.laser_combobox.currentText()
 
