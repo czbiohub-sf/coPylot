@@ -3,7 +3,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from widgets.gui import qt_nidaq_worker
 import time
+import logging
 from widgets.hardware.control import NIDaq
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class LiveControl(QWidget):
@@ -50,13 +52,17 @@ class LiveControl(QWidget):
 
         if self.state_tracker:
 
-            while self.wait_shutdown:
-                time.sleep(0.05)
-
-            self.wait_shutdown = True  # reset to true for next call
             self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
             # Stops thread before new one is launched. Needed when instanced on parameter change.
             # Not needed in timelapse
+
+            print("back at wait")
+
+            while self.wait_shutdown:
+                print("waiting")
+                #time.sleep(0.05)
+                time.sleep(1)
+            self.wait_shutdown = True  # reset to true for next call
 
             parameters = self.parent.left_window.update_parameters
             view = self.view_combobox.currentText()
@@ -72,6 +78,8 @@ class LiveControl(QWidget):
             self.trigger_stop_live.connect(daq_card_thread.stop)
 
             self.q_thread_pool.start(daq_card_thread)
+
+            logging.info("start line passed")
 
         else:
             self.trigger_stop_live.emit()  # launch_nidaq_instance is called from button_state_change,
@@ -89,4 +97,5 @@ class LiveControl(QWidget):
 
     @pyqtSlot()
     def update_wait_shutdown(self):
+        print("finished signal received")
         self.wait_shutdown = False
