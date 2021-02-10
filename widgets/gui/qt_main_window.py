@@ -3,8 +3,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qdarkstyle
-import qt_mode_widget
-from widgets.gui import qt_parameters_widget, qt_live_control, qt_timelapse_control, qt_mode_widget
+from widgets.gui import qt_parameters_widget, qt_mode_widget
 
 
 class MainWindow(QMainWindow):
@@ -22,6 +21,8 @@ class MainWindow(QMainWindow):
 
         self.mode_dock = QDockWidget("Mode Control", self)
         self.mode_dock.setMaximumSize(200, 300)
+        self.mode_dock.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
+        self.mode_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
 
         self.mode_widget = qt_mode_widget.ModeWidget(self)
         self.mode_dock.setWidget(self.mode_widget)
@@ -29,7 +30,9 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.mode_dock)
 
         self.parameters_dock = QDockWidget("Parameters", self)
-        self.parameters_dock.setMaximumSize(500, 600)
+        self.parameters_dock.setMaximumSize(500, 650)
+        self.parameters_dock.setFeatures(QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetMovable)
+        self.parameters_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
 
         self.parameters_widget = qt_parameters_widget.ParametersWidget(self)
         self.parameters_dock.setWidget(self.parameters_widget)
