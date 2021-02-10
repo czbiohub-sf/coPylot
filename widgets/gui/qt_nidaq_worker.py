@@ -1,16 +1,18 @@
 import logging
-from PyQt5.QtCore import *
+import qt_worker_signals
 import time
-
+from PyQt5.QtCore import *
 from widgets.hardware.alternative_control import NIdaq
-
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class NIDaqWorker(QRunnable):
+
     def __init__(self, parameters, view, channel, *args, **kwargs):
         super(NIDaqWorker, self).__init__()
+
+        self.signals = qt_worker_signals.WorkerSignals()
 
         self.parameters = parameters
         self.view = int(view[5])
@@ -22,9 +24,9 @@ class NIDaqWorker(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        logging.info(f"NIDaq Instance launched")
-
-        self.daq_card = NIdaq(exposure=self.parameters[0],
+        logging.info("NIDaq Instance launched")
+        self.daq_card = NIdaq(self,
+                              exposure=self.parameters[0],
                               nb_timepoints=self.parameters[1],
                               scan_step=self.parameters[2],
                               stage_scan_range=self.parameters[3],

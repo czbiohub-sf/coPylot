@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from widgets.gui import qt_nidaq_worker
+import time
 from widgets.hardware.control import NIDaq
 
 
@@ -15,6 +16,7 @@ class LiveControl(QWidget):
         self.button_name = button_name
 
         self.state_tracker = False  # tracks if live mode is on
+        self.wait_shutdown = False
         self.daq_card_thread: QRunnable
 
         self.layout = QVBoxLayout()
@@ -45,7 +47,13 @@ class LiveControl(QWidget):
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
     def launch_nidaq_instance(self):
+
         if self.state_tracker:
+
+            while self.wait_shutdown:
+                time.sleep(0.05)
+
+            self.wait_shutdown = True  # reset to true for next call
             self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
             # Stops thread before new one is launched. Needed when instanced on parameter change.
             # Not needed in timelapse
@@ -60,11 +68,10 @@ class LiveControl(QWidget):
             # launch worker thread with newest parameters
             daq_card_thread = qt_nidaq_worker.NIDaqWorker(parameters, view, channel)
             # connect
+            daq_card_thread.signals.finished.connect(self.update_wait_shutdown)
             self.trigger_stop_live.connect(daq_card_thread.stop)
 
             self.q_thread_pool.start(daq_card_thread)
-
-
 
         else:
             self.trigger_stop_live.emit()  # launch_nidaq_instance is called from button_state_change,
@@ -79,3 +86,7 @@ class LiveControl(QWidget):
             self.section_button.setStyleSheet("background-color: red")
         else:
             self.section_button.setStyleSheet("")
+
+    @pyqtSlot()
+    def update_wait_shutdown(self):
+        self.wait_shutdown = False

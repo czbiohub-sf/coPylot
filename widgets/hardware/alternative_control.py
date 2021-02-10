@@ -39,6 +39,7 @@ class NIdaq:
 
     def __init__(
             self,
+            parent,
             exposure: float,
             nb_timepoints: int,
             scan_step: float,
@@ -75,6 +76,7 @@ class NIdaq:
         """
         self.stop_now = False
 
+        self.parent = parent
         self.exposure = exposure
         self.nb_timepoints = nb_timepoints
         self.scan_step = scan_step
@@ -191,6 +193,8 @@ class NIdaq:
         print("aborted")
 
         self.set_dio_state(self.ch, False)
+
+        self.parent.signals.finished.emit()
 
     def _set_up_retriggerable_counter(self, counter):
         """set up a retriggerable counter task"""
