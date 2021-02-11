@@ -1,6 +1,6 @@
 import logging
 import time
-from PyQt5.QtCore import *
+from PyQt5.QtCore import QRunnable, pyqtSlot
 # from widgets.hardware.alternative_control import NIdaq
 from widgets.gui.qt_worker_signals import WorkerSignals
 
