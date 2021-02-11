@@ -80,7 +80,7 @@ class TextboxAndSlider(QWidget):
         self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
         # added here to prevent trigger on startup
-        self.spinbox.editingFinished.connect(self.parent.parent.live_window.launch_if_idle)
+        self.spinbox.editingFinished.connect(self.parent.parent.live_window.launch_nidaq)
 
     @pyqtSlot()
     def toggle_range_widgets(self):
@@ -143,7 +143,7 @@ class TextboxAndSlider(QWidget):
         self.spinbox.setValue(float(value / self._max_int))
 
     def mouseReleaseEvent(self, event):
-        self.parent.parent.live_window.launch_if_idle()
+        self.parent.parent.live_window.launch_nidaq()
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()

@@ -35,13 +35,13 @@ class LiveControl(QWidget):
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.layout.addWidget(self.view_combobox)
-        self.view_combobox.activated.connect(self.launch_if_idle)
+        self.view_combobox.activated.connect(self.launch_nidaq)
 
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
         self.layout.addWidget(self.laser_combobox)
-        self.laser_combobox.activated.connect(self.launch_if_idle)
+        self.laser_combobox.activated.connect(self.launch_nidaq)
 
         self.setLayout(self.layout)
 
@@ -49,7 +49,6 @@ class LiveControl(QWidget):
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
     def launch_nidaq(self):
-        self.nidaq_running = True
         print("state_tracker", self.state_tracker)
         if self.state_tracker:
             self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
@@ -82,8 +81,6 @@ class LiveControl(QWidget):
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
 
-        self.nidaq_running = False
-
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
 
@@ -100,8 +97,3 @@ class LiveControl(QWidget):
         self.wait_shutdown = False
         print("finished signal received")
 
-    def launch_if_idle(self):
-        if not self.nidaq_running:
-            self.launch_nidaq()
-        else:
-            print("launch failed: not idle")
