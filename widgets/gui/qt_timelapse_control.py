@@ -3,7 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import qt_line_break
 from widgets.gui import qt_nidaq_worker
-from widgets.hardware.control import NIDaq
+# from widgets.hardware.control import NIDaq
 
 
 class TimelapseControl(QWidget):
