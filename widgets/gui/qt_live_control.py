@@ -18,7 +18,6 @@ class LiveControl(QWidget):
 
         self.state_tracker = False  # tracks if live mode is on
         self.wait_shutdown = False
-        self.nidaq_running = False
         self.daq_card_thread: QRunnable
 
         self.layout = QVBoxLayout()
@@ -71,15 +70,51 @@ class LiveControl(QWidget):
             print("called with:", parameters, view, "and channel", channel)
 
             # launch worker thread with newest parameters
-            daq_card_worker = NIDaqWorker(parameters, view, channel)
+            daq_card_worker = NIDaqWorker(self.live_worker, [parameters, view, channel])
+
             # connect
+
             daq_card_worker.signals.finished.connect(self.update_wait_shutdown)
             self.trigger_stop_live.connect(daq_card_worker.stop)
 
             self.q_thread_pool.start(daq_card_worker)
 
+            # because processEvents runs while waiting for wait_shutdown = False, if pressed quickly, live mode can
+            # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
+
+    def live_worker(self, args):
+        parameters = args[0]
+        view = int(args[1][5])
+        channel = int(args[2])
+
+        thread_running = True
+
+        while True:
+            time.sleep(1)
+            logging.info(thread_running)
+            if not thread_running:
+                break
+
+        # self.daq_card = NIdaq(self,
+            #                      exposure=self.parameters[0],
+            #                      nb_timepoints=self.parameters[1],
+            #                      scan_step=self.parameters[2],
+            #                      stage_scan_range=self.parameters[3],
+            #                      vertical_pixels=self.parameters[4],
+            #                      num_samples=self.parameters[5],
+            #                      offset_view1=self.parameters[6],
+            #                      offset_view2=self.parameters[7],
+            #                      view1_galvo1=self.parameters[8],
+            #                      view1_galvo2=self.parameters[9],
+            #                      view2_galvo1=self.parameters[10],
+            #                      view2_galvo2=self.parameters[11],
+            #                      stripe_reduction_range=self.parameters[12],
+            #                      stripe_reduction_offset=self.parameters[13])
+            #
+            # self.daq_card.select_view(1)
+            # self.daq_card.select_channel_remove_stripes(488)
 
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
