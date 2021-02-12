@@ -47,6 +47,7 @@ class LiveControl(QWidget):
         self.q_thread_pool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
+
     def launch_nidaq(self):
         print("state_tracker", self.state_tracker)
         if self.state_tracker:
@@ -84,17 +85,15 @@ class LiveControl(QWidget):
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
 
-    def live_worker(self, args):
+    def live_worker(self, parent_worker, args):
         parameters = args[0]
         view = int(args[1][5])
         channel = int(args[2])
 
-        thread_running = True
-
         while True:
             time.sleep(1)
-            logging.info(thread_running)
-            if not thread_running:
+            logging.info(parent_worker.thread_running)
+            if not parent_worker.thread_running:
                 break
 
         # self.daq_card = NIdaq(self,
