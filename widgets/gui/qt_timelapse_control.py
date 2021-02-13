@@ -1,8 +1,10 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-import qt_line_break
-from widgets.gui import qt_nidaq_worker
+from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool
+import time
+import logging
+
+from widgets.gui import qt_line_break
+from widgets.gui.qt_nidaq_worker import NIDaqWorker
 # from widgets.hardware.control import NIDaq
 
 
@@ -44,30 +46,65 @@ class TimelapseControl(QWidget):
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
     def launch_nidaq_instance(self):
+        print("state_tracker", self.state_tracker)
         if self.state_tracker:
 
             parameters = self.parent.left_window.update_parameters
             view = self.view_combobox.currentText()
             channel = self.laser_combobox.currentText()
 
-            print("launched with:", parameters, view, "and channel", channel)
+            print("called with:", parameters, view, "and channel", channel)
 
-            daq_card_thread = qt_nidaq_worker.NIDaqWorker(parameters, view, channel)
-            self.q_thread_pool.start(daq_card_thread)
+            # launch worker thread with newest parameters
+            daq_card_worker = NIDaqWorker(self.timelapse_worker, [parameters, view, channel])
 
             # connect
-            self.trigger_stop_timelapse.connect(daq_card_thread.stop)
+            self.trigger_stop_timelapse.connect(daq_card_worker.stop)
 
-        else:
-            self.trigger_stop_timelapse.emit()
+            self.q_thread_pool.start(daq_card_worker)
+
+            # because processEvents runs while waiting for wait_shutdown = False, if pressed quickly, live mode can
+            # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
+
+    def timelapse_worker(self, parent_worker, args):
+        parameters = args[0]
+        view = int(args[1][5])
+        channel = int(args[2])
+
+        while True:
+            time.sleep(1)
+            logging.info(parent_worker.thread_running)
+            if not parent_worker.thread_running:
+                break
+
+        # self.daq_card = NIdaq(self,
+        #                      exposure=self.parameters[0],
+        #                      nb_timepoints=self.parameters[1],
+        #                      scan_step=self.parameters[2],
+        #                      stage_scan_range=self.parameters[3],
+        #                      vertical_pixels=self.parameters[4],
+        #                      num_samples=self.parameters[5],
+        #                      offset_view1=self.parameters[6],
+        #                      offset_view2=self.parameters[7],
+        #                      view1_galvo1=self.parameters[8],
+        #                      view1_galvo2=self.parameters[9],
+        #                      view2_galvo1=self.parameters[10],
+        #                      view2_galvo2=self.parameters[11],
+        #                      stripe_reduction_range=self.parameters[12],
+        #                      stripe_reduction_offset=self.parameters[13])
+        #
+        # self.daq_card.select_view(view)
+        # self.daq_card.select_channel_remove_stripes(channel)
 
     def button_state_change(self):
 
         self.state_tracker = not self.state_tracker
-        self.launch_nidaq_instance()
 
-        self.parent.toggle_disabled("timelapse")
+        self.parent.toggle_disabled()
+
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
+            self.launch_nidaq_instance()
         else:
             self.section_button.setStyleSheet("")
+            self.trigger_stop_timelapse.emit()
