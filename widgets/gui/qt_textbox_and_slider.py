@@ -22,6 +22,7 @@ class TextboxAndSlider(QWidget):
         # widgets accessed by slot member functions
         self.slider = QSlider(Qt.Horizontal)
         self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
+        self.slider.mouseReleaseEvent = self.mouseReleaseEvent
 
         self.min_input_line = QLineEdit()
         self.max_input_line = QLineEdit()
@@ -79,7 +80,7 @@ class TextboxAndSlider(QWidget):
         self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
         # added here to prevent trigger on startup
-        self.spinbox.valueChanged.connect(self.parent.parent.live_window.launch_nidaq_instance)
+        self.spinbox.editingFinished.connect(self.parent.parent.live_window.launch_nidaq)
 
     @pyqtSlot()
     def toggle_range_widgets(self):
@@ -140,6 +141,9 @@ class TextboxAndSlider(QWidget):
     @pyqtSlot(int)
     def int_to_scaled_float(self, value):
         self.spinbox.setValue(float(value / self._max_int))
+
+    def mouseReleaseEvent(self, event):
+        self.parent.parent.live_window.launch_nidaq()
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()
