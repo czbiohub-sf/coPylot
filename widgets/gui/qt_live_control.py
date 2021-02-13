@@ -71,6 +71,7 @@ class LiveControl(QWidget):
             print("called with:", parameters, view, "and channel", channel)
 
             # launch worker thread with newest parameters
+
             daq_card_worker = NIDaqWorker(self.live_worker, [parameters, view, channel])
 
             # connect
@@ -112,12 +113,13 @@ class LiveControl(QWidget):
             #                      stripe_reduction_range=self.parameters[12],
             #                      stripe_reduction_offset=self.parameters[13])
             #
-            # self.daq_card.select_view(1)
-            # self.daq_card.select_channel_remove_stripes(488)
+            # self.daq_card.select_view(view)
+            # self.daq_card.select_channel_remove_stripes(channel)
 
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
 
+        self.parent.toggle_disabled("live")
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
             self.launch_nidaq()

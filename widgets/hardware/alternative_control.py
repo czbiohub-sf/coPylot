@@ -104,10 +104,9 @@ class NIdaq:
         print("number of slices:", self.nb_slices)
         print("current sampling_rate is:", self.sampling_rate)
 
-    def select_view(self, view_index):
+    def select_view(self, view_index: float) -> None:
         """
         select the views, by using the correct offset of the scanning gavlo and the voltages of the switching galvos
-        float -> void
         """
         if view_index == 1:
             view = self.view1
@@ -128,11 +127,9 @@ class NIdaq:
 
         print("end of select_view method")
 
-    def _offset_dis_to_vol(self, offset):
+    def _offset_dis_to_vol(self, offset: float) -> float:
         """
         convert the offset of each view from um to voltage
-        float -> float
-        um    -> v
         """
         return offset / self.CONVERT_RATIO - self.MAX_VOL
 

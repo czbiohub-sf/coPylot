@@ -48,8 +48,8 @@ class TextboxAndSlider(QWidget):
 
             self.slider_scaler = self._max_int  # scale self.slider parameters into integer range
 
-            self.slider.valueChanged.connect(self.intToScaledFloat)
-            self.spinbox.valueChanged.connect(self.floatToScaledInt)
+            self.slider.valueChanged.connect(self.int_to_scaled_float)
+            self.spinbox.valueChanged.connect(self.float_to_scaled_int)
 
         else:
             raise TypeError("Only integers or floats acceptable for QSpinBox objects")
@@ -135,11 +135,11 @@ class TextboxAndSlider(QWidget):
         pass
 
     @pyqtSlot(float)
-    def floatToScaledInt(self, value):
+    def float_to_scaled_int(self, value):
         self.slider.setValue(int(value * self._max_int))
 
     @pyqtSlot(int)
-    def intToScaledFloat(self, value):
+    def int_to_scaled_float(self, value):
         self.spinbox.setValue(float(value / self._max_int))
 
     def mouseReleaseEvent(self, event):
@@ -147,5 +147,4 @@ class TextboxAndSlider(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()
-
 
