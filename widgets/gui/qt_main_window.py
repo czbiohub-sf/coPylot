@@ -18,6 +18,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
 
         self.setCentralWidget(qt_main_widget.MainWidget(self))
 
