@@ -47,7 +47,6 @@ class LiveControl(QWidget):
         self.q_thread_pool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
-
     def launch_nidaq(self):
         print("state_tracker", self.state_tracker)
         if self.state_tracker:
@@ -75,7 +74,6 @@ class LiveControl(QWidget):
             daq_card_worker = NIDaqWorker(self.live_worker, [parameters, view, channel])
 
             # connect
-
             daq_card_worker.signals.finished.connect(self.update_wait_shutdown)
             self.trigger_stop_live.connect(daq_card_worker.stop)
 
@@ -98,28 +96,27 @@ class LiveControl(QWidget):
                 break
 
         # self.daq_card = NIdaq(self,
-            #                      exposure=self.parameters[0],
-            #                      nb_timepoints=self.parameters[1],
-            #                      scan_step=self.parameters[2],
-            #                      stage_scan_range=self.parameters[3],
-            #                      vertical_pixels=self.parameters[4],
-            #                      num_samples=self.parameters[5],
-            #                      offset_view1=self.parameters[6],
-            #                      offset_view2=self.parameters[7],
-            #                      view1_galvo1=self.parameters[8],
-            #                      view1_galvo2=self.parameters[9],
-            #                      view2_galvo1=self.parameters[10],
-            #                      view2_galvo2=self.parameters[11],
-            #                      stripe_reduction_range=self.parameters[12],
-            #                      stripe_reduction_offset=self.parameters[13])
-            #
-            # self.daq_card.select_view(view)
-            # self.daq_card.select_channel_remove_stripes(channel)
+        #                      exposure=self.parameters[0],
+        #                      nb_timepoints=self.parameters[1],
+        #                      scan_step=self.parameters[2],
+        #                      stage_scan_range=self.parameters[3],
+        #                      vertical_pixels=self.parameters[4],
+        #                      num_samples=self.parameters[5],
+        #                      offset_view1=self.parameters[6],
+        #                      offset_view2=self.parameters[7],
+        #                      view1_galvo1=self.parameters[8],
+        #                      view1_galvo2=self.parameters[9],
+        #                      view2_galvo1=self.parameters[10],
+        #                      view2_galvo2=self.parameters[11],
+        #                      stripe_reduction_range=self.parameters[12],
+        #                      stripe_reduction_offset=self.parameters[13])
+        #
+        # self.daq_card.select_view(view)
+        # self.daq_card.select_channel_remove_stripes(channel)
 
     def button_state_change(self):
         self.state_tracker = not self.state_tracker
 
-        self.parent.toggle_disabled("live")
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
             self.launch_nidaq()
@@ -132,4 +129,3 @@ class LiveControl(QWidget):
         print("update_wait_shutdown called")
         self.wait_shutdown = False
         print("finished signal received")
-

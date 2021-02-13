@@ -34,21 +34,17 @@ class MainWidget(QWidget):
         self.setLayout(self.window_layout)
 
     @pyqtSlot()
-    def toggle_disabled(self, button):
+    def toggle_disabled(self):
         """
         function to disable all input widgets when button to enter timelapse mode is pressed
         """
         self.button_state = not self.button_state
 
         self.left_window.toggle_button.setDisabled(self.button_state)
-        if button == "timelapse":
-            self.timelapse_window.view_combobox.setDisabled(self.button_state)
-            self.timelapse_window.laser_combobox.setDisabled(self.button_state)
-            self.live_window.setDisabled(self.button_state)
-        elif button == "live":
-            self.live_window.view_combobox.setDisabled(self.button_state)
-            self.live_window.laser_combobox.setDisabled(self.button_state)
-            self.timelapse_window.setDisabled(self.button_state)
+
+        self.timelapse_window.view_combobox.setDisabled(self.button_state)
+        self.timelapse_window.laser_combobox.setDisabled(self.button_state)
+        self.live_window.setDisabled(self.button_state)
 
         for parameter_object in self.left_window.parameter_objects:
             parameter_object.spinbox.setDisabled(self.button_state)

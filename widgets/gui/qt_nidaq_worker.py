@@ -35,4 +35,3 @@ class NIDaqWorker(QRunnable):
         #self.daq_card.stop_now = True
         print("stop called")
         self.thread_running = False
-        
