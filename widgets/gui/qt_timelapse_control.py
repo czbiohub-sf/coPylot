@@ -101,7 +101,6 @@ class TimelapseControl(QWidget):
         self.state_tracker = not self.state_tracker
 
         self.parent.toggle_disabled()
-
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
             self.launch_nidaq_instance()

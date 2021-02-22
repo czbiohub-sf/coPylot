@@ -22,16 +22,13 @@ class NIDaqWorker(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        logging.info("NIDaq Instance launched")
-        self.signals.launching.emit()
         try:
+            self.signals.running.emit()
             self.fn(self, *self.args, **self.kwargs)
 
         finally:
             self.signals.finished.emit()
-            print("finished emitted")
 
     def stop(self):
         #self.daq_card.stop_now = True
-        print("stop called")
         self.thread_running = False

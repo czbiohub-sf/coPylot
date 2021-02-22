@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool
+from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool, pyqtSlot
 import time
 import logging
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
@@ -9,6 +9,7 @@ logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 class LiveControl(QWidget):
     trigger_stop_live = pyqtSignal()
+    thread_launching = pyqtSignal()
 
     def __init__(self, parent, button_name):
         super(QWidget, self).__init__(parent)
@@ -47,14 +48,14 @@ class LiveControl(QWidget):
         self.q_thread_pool = QThreadPool()
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
+        self.thread_launching.connect(self.status_launching)
+
     def launch_nidaq(self):
-        print("state_tracker", self.state_tracker)
         if self.state_tracker:
+            self.thread_launching.emit()
             self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
             # Stops thread before new one is launched. Needed when instanced on parameter change.
             # Not needed in timelapse
-
-            print("back at wait")
 
             while True:
                 time.sleep(0.05)
@@ -74,6 +75,7 @@ class LiveControl(QWidget):
             daq_card_worker = NIDaqWorker(self.live_worker, [parameters, view, channel])
 
             # connect
+            daq_card_worker.signals.running.connect(self.status_running)
             daq_card_worker.signals.finished.connect(self.update_wait_shutdown)
             self.trigger_stop_live.connect(daq_card_worker.stop)
 
@@ -123,9 +125,15 @@ class LiveControl(QWidget):
         else:
             self.section_button.setStyleSheet("")
             self.trigger_stop_live.emit()
-            print("final stop emitted")
+            self.parent.parent.status_bar.showMessage("NIDaq idle...")
+
+    @pyqtSlot()
+    def status_launching(self):
+        self.parent.parent.status_bar.showMessage("NIDaq launching...")
+
+    @pyqtSlot()
+    def status_running(self):
+        self.parent.parent.status_bar.showMessage("NIDaq running...")
 
     def update_wait_shutdown(self):
-        print("update_wait_shutdown called")
         self.wait_shutdown = False
-        print("finished signal received")
