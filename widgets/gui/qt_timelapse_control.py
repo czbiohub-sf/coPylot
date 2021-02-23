@@ -67,15 +67,15 @@ class TimelapseControl(QWidget):
 
         print("called with:", parameters, view, "and channel", channel)
 
-        while True:
-            time.sleep(1)
-            logging.info(parent_worker.thread_running)
-            if not parent_worker.thread_running:
-                break
+        # while True:
+        #     time.sleep(1)
+        #     logging.info(parent_worker.thread_running)
+        #     if not parent_worker.thread_running:
+        #         break
 
-        # self.daq_card = NIdaq(self, **parameters)
-        # self.daq_card.select_view(view)
-        # self.daq_card.select_channel_remove_stripes(channel)
+        self.daq_card = NIdaq(self, **parameters)
+        self.daq_card.select_view(view)
+        self.daq_card.select_channel_remove_stripes(channel)
 
     def button_state_change(self):
 
