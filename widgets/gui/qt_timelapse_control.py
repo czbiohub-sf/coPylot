@@ -61,7 +61,7 @@ class TimelapseControl(QWidget):
             # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
 
     def timelapse_worker(self, parent_worker):
-        parameters = self.parent.left_window.update_parameters
+        parameters = self.parent.left_window.fetch_parameters
         view = self.fetch_combobox_view
         channel = self.fetch_combobox_channel
 

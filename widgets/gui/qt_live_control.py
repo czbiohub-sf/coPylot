@@ -81,7 +81,7 @@ class LiveControl(QWidget):
                 self.trigger_stop_live.emit()
 
     def live_worker(self, parent_worker):
-        parameters = self.parent.left_window.update_parameters
+        parameters = self.parent.left_window.fetch_parameters
         view = self.fetch_combobox_view
         channel = self.fetch_combobox_channel
 
