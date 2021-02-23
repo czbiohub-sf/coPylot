@@ -191,8 +191,6 @@ class NIdaq:
 
         self.set_dio_state(self.ch, False)
 
-        self.parent.signals.finished.emit()
-
     def _set_up_retriggerable_counter(self, counter):
         """set up a retriggerable counter task"""
         task_ctr = nidaqmx.Task()
