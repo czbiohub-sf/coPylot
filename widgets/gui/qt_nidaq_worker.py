@@ -29,5 +29,5 @@ class NIDaqWorker(QRunnable):
             self.signals.finished.emit()
 
     def stop(self):
-        # self.daq_card.stop_now = True
-        self.thread_running = False
+        self.daq_card.stop_now = True
+        #self.thread_running = False
