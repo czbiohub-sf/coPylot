@@ -2,7 +2,9 @@ from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBox
 from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool, pyqtSlot
 import time
 import logging
+
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
+from widgets.hardware.alternative_control import NIdaq
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -64,15 +66,7 @@ class LiveControl(QWidget):
                 QApplication.processEvents()
             self.wait_shutdown = True  # reset to true for next call
 
-            parameters = self.parent.left_window.update_parameters
-            view = self.view_combobox.currentText()
-            channel = self.laser_combobox.currentText()
-
-            print("called with:", parameters, view, "and channel", channel)
-
-            # launch worker thread with newest parameters
-
-            daq_card_worker = NIDaqWorker(self.live_worker, [parameters, view, channel])
+            daq_card_worker = NIDaqWorker(self.live_worker)
 
             # connect
             daq_card_worker.signals.running.connect(self.status_running)
@@ -86,10 +80,12 @@ class LiveControl(QWidget):
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
 
-    def live_worker(self, parent_worker, args):
-        parameters = args[0]
-        view = int(args[1][5])
-        channel = int(args[2])
+    def live_worker(self, parent_worker):
+        parameters = self.parent.left_window.parameters
+        view = self.combobox_view
+        channel = self.combobox_channel
+
+        print("called with:", parameters, view, "and channel", channel)
 
         while True:
             time.sleep(1)
@@ -97,22 +93,7 @@ class LiveControl(QWidget):
             if not parent_worker.thread_running:
                 break
 
-        # self.daq_card = NIdaq(self,
-        #                      exposure=self.parameters[0],
-        #                      nb_timepoints=self.parameters[1],
-        #                      scan_step=self.parameters[2],
-        #                      stage_scan_range=self.parameters[3],
-        #                      vertical_pixels=self.parameters[4],
-        #                      num_samples=self.parameters[5],
-        #                      offset_view1=self.parameters[6],
-        #                      offset_view2=self.parameters[7],
-        #                      view1_galvo1=self.parameters[8],
-        #                      view1_galvo2=self.parameters[9],
-        #                      view2_galvo1=self.parameters[10],
-        #                      view2_galvo2=self.parameters[11],
-        #                      stripe_reduction_range=self.parameters[12],
-        #                      stripe_reduction_offset=self.parameters[13])
-        #
+        # self.daq_card = NIdaq(self, **parameters)
         # self.daq_card.select_view(view)
         # self.daq_card.select_channel_remove_stripes(channel)
 
@@ -137,3 +118,11 @@ class LiveControl(QWidget):
 
     def update_wait_shutdown(self):
         self.wait_shutdown = False
+
+    @property
+    def combobox_view(self):
+        return self.view_combobox.currentIndex() + 1
+
+    @property
+    def combobox_channel(self):
+        return int(self.laser_combobox.currentText())
