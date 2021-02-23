@@ -213,6 +213,161 @@ class NIdaq:
             task.do_channels.add_do_chan(ch)
             task.write([value], auto_start=True)
 
+    def acquire_stacks(self, channels, view):
+        """acquire stackes, depending on the given channel and view.
+        view=0, first view only;
+        view=1, second view only;
+        view=2, both views;
+        channel=[488], [561], or [488, 561]
+        """
+        task_ao = nidaqmx.Task("ao0")
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao0)
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao1)
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao2)
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao3)
+
+        task_do = nidaqmx.Task("do0")  # for laser control
+
+        # slect channel
+        if channels == [488]:
+            task_do.do_channels.add_do_chan(self.ch_dio0)
+        elif channels == [561]:
+            task_do.do_channels.add_do_chan(self.ch_dio1)
+        elif channels == [488, 561]:
+            task_do.do_channels.add_do_chan(self.ch_dio0)
+            task_do.do_channels.add_do_chan(self.ch_dio1)
+        else:
+            raise ValueError('Channel not supported')
+
+        # slect view
+        if view == 0:
+            views = ["view1"]
+        elif view == 1:
+            views = ["view2"]
+        elif view == 2:
+            views = ["view1", "view2"]
+        else:
+            raise ValueError('View not supported')
+
+        data_ao = [self._get_ao_data(v) for v in views]  # different for each view due to different offsets
+        data_do = self._get_do_data(channels)  # get the digital output data depending on the channels
+
+        # set up the counter for loop through a zstack
+        task_ctr_loop = nidaqmx.Task("counter0")
+        ctr_loop = task_ctr_loop.ci_channels.add_ci_count_edges_chan(self.ch_ctr1, edge=nidaqmx.constants.Edge.RISING)
+        ctr_loop.ci_count_edges_term = self.PFI0
+
+        # set up the counter to retrigger the ao and do channels
+        task_ctr_retrig = nidaqmx.Task("counter1")
+        task_ctr_retrig.co_channels.add_co_pulse_chan_freq(self.ch_ctr0,
+                                                           idle_state=nidaqmx.constants.Level.LOW,
+                                                           freq=self.sampling_rate)
+        task_ctr_retrig.timing.cfg_implicit_timing(sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
+                                                   samps_per_chan=self.num_samples)
+        task_ctr_retrig.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=self.PFI0,
+                                                                       trigger_edge=nidaqmx.constants.Slope.RISING)
+        task_ctr_retrig.triggers.start_trigger.retriggerable = True
+
+        # set up ao channel
+        task_ao.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
+                                           source=self.ch_ctr0_internal_output,
+                                           sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
+
+        task_ctr_retrig.start()
+
+        def run_tasks():
+            for _ in range(self.nb_timepoints):
+                for v in range(len(data_ao)):  # change view
+                    if self.stop_now:
+                        return
+                    else:
+                        task_ao.write(data_ao[v])
+                        task_ao.start()
+                        for i_ch in range(1):  # range(len(channels)):  # change channel # run once
+                            if self.stop_now:
+                                break
+                                
+                            # set up the do channel
+                            task_do.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
+                                                               source=self.ch_ctr0_internal_output,
+                                                               sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
+                            task_do.write(data_do)
+                            task_do.start()
+
+                            task_ctr_loop.start()
+                            counts = 0
+                            while counts < self.nb_slices + 1:  # Flash4.0 outputs 1 more pulse than asked
+                                counts = task_ctr_loop.read()
+                                if self.stop_now:
+                                    break
+                                time.sleep(0.005)  # wait time during loop
+                            task_ctr_loop.stop()
+                            print("counts: ", counts)
+                            # print("counts: ", counts)
+                            time.sleep(self.exposure + 0.1)  # add time to allow ao and do output for the last frame
+                            task_do.stop()
+                            print("one stack done!")
+                        task_ao.stop()
+
+        run_tasks()
+
+        # task_ctr_retrig.stop()
+        task_ctr_retrig.close()
+        task_ctr_loop.close()
+
+
+
+
+        task_ao.close()
+        task_do.close()
+
+    def _get_ao_data(self, view: str):
+        """generate the ndarray for an ao channel"""
+
+        # for stripe reduction
+        stripe_min = -self.stripe_reduction_range + self.stripe_reduction_offset
+        stripe_max = self.stripe_reduction_range + self.stripe_reduction_offset
+        nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+        nb_off_sample = round(self.readout_time * self.sampling_rate)
+        data_ao3 = list(np.linspace(stripe_min, stripe_max, nb_on_sample))
+        data_ao3.extend([stripe_min] * nb_off_sample)
+
+        # for view switching and light sheet stabilization
+        if view == "view1":
+            offset = self._offset_dis_to_vol(self.view1["offset"])   # convert the offset from um to v
+            min_range = - self.scan_step / 2 / self.CONVERT_RATIO
+            max_range = self.scan_step / 2 / self.CONVERT_RATIO
+            data_ao0 = list(np.linspace(max_range + offset, min_range + offset, self.num_samples))
+            data_ao1 = [self.view1["galvo1"]] * self.num_samples
+            data_ao2 = [self.view1["galvo2"]] * self.num_samples
+            return [data_ao0, data_ao1, data_ao2, data_ao3]
+        elif view == "view2":
+            offset = self._offset_dis_to_vol(self.view2["offset"])  # convert the offset from um to v
+            min_range = - self.scan_step / 2 / self.CONVERT_RATIO
+            max_range = self.scan_step / 2 / self.CONVERT_RATIO
+            data_ao0 = list(np.linspace(max_range + offset, min_range + offset, self.num_samples))
+            data_ao1 = [self.view2["galvo1"]] * self.num_samples
+            data_ao2 = [self.view2["galvo2"]] * self.num_samples
+            return [data_ao0, data_ao1, data_ao2, data_ao3]
+
+    def _get_do_data(self, channels):
+        """
+        Method to get digital output data.
+        """
+        if len(channels) == 1:
+            nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+            data = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
+            return data
+        elif len(channels) == 2:
+            nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+            nb_off_sample = round(self.readout_time * self.sampling_rate)
+            data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
+            data_off = [False] * self.num_samples
+            # return [[data_on, data_off], [data_off, data_on]]
+            return [data_on + data_off, data_off + data_on]
+        else:
+            raise ValueError('Only supported up to 2 channels for now')
+
 
 if __name__ == "__main__":
     daq_card = NIdaq(
@@ -234,10 +389,10 @@ if __name__ == "__main__":
     # live mode
     # for 561
     # daq_card.select_channel(561)
-    daq_card.select_view(1)
-    daq_card.select_channel_remove_stripes(488)
+    # daq_card.select_view(1)
+    # daq_card.select_channel_remove_stripes(488)
 
     # time lapse mode
-    # daq_card.acquire_stacks(channels=[488], view=0)
-    # daq_card.acquire_stacks(channels=[561], view=2)
-    # daq_card.acquire_stacks(channels=[488, 561], view=0)
+    daq_card.acquire_stacks(channels=[488], view=0)
+    daq_card.acquire_stacks(channels=[561], view=2)
+    daq_card.acquire_stacks(channels=[488, 561], view=0)
