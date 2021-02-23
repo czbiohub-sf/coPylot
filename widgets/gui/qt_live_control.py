@@ -120,12 +120,11 @@ class LiveControl(QWidget):
         self.state_tracker = not self.state_tracker
 
         if self.state_tracker:
-            self.section_button.setStyleSheet("background-color: red")
             self.launch_nidaq()
+            self.section_button.setStyleSheet("background-color: red")
         else:
-            self.section_button.setStyleSheet("")
             self.trigger_stop_live.emit()
-            self.parent.parent.status_bar.showMessage("NIDaq idle...")
+            self.section_button.setStyleSheet("")
 
     @pyqtSlot()
     def status_launching(self):
@@ -137,3 +136,6 @@ class LiveControl(QWidget):
 
     def update_wait_shutdown(self):
         self.wait_shutdown = False
+        # reset to idle status here to prevent 'running' being displayed if live mode exited while spinbox is selected
+        if not self.state_tracker:
+            self.parent.parent.status_bar.showMessage("NIDaq idle...")
