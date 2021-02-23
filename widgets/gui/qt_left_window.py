@@ -65,7 +65,7 @@ class LeftWindow(QWidget):
         self.grid_layout.addWidget(self.toggle_button, self.row_counter, 0, 1, 5)
 
     @property
-    def fetch_parameters(self):
+    def parameters(self):
         parameter_vals = {}
         for i in range(0, len(self.parameter_objects)):
             parameter_vals[self.parameter_objects[i].label.text()] = self.parameter_objects[i].spinbox.value()

@@ -81,9 +81,9 @@ class LiveControl(QWidget):
                 self.trigger_stop_live.emit()
 
     def live_worker(self, parent_worker):
-        parameters = self.parent.left_window.fetch_parameters
-        view = self.fetch_combobox_view
-        channel = self.fetch_combobox_channel
+        parameters = self.parent.left_window.parameters
+        view = self.combobox_view
+        channel = self.combobox_channel
 
         print("called with:", parameters, view, "and channel", channel)
 
@@ -120,9 +120,9 @@ class LiveControl(QWidget):
         self.wait_shutdown = False
 
     @property
-    def fetch_combobox_view(self):
+    def combobox_view(self):
         return self.view_combobox.currentIndex() + 1
 
     @property
-    def fetch_combobox_channel(self):
+    def combobox_channel(self):
         return int(self.laser_combobox.currentText())
