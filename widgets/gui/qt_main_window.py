@@ -13,7 +13,7 @@ class MainWindow(QMainWindow):
         self.title = "Pisces Parameter Controller"
         self.left = 10
         self.top = 10
-        self.width = 650
+        self.width = 500
         self.height = 500
 
         self.setWindowTitle(self.title)
