@@ -1,7 +1,6 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 from math import log10
+from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtWidgets import QWidget, QSlider, QLineEdit, QLabel, QSpinBox, QDoubleSpinBox, QAbstractSpinBox
 
 
 class TextboxAndSlider(QWidget):
@@ -147,4 +146,3 @@ class TextboxAndSlider(QWidget):
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()
-

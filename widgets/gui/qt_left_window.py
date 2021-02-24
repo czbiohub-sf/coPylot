@@ -1,8 +1,9 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-import qt_textbox_and_slider
-import qt_line_break
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton
+
+from widgets.gui.qt_line_break import LineBreak
+from widgets.gui.qt_textbox_and_slider import TextboxAndSlider
 
 
 class LeftWindow(QWidget):
@@ -51,9 +52,9 @@ class LeftWindow(QWidget):
         self.parameter_objects = []
 
         for i in self.parameter_list:
-            textbox_and_slider = qt_textbox_and_slider.TextboxAndSlider(*i, self.row_counter)
+            textbox_and_slider = TextboxAndSlider(*i, self.row_counter)
             self.parameter_objects.append(textbox_and_slider)
-            self.grid_layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop), self.row_counter + 1, 0, 1, 5)
+            self.grid_layout.addWidget(LineBreak(Qt.AlignTop), self.row_counter + 1, 0, 1, 5)
 
             self.row_counter += 2
             
