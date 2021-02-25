@@ -1,12 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
 import time
-import logging
-
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
 from widgets.hardware.alternative_control import NIdaq
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class LiveControl(QWidget):
@@ -21,7 +17,6 @@ class LiveControl(QWidget):
 
         self.state_tracker = False  # tracks if live mode is on
         self.wait_shutdown = False
-        self.daq_card_thread: QRunnable
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -30,7 +25,7 @@ class LiveControl(QWidget):
         self.section_button = QPushButton(self.button_name)
 
         self.layout.addWidget(self.section_button)
-        self.section_button.pressed.connect(self.button_state_change)
+        self.section_button.pressed.connect(self.handle_nidaq_launch)
 
         # placeholders for future selection options
         self.view_combobox = QComboBox()
@@ -57,7 +52,6 @@ class LiveControl(QWidget):
             self.thread_launching.emit()
             self.trigger_stop_live.emit()  # does nothing on first iteration before thread is made.
             # Stops thread before new one is launched. Needed when instanced on parameter change.
-            # Not needed in timelapse
 
             while True:
                 time.sleep(0.05)
@@ -81,7 +75,7 @@ class LiveControl(QWidget):
                 self.trigger_stop_live.emit()
 
     def live_worker(self, parent_worker):
-        parameters = self.parent.left_window.parameters
+        parameters = self.parent.parameters_widget.parameters
         view = self.combobox_view
         channel = self.combobox_channel
 
@@ -89,7 +83,6 @@ class LiveControl(QWidget):
 
         # while True:
         #     time.sleep(1)
-        #     logging.info(parent_worker.thread_running)
         #     if not parent_worker.thread_running:
         #         break
 
@@ -97,29 +90,31 @@ class LiveControl(QWidget):
         self.daq_card.select_view(view)
         self.daq_card.select_channel_remove_stripes(channel)
 
-    def button_state_change(self):
+    def handle_nidaq_launch(self):
         self.state_tracker = not self.state_tracker
 
+        self.parent.timelapse_widget.setDisabled(self.state_tracker)
+
         if self.state_tracker:
-            self.launch_nidaq()
             self.section_button.setStyleSheet("background-color: red")
+            self.launch_nidaq()
         else:
-            self.trigger_stop_live.emit()
             self.section_button.setStyleSheet("")
-
-    @pyqtSlot()
-    def status_launching(self):
-        self.parent.parent.status_bar.showMessage("Live mode launching...")
-
-    @pyqtSlot()
-    def status_running(self):
-        self.parent.parent.status_bar.showMessage("Live mode running...")
+            self.trigger_stop_live.emit()
 
     def update_wait_shutdown(self):
         self.wait_shutdown = False
         # reset to idle status here to prevent 'running' being displayed if live mode exited while spinbox is selected
         if not self.state_tracker:
-            self.parent.parent.status_bar.showMessage("NIDaq idle...")
+            self.parent.status_bar.showMessage("NIDaq idle...")
+
+    @pyqtSlot()
+    def status_launching(self):
+        self.parent.status_bar.showMessage("Live mode launching...")
+
+    @pyqtSlot()
+    def status_running(self):
+        self.parent.status_bar.showMessage("Live mode running...")
 
     @property
     def combobox_view(self):
