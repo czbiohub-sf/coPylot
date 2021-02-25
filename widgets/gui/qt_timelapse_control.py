@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool
+from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
 
 from widgets.gui.qt_line_break import LineBreak
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
@@ -31,11 +31,13 @@ class TimelapseControl(QWidget):
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
+        self.view_combobox.addItem("view 1 and 2")
         self.layout.addWidget(self.view_combobox)
 
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
+        self.laser_combobox.addItem("488 and 561")
         self.layout.addWidget(self.laser_combobox)
 
         self.setLayout(self.layout)
@@ -44,25 +46,23 @@ class TimelapseControl(QWidget):
         print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
 
     def launch_nidaq_instance(self):
-        print("state_tracker", self.state_tracker)
         if self.state_tracker:
+            self.parent.parent.status_bar.showMessage("Timelapse mode running...")
             # launch worker thread with newest parameters
             daq_card_worker = NIDaqWorker(self.timelapse_worker)
 
             # connect
             self.trigger_stop_timelapse.connect(daq_card_worker.stop)
+            daq_card_worker.signals.finished.connect(self.status_finished)
 
             self.q_thread_pool.start(daq_card_worker)
-
-            # because processEvents runs while waiting for wait_shutdown = False, if pressed quickly, live mode can
-            # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
 
     def timelapse_worker(self, parent_worker):
         parameters = self.parent.left_window.parameters
         view = self.combobox_view
         channel = self.combobox_channel
 
-        print("called with:", parameters, view, "and channel", channel)
+        print("called with:", parameters, "view", view + 1 if view != 2 else "1 and 2", "and channel", *channel)
 
         # while True:
         #     time.sleep(1)
@@ -71,11 +71,9 @@ class TimelapseControl(QWidget):
         #         break
 
         self.daq_card = NIdaq(self, **parameters)
-        self.daq_card.select_view(view)
-        self.daq_card.select_channel_remove_stripes(channel)
+        self.daq_card.acquire_stacks(channels=channel, view=view)
 
     def button_state_change(self):
-
         self.state_tracker = not self.state_tracker
 
         self.parent.toggle_disabled()
@@ -88,8 +86,13 @@ class TimelapseControl(QWidget):
 
     @property
     def combobox_view(self):
-        return self.view_combobox.currentIndex() + 1
+        return self.view_combobox.currentIndex()
 
     @property
     def combobox_channel(self):
-        return int(self.laser_combobox.currentText())
+        return [int(self.laser_combobox.currentText())] if self.laser_combobox.currentIndex() != 2 \
+            else [488, 561]
+
+    @pyqtSlot()
+    def status_finished(self):
+        self.parent.parent.status_bar.showMessage("NIDaq idle...")

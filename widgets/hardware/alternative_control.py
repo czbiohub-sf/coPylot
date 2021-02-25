@@ -391,6 +391,6 @@ if __name__ == "__main__":
     # daq_card.select_channel_remove_stripes(488)
 
     # time lapse mode
-    daq_card.acquire_stacks(channels=[488], view=0)
-    daq_card.acquire_stacks(channels=[561], view=2)
-    daq_card.acquire_stacks(channels=[488, 561], view=0)
+    # daq_card.acquire_stacks(channels=[488], view=0)
+    # daq_card.acquire_stacks(channels=[561], view=2)
+    # daq_card.acquire_stacks(channels=[488, 561], view=0)
