@@ -27,7 +27,7 @@ class LiveControl(QWidget):
         self.layout.addWidget(self.section_button)
         self.section_button.pressed.connect(self.handle_nidaq_launch)
 
-        # placeholders for future selection options
+        # view and channel combobox widgets and options
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
@@ -43,7 +43,10 @@ class LiveControl(QWidget):
         self.setLayout(self.layout)
 
         self.q_thread_pool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
+        print(
+            "Multithreading with maximum %d threads"
+            % self.q_thread_pool.maxThreadCount()
+        )
 
         self.thread_launching.connect(self.status_launching)
 
@@ -104,7 +107,7 @@ class LiveControl(QWidget):
 
     def update_wait_shutdown(self):
         self.wait_shutdown = False
-        # reset to idle status here to prevent 'running' being displayed if live mode exited while spinbox is selected
+        # reset to idle status is here to prevent 'running' displaying if live mode exited while spinbox is selected
         if not self.state_tracker:
             self.parent.status_bar.showMessage("NIDaq idle...")
 

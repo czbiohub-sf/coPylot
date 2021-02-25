@@ -19,7 +19,7 @@ class NIdaq:
     ch_ctr3 = "cDAQ1/_ctr3"  # idle
 
     PFI0 = "/cDAQ1/PFI0"  # camera exposure input
-    PFI1 = "/cDAQ1/PFI1"    # idle
+    PFI1 = "/cDAQ1/PFI1"  # idle
 
     ch_dio0 = "cDAQ1DIO/port0/line0"  # 488 digital channel
     ch_dio1 = "cDAQ1DIO/port0/line1"  # 561 digital channel
@@ -33,29 +33,35 @@ class NIdaq:
     # constants
     MAX_VOL = 10  # unit: v, maximum voltage of the ao channels
     MIN_VOL = -10  # unit: v, minimal voltage of the ao channels
-    CONVERT_RATIO = 159  # unit: um / v, to convert from voltage to the scan distance of the galvo
-    READOUT_TIME_FULL_CHIP = 0.01  # unit: second, the readout time of the full chip camera
-    MAX_VERTICAL_PIXELS = 2048     # unit: pixels, maximal number of pixels along the vertical direction
+    CONVERT_RATIO = (
+        159  # unit: um / v, to convert from voltage to the scan distance of the galvo
+    )
+    READOUT_TIME_FULL_CHIP = (
+        0.01  # unit: second, the readout time of the full chip camera
+    )
+    MAX_VERTICAL_PIXELS = (
+        2048  # unit: pixels, maximal number of pixels along the vertical direction
+    )
 
     def __init__(
-            self,
-            parent,
-            exposure: float,
-            nb_timepoints: int,
-            scan_step: float,
-            stage_scan_range: float,
-            *,
-            vertical_pixels: int = 2048,    # unit: pixels, number of pixels along the vertical direction
-            num_samples: int = 20,  # for timing
-            offset_view1: float  = 1550,   # unit: um, offset needed for view1
-            offset_view2: float  = 1650,   # unit: um, offset needed for view2
-            view1_galvo1: float  = 4.2,    # unit: v, to apply on galvo 1 for view 1
-            view1_galvo2: float  = -4.08,  # unit: v, to apply on galvo 2 for view 1
-            view2_galvo1: float  = -4.37,  # unit: v, to apply on galvo 1 for view 2
-            view2_galvo2: float  = 3.66,   # unit: v, to apply on galvo 2 for view 2
-            stripe_reduction_range: float = 0.1,    # unit: v, to apply on glavo gamma to reduce stripe
-            stripe_reduction_offset: float = 0.58  # unit: v, to apply on glavo gamma to reduce stripe
-        ):
+        self,
+        parent,
+        exposure: float,
+        nb_timepoints: int,
+        scan_step: float,
+        stage_scan_range: float,
+        *,
+        vertical_pixels: int = 2048,  # unit: pixels, number of pixels along the vertical direction
+        num_samples: int = 20,  # for timing
+        offset_view1: float = 1550,  # unit: um, offset needed for view1
+        offset_view2: float = 1650,  # unit: um, offset needed for view2
+        view1_galvo1: float = 4.2,  # unit: v, to apply on galvo 1 for view 1
+        view1_galvo2: float = -4.08,  # unit: v, to apply on galvo 2 for view 1
+        view2_galvo1: float = -4.37,  # unit: v, to apply on galvo 1 for view 2
+        view2_galvo2: float = 3.66,  # unit: v, to apply on galvo 2 for view 2
+        stripe_reduction_range: float = 0.1,  # unit: v, to apply on glavo gamma to reduce stripe
+        stripe_reduction_offset: float = 0.58  # unit: v, to apply on glavo gamma to reduce stripe
+    ):
         """
         Constructor of NIDaq.
 
@@ -81,21 +87,25 @@ class NIdaq:
         self.nb_timepoints = nb_timepoints
         self.scan_step = scan_step
         self.stage_scan_range = stage_scan_range
-        self.nb_slices = int(self.stage_scan_range / self.scan_step) # for scanning, plus 2 due to Flash4 camera
-        self.readout_time = self.READOUT_TIME_FULL_CHIP * vertical_pixels / self.MAX_VERTICAL_PIXELS
+        self.nb_slices = int(
+            self.stage_scan_range / self.scan_step
+        )  # for scanning, plus 2 due to Flash4 camera
+        self.readout_time = (
+            self.READOUT_TIME_FULL_CHIP * vertical_pixels / self.MAX_VERTICAL_PIXELS
+        )
         self.num_samples = num_samples
         self.sampling_rate = self.num_samples / self.exposure
 
         self.view1 = {
             "offset": offset_view1,
             "galvo1": view1_galvo1,
-            "galvo2": view1_galvo2
+            "galvo2": view1_galvo2,
         }
 
         self.view2 = {
             "offset": offset_view2,
             "galvo1": view2_galvo1,
-            "galvo2": view2_galvo2
+            "galvo2": view2_galvo2,
         }
 
         self.stripe_reduction_range = stripe_reduction_range
@@ -143,7 +153,9 @@ class NIdaq:
 
         nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
         # nb_off_sample = round(self.readout_time * self.sampling_rate)
-        self.data_do = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
+        self.data_do = [True] * nb_on_sample + [False] * (
+            self.num_samples - nb_on_sample
+        )
 
         self.task_do = nidaqmx.Task()
         self.task_do.do_channels.add_do_chan(self.ch)
@@ -159,12 +171,16 @@ class NIdaq:
         self.data_ao3.extend([stripe_min] * nb_off_sample)
 
         # was in other method
-        self.task_do.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
-                                           source=self.ch_ctr0_internal_output,
-                                           sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
-        self.task_ao.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
-                                           source=self.ch_ctr0_internal_output,
-                                           sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
+        self.task_do.timing.cfg_samp_clk_timing(
+            rate=self.sampling_rate,
+            source=self.ch_ctr0_internal_output,
+            sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
+        )
+        self.task_ao.timing.cfg_samp_clk_timing(
+            rate=self.sampling_rate,
+            source=self.ch_ctr0_internal_output,
+            sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
+        )
 
         self.task_ctr = self._set_up_retriggerable_counter(self.ch_ctr0)
 
@@ -194,17 +210,20 @@ class NIdaq:
     def _set_up_retriggerable_counter(self, counter):
         """set up a retriggerable counter task"""
         task_ctr = nidaqmx.Task()
-        task_ctr.co_channels.add_co_pulse_chan_freq(counter,
-                                                    idle_state=nidaqmx.constants.Level.LOW,
-                                                    freq=self.sampling_rate)
-        task_ctr.timing.cfg_implicit_timing(sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
-                                            samps_per_chan=self.num_samples)
-        task_ctr.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=self.PFI0,
-                                                                trigger_edge=nidaqmx.constants.Slope.RISING)
+        task_ctr.co_channels.add_co_pulse_chan_freq(
+            counter, idle_state=nidaqmx.constants.Level.LOW, freq=self.sampling_rate
+        )
+        task_ctr.timing.cfg_implicit_timing(
+            sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
+            samps_per_chan=self.num_samples,
+        )
+        task_ctr.triggers.start_trigger.cfg_dig_edge_start_trig(
+            trigger_source=self.PFI0, trigger_edge=nidaqmx.constants.Slope.RISING
+        )
         task_ctr.triggers.start_trigger.retriggerable = True
         return task_ctr
 
-    def set_dio_state(self,ch, value):
+    def set_dio_state(self, ch, value):
         """set a DIO channel,
         false to low, true to high"""
         with nidaqmx.Task() as task:
@@ -235,7 +254,7 @@ class NIdaq:
             task_do.do_channels.add_do_chan(self.ch_dio0)
             task_do.do_channels.add_do_chan(self.ch_dio1)
         else:
-            raise ValueError('Channel not supported')
+            raise ValueError("Channel not supported")
 
         # slect view
         if view == 0:
@@ -245,31 +264,44 @@ class NIdaq:
         elif view == 2:
             views = ["view1", "view2"]
         else:
-            raise ValueError('View not supported')
+            raise ValueError("View not supported")
 
-        data_ao = [self._get_ao_data(v) for v in views]  # different for each view due to different offsets
-        data_do = self._get_do_data(channels)  # get the digital output data depending on the channels
+        data_ao = [
+            self._get_ao_data(v) for v in views
+        ]  # different for each view due to different offsets
+        data_do = self._get_do_data(
+            channels
+        )  # get the digital output data depending on the channels
 
         # set up the counter for loop through a zstack
         task_ctr_loop = nidaqmx.Task("counter0")
-        ctr_loop = task_ctr_loop.ci_channels.add_ci_count_edges_chan(self.ch_ctr1, edge=nidaqmx.constants.Edge.RISING)
+        ctr_loop = task_ctr_loop.ci_channels.add_ci_count_edges_chan(
+            self.ch_ctr1, edge=nidaqmx.constants.Edge.RISING
+        )
         ctr_loop.ci_count_edges_term = self.PFI0
 
         # set up the counter to retrigger the ao and do channels
         task_ctr_retrig = nidaqmx.Task("counter1")
-        task_ctr_retrig.co_channels.add_co_pulse_chan_freq(self.ch_ctr0,
-                                                           idle_state=nidaqmx.constants.Level.LOW,
-                                                           freq=self.sampling_rate)
-        task_ctr_retrig.timing.cfg_implicit_timing(sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
-                                                   samps_per_chan=self.num_samples)
-        task_ctr_retrig.triggers.start_trigger.cfg_dig_edge_start_trig(trigger_source=self.PFI0,
-                                                                       trigger_edge=nidaqmx.constants.Slope.RISING)
+        task_ctr_retrig.co_channels.add_co_pulse_chan_freq(
+            self.ch_ctr0,
+            idle_state=nidaqmx.constants.Level.LOW,
+            freq=self.sampling_rate,
+        )
+        task_ctr_retrig.timing.cfg_implicit_timing(
+            sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
+            samps_per_chan=self.num_samples,
+        )
+        task_ctr_retrig.triggers.start_trigger.cfg_dig_edge_start_trig(
+            trigger_source=self.PFI0, trigger_edge=nidaqmx.constants.Slope.RISING
+        )
         task_ctr_retrig.triggers.start_trigger.retriggerable = True
 
         # set up ao channel
-        task_ao.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
-                                           source=self.ch_ctr0_internal_output,
-                                           sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
+        task_ao.timing.cfg_samp_clk_timing(
+            rate=self.sampling_rate,
+            source=self.ch_ctr0_internal_output,
+            sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
+        )
 
         task_ctr_retrig.start()
 
@@ -281,20 +313,26 @@ class NIdaq:
                     else:
                         task_ao.write(data_ao[v])
                         task_ao.start()
-                        for i_ch in range(1):  # range(len(channels)):  # change channel # run once
+                        for i_ch in range(
+                            1
+                        ):  # range(len(channels)):  # change channel # run once
                             if self.stop_now:
                                 break
-                                
+
                             # set up the do channel
-                            task_do.timing.cfg_samp_clk_timing(rate=self.sampling_rate,
-                                                               source=self.ch_ctr0_internal_output,
-                                                               sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS)
+                            task_do.timing.cfg_samp_clk_timing(
+                                rate=self.sampling_rate,
+                                source=self.ch_ctr0_internal_output,
+                                sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
+                            )
                             task_do.write(data_do)
                             task_do.start()
 
                             task_ctr_loop.start()
                             counts = 0
-                            while counts < self.nb_slices + 1:  # Flash4.0 outputs 1 more pulse than asked
+                            while (
+                                counts < self.nb_slices + 1
+                            ):  # Flash4.0 outputs 1 more pulse than asked
                                 counts = task_ctr_loop.read()
                                 if self.stop_now:
                                     break
@@ -302,7 +340,9 @@ class NIdaq:
                             task_ctr_loop.stop()
                             print("counts: ", counts)
                             # print("counts: ", counts)
-                            time.sleep(self.exposure + 0.1)  # add time to allow ao and do output for the last frame
+                            time.sleep(
+                                self.exposure + 0.1
+                            )  # add time to allow ao and do output for the last frame
                             task_do.stop()
                             print("one stack done!")
                         task_ao.stop()
@@ -312,9 +352,6 @@ class NIdaq:
         # task_ctr_retrig.stop()
         task_ctr_retrig.close()
         task_ctr_loop.close()
-
-
-
 
         task_ao.close()
         task_do.close()
@@ -332,18 +369,26 @@ class NIdaq:
 
         # for view switching and light sheet stabilization
         if view == "view1":
-            offset = self._offset_dis_to_vol(self.view1["offset"])   # convert the offset from um to v
-            min_range = - self.scan_step / 2 / self.CONVERT_RATIO
+            offset = self._offset_dis_to_vol(
+                self.view1["offset"]
+            )  # convert the offset from um to v
+            min_range = -self.scan_step / 2 / self.CONVERT_RATIO
             max_range = self.scan_step / 2 / self.CONVERT_RATIO
-            data_ao0 = list(np.linspace(max_range + offset, min_range + offset, self.num_samples))
+            data_ao0 = list(
+                np.linspace(max_range + offset, min_range + offset, self.num_samples)
+            )
             data_ao1 = [self.view1["galvo1"]] * self.num_samples
             data_ao2 = [self.view1["galvo2"]] * self.num_samples
             return [data_ao0, data_ao1, data_ao2, data_ao3]
         elif view == "view2":
-            offset = self._offset_dis_to_vol(self.view2["offset"])  # convert the offset from um to v
-            min_range = - self.scan_step / 2 / self.CONVERT_RATIO
+            offset = self._offset_dis_to_vol(
+                self.view2["offset"]
+            )  # convert the offset from um to v
+            min_range = -self.scan_step / 2 / self.CONVERT_RATIO
             max_range = self.scan_step / 2 / self.CONVERT_RATIO
-            data_ao0 = list(np.linspace(max_range + offset, min_range + offset, self.num_samples))
+            data_ao0 = list(
+                np.linspace(max_range + offset, min_range + offset, self.num_samples)
+            )
             data_ao1 = [self.view2["galvo1"]] * self.num_samples
             data_ao2 = [self.view2["galvo2"]] * self.num_samples
             return [data_ao0, data_ao1, data_ao2, data_ao3]
@@ -353,35 +398,41 @@ class NIdaq:
         Method to get digital output data.
         """
         if len(channels) == 1:
-            nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+            nb_on_sample = round(
+                (self.exposure - self.readout_time) * self.sampling_rate
+            )
             data = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
             return data
         elif len(channels) == 2:
-            nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+            nb_on_sample = round(
+                (self.exposure - self.readout_time) * self.sampling_rate
+            )
             nb_off_sample = round(self.readout_time * self.sampling_rate)
-            data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
+            data_on = [True] * nb_on_sample + [False] * (
+                self.num_samples - nb_on_sample
+            )
             data_off = [False] * self.num_samples
             # return [[data_on, data_off], [data_off, data_on]]
             return [data_on + data_off, data_off + data_on]
         else:
-            raise ValueError('Only supported up to 2 channels for now')
+            raise ValueError("Only supported up to 2 channels for now")
 
 
 if __name__ == "__main__":
     daq_card = NIdaq(
-            exposure=0.020,
-            nb_timepoints=600,
-            scan_step=0.310 * 2,  # TTL100
-            stage_scan_range=2500,
-            vertical_pixels=1024,  # used to calculate the readout time
-            offset_view1=1580,
-            offset_view2=1720,
-            view1_galvo1=4.52,
-            view1_galvo2=-4.00,
-            view2_galvo1=-4.18,
-            view2_galvo2=4.00,
-            stripe_reduction_range=0.3,
-            stripe_reduction_offset=-0.58
+        exposure=0.020,
+        nb_timepoints=600,
+        scan_step=0.310 * 2,  # TTL100
+        stage_scan_range=2500,
+        vertical_pixels=1024,  # used to calculate the readout time
+        offset_view1=1580,
+        offset_view2=1720,
+        view1_galvo1=4.52,
+        view1_galvo2=-4.00,
+        view2_galvo1=-4.18,
+        view2_galvo2=4.00,
+        stripe_reduction_range=0.3,
+        stripe_reduction_offset=-0.58,
     )
     """Methods are separated into live mode and acquisition mode"""
     # live mode

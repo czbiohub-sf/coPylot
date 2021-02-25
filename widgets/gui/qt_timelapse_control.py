@@ -13,7 +13,9 @@ class TimelapseControl(QWidget):
         self.parent = parent
         self.button_name = button_name
 
-        self.state_tracker = False  # tracker to set new background color when timelapse mode is on
+        self.state_tracker = (
+            False  # tracker to set new background color when timelapse mode is on
+        )
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
@@ -39,7 +41,10 @@ class TimelapseControl(QWidget):
         self.setLayout(self.layout)
 
         self.q_thread_pool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
+        print(
+            "Multithreading with maximum %d threads"
+            % self.q_thread_pool.maxThreadCount()
+        )
 
     def launch_nidaq(self):
         if self.state_tracker:
@@ -59,7 +64,14 @@ class TimelapseControl(QWidget):
         view = self.combobox_view
         channel = self.combobox_channel
 
-        print("called with:", parameters, "view", view + 1 if view != 2 else "1 and 2", "and channel", *channel)
+        print(
+            "called with:",
+            parameters,
+            "view",
+            view + 1 if view != 2 else "1 and 2",
+            "and channel",
+            *channel
+        )
 
         # while True:
         #     time.sleep(1)
@@ -97,8 +109,11 @@ class TimelapseControl(QWidget):
 
     @property
     def combobox_channel(self):
-        return [int(self.laser_combobox.currentText())] if self.laser_combobox.currentIndex() != 2 \
+        return (
+            [int(self.laser_combobox.currentText())]
+            if self.laser_combobox.currentIndex() != 2
             else [488, 561]
+        )
 
     @pyqtSlot()
     def status_finished(self):
