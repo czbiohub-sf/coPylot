@@ -1,11 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout, QSizePolicy
-from PyQt5.QtCore import Qt, pyqtSignal, QRunnable, QThreadPool, pyqtSlot
-import time
-import logging
+from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
+from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
 
-from widgets.gui import qt_line_break
+from widgets.gui.qt_line_break import LineBreak
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
-# from widgets.hardware.control import NIDaq
 from widgets.hardware.alternative_control import NIdaq
 
 
@@ -23,7 +20,7 @@ class TimelapseControl(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
 
-        self.layout.addWidget(qt_line_break.LineBreak(Qt.AlignTop))  # line break between live and timelapse
+        self.layout.addWidget(LineBreak(Qt.AlignTop))  # line break between live and timelapse
 
         # add launch button that disables parameter input, preventing input change
         self.section_button = QPushButton(self.button_name)

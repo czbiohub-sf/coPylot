@@ -1,14 +1,12 @@
 import sys
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 import qdarkstyle
-import qt_main_widget
+from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication
+from widgets.gui.qt_main_widget import MainWidget
 
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)  # run the init of QMainWindow
+        super().__init__(*args, **kwargs)
 
         self.title = "Pisces Parameter Controller"
         self.left = 10
@@ -21,9 +19,9 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-        self.setCentralWidget(qt_main_widget.MainWidget(self))
+        self.setCentralWidget(MainWidget(self))
 
-        self.show()  # not shown by default
+        self.show()
 
 
 if __name__ == '__main__':

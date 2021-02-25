@@ -1,9 +1,9 @@
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-import qt_live_control
-import qt_left_window
-from widgets.gui import qt_timelapse_control
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout
+
+from widgets.gui.qt_left_window import LeftWindow
+from widgets.gui.qt_live_control import LiveControl
+from widgets.gui.qt_timelapse_control import TimelapseControl
 
 
 class MainWidget(QWidget):
@@ -18,14 +18,14 @@ class MainWidget(QWidget):
         self.right_window_layout = QVBoxLayout()
 
         # Right window
-        self.live_window = qt_live_control.LiveControl(self, "Live")
-        self.timelapse_window = qt_timelapse_control.TimelapseControl(self, "Timelapse")
+        self.live_window = LiveControl(self, "Live")
+        self.timelapse_window = TimelapseControl(self, "Timelapse")
 
         self.right_window_layout.addWidget(self.live_window)
         self.right_window_layout.addWidget(self.timelapse_window)
 
         # left window
-        self.left_window = qt_left_window.LeftWindow(self)
+        self.left_window = LeftWindow(self)
         self.window_layout.addWidget(self.left_window)
 
         # right window
@@ -49,4 +49,3 @@ class MainWidget(QWidget):
         for parameter_object in self.left_window.parameter_objects:
             parameter_object.spinbox.setDisabled(self.button_state)
             parameter_object.slider.setDisabled(self.button_state)
-
