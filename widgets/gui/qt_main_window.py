@@ -1,4 +1,7 @@
 import sys
+from functools import reduce
+from operator import ior
+
 import qdarkstyle
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
@@ -29,14 +32,8 @@ class MainWindow(QMainWindow):
 
         # set common configurations for docks
         self.dock_list = [self.live_dock, self.timelapse_dock, self.parameters_dock]
-
         for dock in self.dock_list:
-            dock.setFeatures(
-                QDockWidget.DockWidgetClosable
-                | QDockWidget.DockWidgetMovable
-                | QDockWidget.DockWidgetFloatable
-            )
-            dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea)
+            self._applyDockConfig(dock)
 
         # set maximum dock sizes
         self.live_dock.setMaximumSize(200, 140)
@@ -70,6 +67,14 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.central_widget)
 
         self.show()
+
+    def _applyDockConfig(self, dock):
+        dock.setFeatures(
+                QDockWidget.DockWidgetClosable
+                | QDockWidget.DockWidgetMovable
+                | QDockWidget.DockWidgetFloatable
+            )
+        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea)
 
 
 if __name__ == '__main__':
