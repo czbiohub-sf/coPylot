@@ -109,11 +109,11 @@ class LiveControl(QWidget):
 
     @pyqtSlot()
     def status_launching(self):
-        self.parent.parent.status_bar.showMessage("NIDaq launching...")
+        self.parent.parent.status_bar.showMessage("Live mode launching...")
 
     @pyqtSlot()
     def status_running(self):
-        self.parent.parent.status_bar.showMessage("NIDaq running...")
+        self.parent.parent.status_bar.showMessage("Live mode running...")
 
     def update_wait_shutdown(self):
         self.wait_shutdown = False
