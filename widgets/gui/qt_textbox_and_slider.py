@@ -1,10 +1,28 @@
 from math import log10
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QWidget, QSlider, QLineEdit, QLabel, QSpinBox, QDoubleSpinBox, QAbstractSpinBox
+from PyQt5.QtWidgets import (
+    QWidget,
+    QSlider,
+    QLineEdit,
+    QLabel,
+    QSpinBox,
+    QDoubleSpinBox,
+    QAbstractSpinBox,
+)
 
 
 class TextboxAndSlider(QWidget):
-    def __init__(self, parent, widget_name, min_range, max_range, data_type, increment, default=0, row=0):
+    def __init__(
+        self,
+        parent,
+        widget_name,
+        min_range,
+        max_range,
+        data_type,
+        increment,
+        default=0,
+        row=0,
+    ):
         super(QWidget, self).__init__(parent)
 
         self.parent = parent
@@ -34,7 +52,9 @@ class TextboxAndSlider(QWidget):
         # set spinbox type and connection based on data type
         if self.data_type == int:
             self.spinbox = QSpinBox()
-            self.slider_scaler = 1  # makes scaling in self.slider parameter have no effect
+            self.slider_scaler = (
+                1  # makes scaling in self.slider parameter have no effect
+            )
 
             #  synchronize text box and self.slider widget values
             self.slider.valueChanged.connect(self.spinbox.setValue)
@@ -45,7 +65,9 @@ class TextboxAndSlider(QWidget):
             self.spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
             self.spinbox.setDecimals(self.num_decimals)
 
-            self.slider_scaler = self._max_int  # scale self.slider parameters into integer range
+            self.slider_scaler = (
+                self._max_int
+            )  # scale self.slider parameters into integer range
 
             self.slider.valueChanged.connect(self.int_to_scaled_float)
             self.spinbox.valueChanged.connect(self.float_to_scaled_int)
@@ -57,7 +79,7 @@ class TextboxAndSlider(QWidget):
         self.spinbox.setSizeIncrement(self.increment, self.increment)
         self.spinbox.setRange(self.min_range, self.max_range)
         self.spinbox.setValue(self.default)
-        self.spinbox.setFixedSize(65, 27)
+        self.spinbox.setFixedSize(75, 27)
 
         #  set slider parameters based on data type (by value of self.slider_scaler)
         self.slider.setMaximum(self.max_range * self.slider_scaler)
@@ -68,8 +90,8 @@ class TextboxAndSlider(QWidget):
         self.min_input_line.setText(str(self.min_range))
         self.max_input_line.setText(str(self.max_range))
 
-        self.min_input_line.setMaximumSize(46, 18)
-        self.max_input_line.setMaximumSize(46, 18)
+        self.min_input_line.setMaximumSize(66, 24)
+        self.max_input_line.setMaximumSize(66, 24)
 
         self.min_input_line.editingFinished.connect(self.update_min_range)
         self.max_input_line.editingFinished.connect(self.update_max_range)
@@ -79,7 +101,9 @@ class TextboxAndSlider(QWidget):
         self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
         # added here to prevent trigger on startup
-        self.spinbox.editingFinished.connect(self.parent.parent.live_window.launch_nidaq)
+        self.spinbox.editingFinished.connect(
+            self.parent.parent.live_widget.launch_nidaq
+        )
 
     @pyqtSlot()
     def toggle_range_widgets(self):
@@ -102,7 +126,9 @@ class TextboxAndSlider(QWidget):
         try:
             min_text = float(min_text)  # if a number, convert to float
             if min_text > self.max_range:
-                self.min_input_line.setText(str(self.min_range))  # reset to last acceptable min range
+                self.min_input_line.setText(
+                    str(self.min_range)
+                )  # reset to last acceptable min range
             else:
                 self.min_range = min_text
                 self.spinbox.setRange(self.min_range, self.max_range)
@@ -142,7 +168,7 @@ class TextboxAndSlider(QWidget):
         self.spinbox.setValue(float(value / self._max_int))
 
     def mouseReleaseEvent(self, event):
-        self.parent.parent.live_window.launch_nidaq()
+        self.parent.parent.live_widget.launch_nidaq()
 
     def mouseDoubleClickEvent(self, event):
         self.toggle_range_widgets()

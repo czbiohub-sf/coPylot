@@ -1,13 +1,8 @@
-import logging
 from PyQt5.QtCore import QRunnable, pyqtSlot
-# from widgets.hardware.alternative_control import NIdaq
 from widgets.gui.qt_worker_signals import WorkerSignals
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 class NIDaqWorker(QRunnable):
-
     def __init__(self, fn, *args, **kwargs):
         super(NIDaqWorker, self).__init__()
 
@@ -30,4 +25,4 @@ class NIDaqWorker(QRunnable):
 
     def stop(self):
         self.daq_card.stop_now = True
-        #self.thread_running = False
+        # self.thread_running = False

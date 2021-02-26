@@ -1,7 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
-
-from widgets.gui.qt_line_break import LineBreak
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
 from widgets.hardware.alternative_control import NIdaq
 
@@ -15,19 +13,19 @@ class TimelapseControl(QWidget):
         self.parent = parent
         self.button_name = button_name
 
-        self.state_tracker = False  # tracker to set new background color when timelapse mode is on
+        self.state_tracker = (
+            False  # tracker to set new background color when timelapse mode is on
+        )
 
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignTop)
 
-        self.layout.addWidget(LineBreak(Qt.AlignTop))  # line break between live and timelapse
-
-        # add launch button that disables parameter input, preventing input change
+        # button to call nidaq launcher
         self.section_button = QPushButton(self.button_name)
-        self.section_button.pressed.connect(self.button_state_change)
+        self.section_button.pressed.connect(self.handle_nidaq_launch)
         self.layout.addWidget(self.section_button)
 
-        # placeholders for future selection options
+        # view and channel combobox widgets and options
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
@@ -43,43 +41,64 @@ class TimelapseControl(QWidget):
         self.setLayout(self.layout)
 
         self.q_thread_pool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.q_thread_pool.maxThreadCount())
+        print(
+            "Multithreading with maximum %d threads"
+            % self.q_thread_pool.maxThreadCount()
+        )
 
-    def launch_nidaq_instance(self):
+    def launch_nidaq(self):
         if self.state_tracker:
-            self.parent.parent.status_bar.showMessage("Timelapse mode running...")
+            self.parent.status_bar.showMessage("Timelapse mode running...")
+
             # launch worker thread with newest parameters
             daq_card_worker = NIDaqWorker(self.timelapse_worker)
 
-            # connect
+            # connect signals
             self.trigger_stop_timelapse.connect(daq_card_worker.stop)
             daq_card_worker.signals.finished.connect(self.status_finished)
 
             self.q_thread_pool.start(daq_card_worker)
 
     def timelapse_worker(self, parent_worker):
-        parameters = self.parent.left_window.parameters
+        parameters = self.parent.parameters_widget.parameters
         view = self.combobox_view
         channel = self.combobox_channel
 
-        print("called with:", parameters, "view", view + 1 if view != 2 else "1 and 2", "and channel", *channel)
+        print(
+            "called with:",
+            parameters,
+            "view",
+            view + 1 if view != 2 else "1 and 2",
+            "and channel",
+            *channel
+        )
 
         # while True:
         #     time.sleep(1)
-        #     logging.info(parent_worker.thread_running)
         #     if not parent_worker.thread_running:
         #         break
 
         self.daq_card = NIdaq(self, **parameters)
         self.daq_card.acquire_stacks(channels=channel, view=view)
 
-    def button_state_change(self):
+    def handle_nidaq_launch(self):
         self.state_tracker = not self.state_tracker
 
-        self.parent.toggle_disabled()
+        # disable timelapse parameter inputs and live mode
+        self.parent.parameters_widget.toggle_button.setDisabled(self.state_tracker)
+        self.view_combobox.setDisabled(self.state_tracker)
+        self.laser_combobox.setDisabled(self.state_tracker)
+        self.parent.live_widget.setDisabled(self.state_tracker)
+
+        # disable parameter inputs
+        for parameter_object in self.parent.parameters_widget.parameter_objects:
+            parameter_object.spinbox.setDisabled(self.state_tracker)
+            parameter_object.slider.setDisabled(self.state_tracker)
+
+        # launch or stop worker & change style sheet depending on current state
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
-            self.launch_nidaq_instance()
+            self.launch_nidaq()
         else:
             self.section_button.setStyleSheet("")
             self.trigger_stop_timelapse.emit()
@@ -90,9 +109,12 @@ class TimelapseControl(QWidget):
 
     @property
     def combobox_channel(self):
-        return [int(self.laser_combobox.currentText())] if self.laser_combobox.currentIndex() != 2 \
+        return (
+            [int(self.laser_combobox.currentText())]
+            if self.laser_combobox.currentIndex() != 2
             else [488, 561]
+        )
 
     @pyqtSlot()
     def status_finished(self):
-        self.parent.parent.status_bar.showMessage("NIDaq idle...")
+        self.parent.status_bar.showMessage("NIDaq idle...")
