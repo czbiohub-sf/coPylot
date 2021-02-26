@@ -79,7 +79,7 @@ class TextboxAndSlider(QWidget):
         self.spinbox.setSizeIncrement(self.increment, self.increment)
         self.spinbox.setRange(self.min_range, self.max_range)
         self.spinbox.setValue(self.default)
-        self.spinbox.setFixedSize(65, 27)
+        self.spinbox.setFixedSize(75, 27)
 
         #  set slider parameters based on data type (by value of self.slider_scaler)
         self.slider.setMaximum(self.max_range * self.slider_scaler)
@@ -90,8 +90,8 @@ class TextboxAndSlider(QWidget):
         self.min_input_line.setText(str(self.min_range))
         self.max_input_line.setText(str(self.max_range))
 
-        self.min_input_line.setMaximumSize(46, 18)
-        self.max_input_line.setMaximumSize(46, 18)
+        self.min_input_line.setMaximumSize(66, 24)
+        self.max_input_line.setMaximumSize(66, 24)
 
         self.min_input_line.editingFinished.connect(self.update_min_range)
         self.max_input_line.editingFinished.connect(self.update_max_range)

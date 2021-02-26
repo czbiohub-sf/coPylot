@@ -14,8 +14,8 @@ class MainWindow(QMainWindow):
         self.title = "Pisces Parameter Controller"
         self.left = 10
         self.top = 10
-        self.width = 700
-        self.height = 500
+        self.width = 900
+        self.height = 1000
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -32,9 +32,9 @@ class MainWindow(QMainWindow):
             _applyDockConfig(dock)
 
         # set maximum dock sizes
-        self.live_dock.setMaximumSize(200, 140)
-        self.timelapse_dock.setMaximumSize(200, 140)
-        self.parameters_dock.setMaximumSize(500, 650)
+        self.live_dock.setMaximumSize(200, 220)
+        self.timelapse_dock.setMaximumSize(200, 220)
+        self.parameters_dock.setMaximumSize(650, 950)
 
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, "Live Mode")
