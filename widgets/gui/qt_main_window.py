@@ -1,6 +1,6 @@
 import sys
 import qdarkstyle
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
 from widgets.gui.qt_live_control import LiveControl
 from widgets.gui.qt_parameters_widget import ParametersWidget
@@ -10,6 +10,8 @@ from widgets.gui.qt_timelapse_control import TimelapseControl
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
         self.left = 10
@@ -37,11 +39,11 @@ class MainWindow(QMainWindow):
         self.parameters_dock.setMaximumSize(650, 950)
 
         # initialize widgets and assign to their dock
-        self.live_widget = LiveControl(self, "Live Mode")
+        self.live_widget = LiveControl(self, "Live Mode", self.threadpool)
         self.live_dock.setWidget(self.live_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
 
-        self.timelapse_widget = TimelapseControl(self, "Timelapse Mode")
+        self.timelapse_widget = TimelapseControl(self, "Timelapse Mode", self.threadpool)
         self.timelapse_dock.setWidget(self.timelapse_widget)
         self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 

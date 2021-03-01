@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 import time
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
 from widgets.hardware.alternative_control import NIdaq
@@ -9,11 +9,12 @@ class LiveControl(QWidget):
     trigger_stop_live = pyqtSignal()
     thread_launching = pyqtSignal()
 
-    def __init__(self, parent, button_name):
+    def __init__(self, parent, button_name, threadpool):
         super(QWidget, self).__init__(parent)
 
         self.parent = parent
         self.button_name = button_name
+        self.threadpool = threadpool
 
         self.state_tracker = False  # tracks if live mode is on
         self.wait_shutdown = False
@@ -42,12 +43,6 @@ class LiveControl(QWidget):
 
         self.setLayout(self.layout)
 
-        self.q_thread_pool = QThreadPool()
-        print(
-            "Multithreading with maximum %d threads"
-            % self.q_thread_pool.maxThreadCount()
-        )
-
         self.thread_launching.connect(self.status_launching)
 
     def launch_nidaq(self):
@@ -70,7 +65,7 @@ class LiveControl(QWidget):
             daq_card_worker.signals.finished.connect(self.update_wait_shutdown)
             self.trigger_stop_live.connect(daq_card_worker.stop)
 
-            self.q_thread_pool.start(daq_card_worker)
+            self.threadpool.start(daq_card_worker)
 
             # because processEvents runs while waiting for wait_shutdown = False, if pressed quickly, live mode can
             # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
