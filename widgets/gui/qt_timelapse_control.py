@@ -7,11 +7,12 @@ from widgets.hardware.alternative_control import NIdaq
 class TimelapseControl(QWidget):
     trigger_stop_timelapse = pyqtSignal()
 
-    def __init__(self, parent, button_name):
+    def __init__(self, parent, button_name, threadpool):
         super(QWidget, self).__init__(parent)
 
         self.parent = parent
         self.button_name = button_name
+        self.threadpool = threadpool
 
         self.state_tracker = (
             False  # tracker to set new background color when timelapse mode is on
@@ -40,12 +41,6 @@ class TimelapseControl(QWidget):
 
         self.setLayout(self.layout)
 
-        self.q_thread_pool = QThreadPool()
-        print(
-            "Multithreading with maximum %d threads"
-            % self.q_thread_pool.maxThreadCount()
-        )
-
     def launch_nidaq(self):
         if self.state_tracker:
             self.parent.status_bar.showMessage("Timelapse mode running...")
@@ -57,7 +52,7 @@ class TimelapseControl(QWidget):
             self.trigger_stop_timelapse.connect(daq_card_worker.stop)
             daq_card_worker.signals.finished.connect(self.status_finished)
 
-            self.q_thread_pool.start(daq_card_worker)
+            self.threadpool.start(daq_card_worker)
 
     def timelapse_worker(self, parent_worker):
         parameters = self.parent.parameters_widget.parameters
