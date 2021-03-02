@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, QThreadPool, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
 from widgets.hardware.alternative_control import NIdaq
 
@@ -46,35 +46,26 @@ class TimelapseControl(QWidget):
             self.parent.status_bar.showMessage("Timelapse mode running...")
 
             # launch worker thread with newest parameters
-            daq_card_worker = NIDaqWorker(self.timelapse_worker)
+            daq_card_worker = NIDaqWorker(
+                "timelapse",
+                self.combobox_view,
+                self.combobox_channel,
+                self.parent.parameters_widget.parameters
+            )
+            print(
+                "called with:",
+                self.parent.parameters_widget.parameters,
+                "view",
+                self.combobox_view + 1 if self.combobox_view != 2 else "1 and 2",
+                "and channel",
+                *self.combobox_channel
+            )
 
             # connect signals
             self.trigger_stop_timelapse.connect(daq_card_worker.stop)
             daq_card_worker.signals.finished.connect(self.status_finished)
 
             self.threadpool.start(daq_card_worker)
-
-    def timelapse_worker(self, parent_worker):
-        parameters = self.parent.parameters_widget.parameters
-        view = self.combobox_view
-        channel = self.combobox_channel
-
-        print(
-            "called with:",
-            parameters,
-            "view",
-            view + 1 if view != 2 else "1 and 2",
-            "and channel",
-            *channel
-        )
-
-        # while True:
-        #     time.sleep(1)
-        #     if not parent_worker.thread_running:
-        #         break
-
-        self.daq_card = NIdaq(self, **parameters)
-        self.daq_card.acquire_stacks(channels=channel, view=view)
 
     def handle_nidaq_launch(self):
         self.state_tracker = not self.state_tracker

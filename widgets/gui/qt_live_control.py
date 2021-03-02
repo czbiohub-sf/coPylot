@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBox
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 import time
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
-from widgets.hardware.alternative_control import NIdaq
 
 
 class LiveControl(QWidget):
@@ -58,7 +57,18 @@ class LiveControl(QWidget):
                 QApplication.processEvents()
             self.wait_shutdown = True  # reset to true for next call
 
-            daq_card_worker = NIDaqWorker(self.live_worker)
+            daq_card_worker = NIDaqWorker(
+                "live",
+                self.combobox_view,
+                self.combobox_channel,
+                self.parent.parameters_widget.parameters
+            )
+
+            print(
+                "called with:", self.parent.parameters_widget.parameters,
+                "view", self.combobox_view,
+                "and channel", self.combobox_channel
+            )
 
             # connect
             daq_card_worker.signals.running.connect(self.status_running)
@@ -71,22 +81,6 @@ class LiveControl(QWidget):
             # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
-
-    def live_worker(self, parent_worker):
-        parameters = self.parent.parameters_widget.parameters
-        view = self.combobox_view
-        channel = self.combobox_channel
-
-        print("called with:", parameters, "view", view, "and channel", channel)
-
-        # while True:
-        #     time.sleep(1)
-        #     if not parent_worker.thread_running:
-        #         break
-
-        self.daq_card = NIdaq(self, **parameters)
-        self.daq_card.select_view(view)
-        self.daq_card.select_channel_remove_stripes(channel)
 
     def handle_nidaq_launch(self):
         self.state_tracker = not self.state_tracker
