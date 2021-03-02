@@ -58,7 +58,12 @@ class LiveControl(QWidget):
                 QApplication.processEvents()
             self.wait_shutdown = True  # reset to true for next call
 
-            daq_card_worker = NIDaqWorker(self.live_worker)
+            view = self.combobox_view
+            channel = self.combobox_channel
+            parameters = self.parent.parameters_widget.parameters
+            daq_card_worker = NIDaqWorker(view, channel, parameters)
+
+            print("called with:", parameters, "view", view, "and channel", channel)
 
             # connect
             daq_card_worker.signals.running.connect(self.status_running)
@@ -71,22 +76,6 @@ class LiveControl(QWidget):
             # emit final trigger_stop_live.emit before final worker is initialized, preventing a proper shutdown.
             if not self.state_tracker:
                 self.trigger_stop_live.emit()
-
-    def live_worker(self, parent_worker):
-        parameters = self.parent.parameters_widget.parameters
-        view = self.combobox_view
-        channel = self.combobox_channel
-
-        print("called with:", parameters, "view", view, "and channel", channel)
-
-        # while True:
-        #     time.sleep(1)
-        #     if not parent_worker.thread_running:
-        #         break
-
-        self.daq_card = NIdaq(self, **parameters)
-        self.daq_card.select_view(view)
-        self.daq_card.select_channel_remove_stripes(channel)
 
     def handle_nidaq_launch(self):
         self.state_tracker = not self.state_tracker
