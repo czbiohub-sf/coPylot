@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBox
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 import time
 from widgets.gui.qt_nidaq_worker import NIDaqWorker
-from widgets.hardware.alternative_control import NIdaq
 
 
 class LiveControl(QWidget):
@@ -58,12 +57,18 @@ class LiveControl(QWidget):
                 QApplication.processEvents()
             self.wait_shutdown = True  # reset to true for next call
 
-            view = self.combobox_view
-            channel = self.combobox_channel
-            parameters = self.parent.parameters_widget.parameters
-            daq_card_worker = NIDaqWorker(view, channel, parameters)
+            daq_card_worker = NIDaqWorker(
+                "live",
+                self.combobox_view,
+                self.combobox_channel,
+                self.parent.parameters_widget.parameters
+            )
 
-            print("called with:", parameters, "view", view, "and channel", channel)
+            print(
+                "called with:", self.parent.parameters_widget.parameters,
+                "view", self.combobox_view,
+                "and channel", self.combobox_channel
+            )
 
             # connect
             daq_card_worker.signals.running.connect(self.status_running)
