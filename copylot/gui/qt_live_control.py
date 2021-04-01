@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 import time
-from widgets.gui.qt_nidaq_worker import NIDaqWorker
+
+from copylot.gui.qt_nidaq_worker import NIDaqWorker
 
 
 class LiveControl(QWidget):

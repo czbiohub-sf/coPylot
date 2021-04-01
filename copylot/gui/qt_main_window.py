@@ -2,9 +2,10 @@ import sys
 import qdarkstyle
 from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
-from widgets.gui.qt_live_control import LiveControl
-from widgets.gui.qt_parameters_widget import ParametersWidget
-from widgets.gui.qt_timelapse_control import TimelapseControl
+
+from copylot.gui.qt_live_control import LiveControl
+from copylot.gui.qt_parameters_widget import ParametersWidget
+from copylot.gui.qt_timelapse_control import TimelapseControl
 
 
 class MainWindow(QMainWindow):

@@ -2,8 +2,8 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton
 
-from widgets.gui.qt_line_break import LineBreak
-from widgets.gui.qt_textbox_and_slider import TextboxAndSlider
+from copylot.gui.qt_line_break import LineBreak
+from copylot.gui.qt_textbox_and_slider import TextboxAndSlider
 
 
 class ParametersWidget(QWidget):
