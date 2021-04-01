@@ -22,10 +22,12 @@ def set_ao_value(ch, value):
 
 class NIDaq:
     # Channel information
-    ch_ao0 = "cDAQ1AO/ao0"  # scanning channel
-    ch_ao1 = "cDAQ1AO/ao1"  # view switching
-    ch_ao2 = "cDAQ1AO/ao2"  # view switching
-    ch_ao3 = "cDAQ1AO/ao3"  # stripe reduction
+    ch_ao0 = "cDAQ1AO/ao0"   # scanning channel
+    ch_ao1 = "cDAQ1AO/ao1"   # view switching
+    ch_ao2 = "cDAQ1AO/ao2"   # view switching
+    ch_ao3 = "cDAQ1AO/ao3"   # gamma angle, stripe reduction
+    ch_ao4 = "cDAQ1AO2/ao0"  # beta angle, light sheet incident angle
+    ch_ao5 = "cDAQ1AO2/ao1"  # O1 PIFOC control
 
     ch_ctr0 = "cDAQ1/_ctr0"  # for retrigger
     ch_ctr0_internal_output = "/cDAQ1/Ctr0InternalOutput"
@@ -39,8 +41,8 @@ class NIDaq:
 
     ch_dio0 = "cDAQ1DIO/port0/line0"  # 488 digital channel
     ch_dio1 = "cDAQ1DIO/port0/line1"  # 561 digital channel
-    ch_dio2 = "cDAQ1DIO/port0/line2"  # bright field
-    ch_dio3 = "cDAQ1DIO/port0/line3"  # idle
+    ch_dio2 = "cDAQ1DIO/port0/line2"  # 640 digital channel
+    ch_dio3 = "cDAQ1DIO/port0/line3"  # bright field
     ch_dio4 = "cDAQ1DIO/port0/line4"  # idle
     ch_dio5 = "cDAQ1DIO/port0/line5"  # idle
     ch_dio6 = "cDAQ1DIO/port0/line6"  # idle
@@ -49,8 +51,11 @@ class NIDaq:
     # constants
     MAX_VOL = 10  # unit: v, maximum voltage of the ao channels
     MIN_VOL = -10  # unit: v, minimal voltage of the ao channels
-    CONVERT_RATIO = (
+    CONVERT_RATIO_SCAN_GALVO = (
         159  # unit: um / v, to convert from voltage to the scan distance of the galvo
+    )
+    CONVERT_RATIO_PIFOC = (
+        40  # unit: um / v, to convert from voltage to the scan distance of the PIFOC [-400, 400]
     )
     READOUT_TIME_FULL_CHIP = (
         0.01  # unit: second, the readout time of the full chip camera
@@ -75,7 +80,9 @@ class NIDaq:
         view2_galvo1: float = -4.37,  # unit: v, to apply on galvo 1 for view 2
         view2_galvo2: float = 3.66,  # unit: v, to apply on galvo 2 for view 2
         stripe_reduction_range: float = 0.1,  # unit: v, to apply on glavo gamma to reduce stripe
-        stripe_reduction_offset: float = 0.58  # unit: v, to apply on glavo gamma to reduce stripe
+        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on glavo gamma to reduce stripe
+        o1_pifoc=0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
+        light_sheet_angle=-2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
     ):
         """
         Constructor of NIDaq.
@@ -113,7 +120,8 @@ class NIDaq:
         self.view2_galvo2 = view2_galvo2
         self.stripe_reduction_range = stripe_reduction_range
         self.stripe_reduction_offset = stripe_reduction_offset
-
+        self.o1_pifoc = o1_pifoc
+        self.light_sheet_angle = light_sheet_angle
         print("number of slices:", self.nb_slices)
         print("current sampling_rate is:", self.sampling_rate)
 
@@ -129,7 +137,6 @@ class NIDaq:
 
     def _get_ao_data(self, view: str):
         """generate the ndarray for an ao channel"""
-
         # for stripe reduction
         stripe_min = -self.stripe_reduction_range + self.stripe_reduction_offset
         stripe_max = self.stripe_reduction_range + self.stripe_reduction_offset
@@ -138,31 +145,37 @@ class NIDaq:
         data_ao3 = list(np.linspace(stripe_min, stripe_max, nb_on_sample))
         data_ao3.extend([stripe_min] * nb_off_sample)
 
+        # for fixed light sheet angle
+        data_ao4 = [self.light_sheet_angle] * self.num_samples
+
+        # for fixed O1 position
+        data_ao5 = [self.o1_pifoc / self.CONVERT_RATIO_PIFOC] * self.num_samples
+
         # for view switching and light sheet stabilization
         if view == "view1":
             offset = self._offset_dis_to_vol(
                 self.offset_view1
             )  # convert the offset from um to v
-            min_range = -self.scan_step / 2 / self.CONVERT_RATIO
-            max_range = self.scan_step / 2 / self.CONVERT_RATIO
+            min_range = -self.scan_step / 2 / self.CONVERT_RATIO_SCAN_GALVO
+            max_range = self.scan_step / 2 / self.CONVERT_RATIO_SCAN_GALVO
             data_ao0 = list(
                 np.linspace(max_range + offset, min_range + offset, self.num_samples)
             )
             data_ao1 = [self.view1_galvo1] * self.num_samples
             data_ao2 = [self.view1_galvo2] * self.num_samples
-            return [data_ao0, data_ao1, data_ao2, data_ao3]
+            return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5]
         elif view == "view2":
             offset = self._offset_dis_to_vol(
                 self.offset_view2
             )  # convert the offset from um to v
-            min_range = -self.scan_step / 2 / self.CONVERT_RATIO
-            max_range = self.scan_step / 2 / self.CONVERT_RATIO
+            min_range = -self.scan_step / 2 / self.CONVERT_RATIO_SCAN_GALVO
+            max_range = self.scan_step / 2 / self.CONVERT_RATIO_SCAN_GALVO
             data_ao0 = list(
                 np.linspace(max_range + offset, min_range + offset, self.num_samples)
             )
             data_ao1 = [self.view2_galvo1] * self.num_samples
             data_ao2 = [self.view2_galvo2] * self.num_samples
-            return [data_ao0, data_ao1, data_ao2, data_ao3]
+            return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5]
 
     def _get_do_data(self, channels):
         """
@@ -207,7 +220,7 @@ class NIDaq:
         task_ao = self._crate_ao_task_for_acquisition()
         task_do = nidaqmx.Task("do0")  # for laser control
 
-        # slect channel
+        # select channel
         if channels == [488]:
             task_do.do_channels.add_do_chan(self.ch_dio0)
         elif channels == [561]:
@@ -218,7 +231,7 @@ class NIDaq:
         else:
             raise ValueError("Channel not supported")
 
-        # slect view
+        # select view
         if view == 0:
             self._acquire_stacks(task_ao, task_do, channels, ["view1"])
         elif view == 1:
@@ -273,14 +286,11 @@ class NIDaq:
         task_ctr_retrig.start()
         for _ in range(self.nb_timepoints):
             for v in range(len(data_ao)):  # change view
-                # print("ao data size: ", len(data_ao))
-                # print("ao data size2: ", len(data_ao[v]))
-                # print("ao data size3: ", len(data_ao[v][0]))
                 task_ao.write(data_ao[v])
                 task_ao.start()
                 for i_ch in range(
                     1
-                ):  # range(len(channels)):  # change channel # run once
+                ):  # interleaved acquisition, todo support also sequential channel imaging
                     # set up the do channel
                     task_do.timing.cfg_samp_clk_timing(
                         rate=self.sampling_rate,
@@ -311,25 +321,37 @@ class NIDaq:
         task_ctr_retrig.close()
         task_ctr_loop.close()
 
-    def _select_view(self, offset, galvo1, galvo2):
+    def _select_view(self, offset, galvo1, galvo2, angle_galvo, o1):
         """
         select the views, by using the correct offset of the scanning gavlo and the voltages of the switching galvos
         float -> void
         """
         offset_in_vol = self._offset_dis_to_vol(offset)
-        data = [offset_in_vol, galvo1, galvo2]
+        data = [offset_in_vol, galvo1, galvo2, angle_galvo, o1]
         with nidaqmx.Task() as task:
             task.ao_channels.add_ao_voltage_chan(self.ch_ao0)
             task.ao_channels.add_ao_voltage_chan(self.ch_ao1)
             task.ao_channels.add_ao_voltage_chan(self.ch_ao2)
+            task.ao_channels.add_ao_voltage_chan(self.ch_ao4)
+            task.ao_channels.add_ao_voltage_chan(self.ch_ao5)
             task.write(data, auto_start=True)
 
     def select_view(self, view):
         """select one view in live mode"""
         if view == 1:
-            self._select_view(self.offset_view1, self.view1_galvo1, self.view1_galvo2)
+            self._select_view(self.offset_view1,
+                              self.view1_galvo1,
+                              self.view1_galvo2,
+                              self.light_sheet_angle,
+                              self.o1_pifoc / self.CONVERT_RATIO_PIFOC
+                              )
         elif view == 2:
-            self._select_view(self.offset_view2, self.view2_galvo1, self.view2_galvo2)
+            self._select_view(self.offset_view2,
+                              self.view2_galvo1,
+                              self.view2_galvo2,
+                              self.light_sheet_angle,
+                              self.o1_pifoc / self.CONVERT_RATIO_PIFOC
+                              )
         else:
             raise ValueError("View not supported")
 
@@ -339,19 +361,11 @@ class NIDaq:
         float -> float
         um    -> v
         """
-        return offset / self.CONVERT_RATIO - self.MAX_VOL
+        return offset / self.CONVERT_RATIO_SCAN_GALVO - self.MAX_VOL
 
     def _select_channel(self, ch):
-        nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
-        # nb_off_sample = round(self.readout_time * self.sampling_rate)
-        data = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
-
-        task = nidaqmx.Task()
-        task.do_channels.add_do_chan(ch)
-        self._retriggable_task(task, data)
-        set_dio_state(ch, False)
-
-    def _select_channel_remove_stripes(self, ch):
+        """Helper. Set up DIO channel and Gamma AO channel.
+        Now always do remove shadow. Set gamma AO range to 0 if no need for shadow removal."""
         nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
         # nb_off_sample = round(self.readout_time * self.sampling_rate)
         data_do = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
@@ -381,15 +395,6 @@ class NIDaq:
         else:
             raise ValueError("Channel not supported!")
 
-    def select_channel_remove_stripes(self, ch):
-        """select one channel in live mode, with remove_stripes functionality"""
-        if ch == 488:
-            self._select_channel_remove_stripes(self.ch_dio0)
-        elif ch == 561:
-            self._select_channel_remove_stripes(self.ch_dio1)
-        else:
-            raise ValueError("Channel not supported!")
-
     def _set_up_retriggerable_counter(self, counter):
         """set up a retriggerable counter task"""
         task_ctr = nidaqmx.Task()
@@ -412,7 +417,7 @@ class NIDaq:
         task.timing.cfg_samp_clk_timing(
             rate=self.sampling_rate,
             source=self.ch_ctr0_internal_output,
-            sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
+            sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS
         )
 
         task_ctr = self._set_up_retriggerable_counter(self.ch_ctr0)
@@ -466,7 +471,6 @@ if __name__ == "__main__":
     daq_card = NIDaq(
         exposure=0.020,
         nb_timepoints=600,
-        # scan_step=4,
         scan_step=0.310 * 2,  # TTL100
         # scan_step=0.376 * 4,  # TTL165
         # scan_step=0.103 * 2,    # TTL165
@@ -474,18 +478,14 @@ if __name__ == "__main__":
         vertical_pixels=1024,  # used to calculate the readout time
         offset_view1=1580,
         offset_view2=1720,
-        # offset_view1=1650,
-        # offset_view2=1650,
-        # view1_galvo1=4.52,
-        # view1_galvo2=-4.05,
-        # view2_galvo1=-4.18,
-        # view2_galvo2=3.90,
         view1_galvo1=4.52,
         view1_galvo2=-4.00,
         view2_galvo1=-4.18,
         view2_galvo2=4.00,
         stripe_reduction_range=0.3,
         stripe_reduction_offset=-0.58,
+        o1_pifoc=0,
+        light_sheet_angle=-2.2
     )
     """Methods are separated into live mode and aacquisition mode"""
 
@@ -493,8 +493,8 @@ if __name__ == "__main__":
 
     # for 561
     # daq_card.select_channel(561)
-    daq_card.select_view(1)
-    daq_card.select_channel_remove_stripes(488)
+    daq_card.select_view(2)
+    daq_card.select_channel(488)
 
     # time lapse mode
     # daq_card.acquire_stacks(channels=[488], view=0)
