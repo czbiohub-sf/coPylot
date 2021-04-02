@@ -208,6 +208,8 @@ class NIDaq:
         task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao1)
         task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao2)
         task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao3)
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao4)
+        task_ao.ao_channels.add_ao_voltage_chan(self.ch_ao5)
         return task_ao
 
     def acquire_stacks(self, channels, view):
@@ -471,13 +473,13 @@ if __name__ == "__main__":
     daq_card = NIDaq(
         exposure=0.020,
         nb_timepoints=600,
-        scan_step=0.310 * 2,  # TTL100
+        scan_step=0.310 * 4,  # TTL100
         # scan_step=0.376 * 4,  # TTL165
         # scan_step=0.103 * 2,    # TTL165
-        stage_scan_range=2500,
+        stage_scan_range=1000,
         vertical_pixels=1024,  # used to calculate the readout time
-        offset_view1=1580,
-        offset_view2=1720,
+        offset_view1=1550,
+        offset_view2=1650,
         view1_galvo1=4.52,
         view1_galvo2=-4.00,
         view2_galvo1=-4.18,
@@ -490,9 +492,6 @@ if __name__ == "__main__":
     """Methods are separated into live mode and aacquisition mode"""
 
     # live mode
-
-    # for 561
-    # daq_card.select_channel(561)
     daq_card.select_view(2)
     daq_card.select_channel(488)
 
