@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
-from widgets.gui.qt_nidaq_worker import NIDaqWorker
-from widgets.hardware.alternative_control import NIdaq
+
+from copylot.gui.qt_nidaq_worker import NIDaqWorker
 
 
 class TimelapseControl(QWidget):
