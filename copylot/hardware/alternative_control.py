@@ -9,7 +9,9 @@ class NIdaq:
     ch_ao0 = "cDAQ1AO/ao0"  # scanning channel
     ch_ao1 = "cDAQ1AO/ao1"  # view switching
     ch_ao2 = "cDAQ1AO/ao2"  # view switching
-    ch_ao3 = "cDAQ1AO/ao3"  # stripe reduction
+    ch_ao3 = "cDAQ1AO/ao3"  # gamma angle, stripe reduction
+    ch_ao4 = "cDAQ1AO2/ao0"  # beta angle, light sheet incident angle
+    ch_ao5 = "cDAQ1AO2/ao1"  # O1 PIFOC control
 
     ch_ctr0 = "cDAQ1/_ctr0"  # for retrigger
     ch_ctr0_internal_output = "/cDAQ1/Ctr0InternalOutput"
@@ -23,8 +25,8 @@ class NIdaq:
 
     ch_dio0 = "cDAQ1DIO/port0/line0"  # 488 digital channel
     ch_dio1 = "cDAQ1DIO/port0/line1"  # 561 digital channel
-    ch_dio2 = "cDAQ1DIO/port0/line2"  # bright field
-    ch_dio3 = "cDAQ1DIO/port0/line3"  # idle
+    ch_dio2 = "cDAQ1DIO/port0/line2"  # 640 digital channel
+    ch_dio3 = "cDAQ1DIO/port0/line3"  # bright field
     ch_dio4 = "cDAQ1DIO/port0/line4"  # idle
     ch_dio5 = "cDAQ1DIO/port0/line5"  # idle
     ch_dio6 = "cDAQ1DIO/port0/line6"  # idle
@@ -33,8 +35,11 @@ class NIdaq:
     # constants
     MAX_VOL = 10  # unit: v, maximum voltage of the ao channels
     MIN_VOL = -10  # unit: v, minimal voltage of the ao channels
-    CONVERT_RATIO = (
+    CONVERT_RATIO_SCAN_GALVO = (
         159  # unit: um / v, to convert from voltage to the scan distance of the galvo
+    )
+    CONVERT_RATIO_PIFOC = (
+        40  # unit: um / v, to convert from voltage to the scan distance of the PIFOC [-400, 400]
     )
     READOUT_TIME_FULL_CHIP = (
         0.01  # unit: second, the readout time of the full chip camera
@@ -60,7 +65,9 @@ class NIdaq:
         view2_galvo1: float = -4.37,  # unit: v, to apply on galvo 1 for view 2
         view2_galvo2: float = 3.66,  # unit: v, to apply on galvo 2 for view 2
         stripe_reduction_range: float = 0.1,  # unit: v, to apply on glavo gamma to reduce stripe
-        stripe_reduction_offset: float = 0.58  # unit: v, to apply on glavo gamma to reduce stripe
+        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on glavo gamma to reduce stripe
+        o1_pifoc=0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
+        light_sheet_angle=-2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
     ):
         """
         Constructor of NIDaq.
@@ -75,8 +82,6 @@ class NIdaq:
             Scanning step size. unit: um.
         stage_scan_range : float
             Total range of stage scanning. unit: um.
-        readout_time : float
-             Readout time of the camera for full chip, unit: second.
 
         # TODO: add missing docstrings for rest of the optional arguments.
         """
