@@ -15,74 +15,71 @@ import serial
 import time
 
 
-def set_pump_speed(freq: int, amp: int):
-    """set the speed for pump by setting the frequency and amplitude"""
-    ser = serial.Serial(com, baudrate, timeout=5)
-    if ser.is_open:
+class WaterDispenserControl:
+    def __init__(self):
+        self.stop_now = False
+
+    def set_pump_speed(self, freq: int, amp: int):
+        """set the speed for pump by setting the frequency and amplitude"""
+        ser = serial.Serial(com, baudrate, timeout=5)
+        if ser.is_open:
+            ser.close()
+        ser.open()
+        message_freq = b"f" + bytearray(str(freq), "utf-8") + b"\r"
+        print(message_freq)
+        ser.write(message_freq)
+        time.sleep(1)  # allow the pump to respond to previous command
+        message_amp = b"a" + bytearray(str(amp), "utf-8") + b"\r"
+        print(message_amp)
+        ser.write(message_amp)
         ser.close()
-    ser.open()
-    message_freq = b'f' + bytearray(str(freq), "utf-8") + b'\r'
-    print(message_freq)
-    ser.write(message_freq)
-    time.sleep(1)  # allow the pump to respond to previous command
-    message_amp = b'a' + bytearray(str(amp), "utf-8") + b'\r'
-    print(message_amp)
-    ser.write(message_amp)
-    ser.close()
 
-
-def run_pump(duration: float):
-    """start pump for the duration and then stop"""
-    ser = serial.Serial(com, baudrate, timeout=5)
-    if ser.is_open:
+    def run_pump(self, duration: float):
+        """start pump for the duration and then stop"""
+        ser = serial.Serial(com, baudrate, timeout=5)
+        if ser.is_open:
+            ser.close()
+        ser.open()
+        print("start dispensing water")
+        ser.write(b"bon\r")
+        time.sleep(duration)
+        ser.write(b"boff\r")
+        print("stop dispensing water")
         ser.close()
-    ser.open()
-    print('start dispensing water')
-    ser.write(b'bon\r')
-    time.sleep(duration)
-    ser.write(b'boff\r')
-    print('stop dispensing water')
-    ser.close()
 
-
-def read_pump():
-    """read out the current status and print"""
-    ser = serial.Serial(com, baudrate, timeout=5)
-    if ser.is_open:
+    def read_pump(self):
+        """read out the current status and print"""
+        ser = serial.Serial(com, baudrate, timeout=5)
+        if ser.is_open:
+            ser.close()
+        ser.open()
+        ser.write(b"\r")
+        message = ser.read(100)
+        print(message.decode("utf-8"))
         ser.close()
-    ser.open()
-    ser.write(b'\r')
-    message = ser.read(100)
-    print(message.decode("utf-8"))
-    ser.close()
 
+    def run_for_recording(self, interval: float, duration: float, freq: int, amp: int):
+        """run the pump for a recording session
+        interval: float, unit: minute, interval to wait to run pump again
+        duration: fload, unit: second, duration when pump is on
+        freq: int, pump control frequency
+        amp : int, pump control amplitude
+        """
+        waittime = interval * 60 - duration
+        if waittime <= 0:
+            raise ValueError("interval is shorter than duration")
 
-def run_for_recording(interval: float, duration: float, freq: int, amp: int):
-    """run the pump for a recording session
-    interval: float, unit: minute, interval to wait to run pump again
-    duration: fload, unit: second, duration when pump is on
-    freq: int, pump control frequency
-    amp : int, pump control amplitude
-    """
-    waittime = interval * 60 - duration
-    if waittime <=0:
-        raise ValueError('interval is shorter than duration')
-
-    set_pump_speed(freq, amp)  # set the pump speed
-    time.sleep(1)
-    while True:
-        run_pump(duration)
-        time.sleep(waittime)
+        self.set_pump_speed(freq, amp)  # set the pump speed
+        time.sleep(1)
+        while not self.stop_now:
+            self.run_pump(duration)
+            time.sleep(waittime)
 
 
 if __name__ == "__main__":
-    com = 'COM7'
+    com = "COM7"
     baudrate = 9600
     # set_pump_speed(20, 100)
     # read_pump()
     # run_pump(5)
-    run_for_recording(3, 6, 25, 100)
-
-
-
-
+    WaterDispenserControl.run_for_recording(3, 6, 25, 100)

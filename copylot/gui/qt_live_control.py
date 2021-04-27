@@ -9,11 +9,11 @@ class LiveControl(QWidget):
     trigger_stop_live = pyqtSignal()
     thread_launching = pyqtSignal()
 
-    def __init__(self, parent, button_name, threadpool):
+    def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
 
         self.parent = parent
-        self.button_name = button_name
+        self.button_name = "Live Mode"
         self.threadpool = threadpool
 
         self.state_tracker = False  # tracks if live mode is on
@@ -62,13 +62,16 @@ class LiveControl(QWidget):
                 "live",
                 self.combobox_view,
                 self.combobox_channel,
-                self.parent.parameters_widget.parameters
+                self.parent.parameters_widget.parameters,
             )
 
             print(
-                "called with:", self.parent.parameters_widget.parameters,
-                "view", self.combobox_view,
-                "and channel", self.combobox_channel
+                "called with:",
+                self.parent.parameters_widget.parameters,
+                "view",
+                self.combobox_view,
+                "and channel",
+                self.combobox_channel,
             )
 
             # connect
