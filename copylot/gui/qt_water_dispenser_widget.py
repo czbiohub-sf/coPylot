@@ -1,11 +1,7 @@
 from PyQt5.QtWidgets import (
     QWidget,
-    QApplication,
-    QComboBox,
     QPushButton,
     QVBoxLayout,
-    QLineEdit,
-    QHBoxLayout,
     QGridLayout,
     QLabel,
     QDoubleSpinBox,
