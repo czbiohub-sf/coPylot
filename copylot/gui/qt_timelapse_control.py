@@ -31,12 +31,16 @@ class TimelapseControl(QWidget):
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.view_combobox.addItem("view 1 and 2")
+        self.view_combobox.setCurrentIndex(self.parent.defaults["timelapse"][0])
+
         self.layout.addWidget(self.view_combobox)
 
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
         self.laser_combobox.addItem("488 and 561")
+        self.laser_combobox.setCurrentIndex(self.parent.defaults["timelapse"][1])
+
         self.layout.addWidget(self.laser_combobox)
 
         self.setLayout(self.layout)

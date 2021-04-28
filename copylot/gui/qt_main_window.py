@@ -1,3 +1,4 @@
+import json
 import sys
 import qdarkstyle
 from PyQt5.QtCore import Qt, QThreadPool
@@ -31,6 +32,36 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
+
+        self.init_defaults = [
+            ["exposure", 0.001, 1, 0.02],
+            ["nb_timepoints", 1, 10000, 600],
+            ["scan_step", 0.01, 1, 0.1],
+            ["stage_scan_range", 0, 10000, 1000],
+            ["vertical_pixels", 0, 4000, 2048],
+            ["num_samples", 0, 100, 20],
+            ["offset_view1", 0, 3180, 1550],
+            ["offset_view2", 0, 3180, 1650],
+            ["view1_galvo1", -10, 10, 4.2],
+            ["view1_galvo2", -10, 10, -4.08],
+            ["view2_galvo1", -10, 10, -4.37],
+            ["view2_galvo2", -10, 10, 3.66],
+            ["stripe_reduction_range", 0, 10, 0.1],
+            ["stripe_reduction_offset", -10, 10, 0.58],
+        ]
+
+        try:
+            with open("defaults.txt") as json_file:
+                self.defaults = json.load(json_file)
+
+        except FileNotFoundError:  # construct initial defaults.txt file
+            self.defaults = {"parameters": {}, "live": [0, 0], "timelapse": [0, 0]}
+            for i in range(0, len(self.init_defaults)):
+                obj = self.init_defaults[i]
+                self.defaults["parameters"][obj[0]] = [obj[3], obj[1], obj[2]]
+
+            with open("defaults.txt", "w") as outfile:
+                json.dump(self.defaults, outfile)
 
         # initialize docks
         self.live_dock = QDockWidget("Live", self)
