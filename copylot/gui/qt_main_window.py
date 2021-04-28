@@ -42,10 +42,10 @@ class MainWindow(QMainWindow):
             _applyDockConfig(dock)
 
         # set maximum dock sizes
-        self.live_dock.setMaximumSize(200, 220)
-        self.timelapse_dock.setMaximumSize(200, 220)
-        self.water_dock.setMaximumSize(200, 220)
-        self.parameters_dock.setMaximumSize(650, 950)
+        self.live_dock.setFixedSize(200, 150)
+        self.timelapse_dock.setFixedSize(200, 150)
+        self.water_dock.setFixedSize(200, 200)
+        self.parameters_dock.setFixedSize(650, 650)
 
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, self.threadpool)
@@ -82,11 +82,7 @@ class MainWindow(QMainWindow):
 
 
 def _applyDockConfig(dock):
-    dock.setFeatures(
-        # QDockWidget.DockWidgetClosable
-        QDockWidget.DockWidgetMovable
-        | QDockWidget.DockWidgetFloatable
-    )
+    dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
     dock.setAllowedAreas(
         Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea
     )
