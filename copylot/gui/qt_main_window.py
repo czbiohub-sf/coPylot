@@ -1,7 +1,14 @@
 import sys
 import qdarkstyle
 from PyQt5.QtCore import Qt, QThreadPool
-from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QApplication,
+    QWidget,
+    QDockWidget,
+    QPushButton,
+)
 
 from copylot.gui.qt_live_control import LiveControl
 from copylot.gui.qt_parameters_widget import ParametersWidget
@@ -39,7 +46,7 @@ class MainWindow(QMainWindow):
             self.parameters_dock,
         ]
         for dock in self.dock_list:
-            _applyDockConfig(dock)
+            _apply_dock_config(dock)
 
         # set maximum dock sizes
         self.live_dock.setFixedSize(200, 150)
@@ -81,7 +88,7 @@ class MainWindow(QMainWindow):
         self.show()
 
 
-def _applyDockConfig(dock):
+def _apply_dock_config(dock):
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
     dock.setAllowedAreas(
         Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea
