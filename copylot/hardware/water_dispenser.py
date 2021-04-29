@@ -18,10 +18,12 @@ import time
 class WaterDispenserControl:
     def __init__(self):
         self.stop_now = False
+        self.com = "COM7"
+        self.baudrate = 9600
 
     def set_pump_speed(self, freq: int, amp: int):
         """set the speed for pump by setting the frequency and amplitude"""
-        ser = serial.Serial(com, baudrate, timeout=5)
+        ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
         ser.open()
@@ -36,7 +38,7 @@ class WaterDispenserControl:
 
     def run_pump(self, duration: float):
         """start pump for the duration and then stop"""
-        ser = serial.Serial(com, baudrate, timeout=5)
+        ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
         ser.open()
@@ -49,7 +51,7 @@ class WaterDispenserControl:
 
     def read_pump(self):
         """read out the current status and print"""
-        ser = serial.Serial(com, baudrate, timeout=5)
+        ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
         ser.open()
@@ -77,8 +79,8 @@ class WaterDispenserControl:
 
 
 if __name__ == "__main__":
-    com = "COM7"
-    baudrate = 9600
+    # com = "COM7"
+    # baudrate = 9600
     # set_pump_speed(20, 100)
     # read_pump()
     # run_pump(5)

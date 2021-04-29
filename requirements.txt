@@ -3,5 +3,5 @@ qdarkstyle==2.8
 nidaqmx==0.5.7
 black
 pre-commit
-serial~=0.0.97
-numpy~=1.20.2
+pyserial
+numpy==1.20.2
