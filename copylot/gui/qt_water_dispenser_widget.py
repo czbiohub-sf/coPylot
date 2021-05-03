@@ -1,3 +1,6 @@
+import sys
+import glob
+import serial
 from PyQt5.QtWidgets import (
     QWidget,
     QPushButton,
@@ -7,10 +10,33 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QSpinBox,
     QAbstractSpinBox,
+    QComboBox,
 )
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRunnable
-from copylot.hardware.water_dispenser import WaterDispenserControl
+from copylot.hardware.water_dispenser_control import WaterDispenserControl
 from copylot.gui.qt_worker_signals import WorkerSignals
+
+
+# provide list of available serial ports
+def serial_ports():
+    if sys.platform.startswith("win"):
+        ports = ["COM%s" % (i + 1) for i in range(256)]
+    elif sys.platform.startswith("linux") or sys.platform.startswith("cygwin"):
+        ports = glob.glob("/dev/tty[A-Za-z]*")
+    elif sys.platform.startswith("darwin"):
+        ports = glob.glob("/dev/tty.*")
+    else:
+        raise EnvironmentError("Unsupported platform")
+
+    result = []
+    for port in ports:
+        try:
+            s = serial.Serial(port)
+            s.close()
+            result.append(port)
+        except (OSError, serial.SerialException):
+            pass
+    return result
 
 
 class WaterDispenser(QWidget):
@@ -18,6 +44,8 @@ class WaterDispenser(QWidget):
 
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
+
+        print(serial_ports())
 
         self.parent = parent
         self.threadpool = threadpool
@@ -41,19 +69,41 @@ class WaterDispenser(QWidget):
         self.freq = QSpinBox()
         self.amp = QSpinBox()
 
-        self.param_list = [self.interval, self.duration, self.freq, self.amp]
-        self.param_names = ["interval", "duration", "freq", "amp"]
+        self.com = QComboBox()
+        self.baudrate = QComboBox()
+
         self.defaults = [3, 6, 25, 100]
+        self.com.addItems(serial_ports())
+        self.baudrate.addItems(map(str, serial.Serial.BAUDRATES))
+
+        self.param_list = [
+            self.interval,
+            self.duration,
+            self.freq,
+            self.amp,
+            self.com,
+            self.baudrate,
+        ]
+        self.param_names = [
+            "interval",
+            "duration",
+            "freq",
+            "amp",
+            "serial port",
+            "baudrate",
+        ]
 
         grid_counter = 0
-
         for param in self.param_list:
-            param.setValue(self.defaults[grid_counter])
-            param.setMaximum(1000)
+            if type(param) == QComboBox:
+                pass
+            else:
+                param.setValue(self.defaults[grid_counter])
+                param.setMaximum(1000)
 
-            if param == QDoubleSpinBox:
-                param.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
-                param.setDecimals(3)
+                if param == QDoubleSpinBox:
+                    param.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
+                    param.setDecimals(3)
 
             self.parameter_layout.addWidget(
                 QLabel(self.param_names[grid_counter]), grid_counter, 0
@@ -79,8 +129,9 @@ class WaterDispenser(QWidget):
                 self.freq_state,
                 self.amp_state,
             ]
+            serial_parameters = [self.serial_port_state, self.baudrate_state]
 
-            water_worker = WaterWorker(self, parameters)
+            water_worker = WaterWorker(self, parameters, serial_parameters)
             self.trigger_stop.connect(water_worker.stop)
             self.threadpool.start(water_worker)
 
@@ -107,13 +158,21 @@ class WaterDispenser(QWidget):
     def amp_state(self):
         return self.amp.value()
 
+    @property
+    def serial_port_state(self):
+        return self.com.currentText()
+
+    @property
+    def baudrate_state(self):
+        return int(self.baudrate.currentText())
+
 
 class WaterWorker(QRunnable):
-    def __init__(self, parent, parameters):
+    def __init__(self, parent, parameters, serial_parameters):
         super().__init__()
         self.parent = parent
         self.parameters = parameters
-        self.water_control = WaterDispenserControl()
+        self.water_control = WaterDispenserControl(*serial_parameters)
         self.signals = WorkerSignals()
 
     @pyqtSlot()

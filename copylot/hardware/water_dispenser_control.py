@@ -16,10 +16,10 @@ import time
 
 
 class WaterDispenserControl:
-    def __init__(self):
+    def __init__(self, com, baudrate):
         self.stop_now = False
-        self.com = "COM7"
-        self.baudrate = 9600
+        self.com = com
+        self.baudrate = baudrate
 
     def set_pump_speed(self, freq: int, amp: int):
         """set the speed for pump by setting the frequency and amplitude"""
