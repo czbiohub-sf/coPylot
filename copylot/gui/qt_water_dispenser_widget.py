@@ -45,8 +45,6 @@ class WaterDispenser(QWidget):
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
 
-        print(serial_ports())
-
         self.parent = parent
         self.threadpool = threadpool
         self.button_name = "Run for Recording"
@@ -98,8 +96,8 @@ class WaterDispenser(QWidget):
             if type(param) == QComboBox:
                 pass
             else:
-                param.setValue(self.defaults[grid_counter])
                 param.setMaximum(1000)
+                param.setValue(self.defaults[grid_counter])
 
                 if param == QDoubleSpinBox:
                     param.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
