@@ -1,4 +1,17 @@
-from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
+import os
+from datetime import datetime
+from pathlib import Path
+import json
+
+from PyQt5.QtWidgets import (
+    QWidget,
+    QComboBox,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QCheckBox,
+    QLabel,
+)
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from copylot.gui.qt_nidaq_worker import NIDaqWorker
@@ -43,6 +56,15 @@ class TimelapseControl(QWidget):
 
         self.layout.addWidget(self.laser_combobox)
 
+        self.start_layout = QHBoxLayout()
+        self.start_layout.setAlignment(Qt.AlignLeft)
+        self.save_parameters_checkbox = QCheckBox()
+        self.save_label = QLabel("log parameters")
+        self.start_layout.addWidget(self.save_parameters_checkbox)
+        self.start_layout.addWidget(self.save_label)
+
+        self.layout.addLayout(self.start_layout)
+
         self.setLayout(self.layout)
 
     def launch_nidaq(self):
@@ -78,6 +100,7 @@ class TimelapseControl(QWidget):
         self.parent.parameters_widget.toggle_button.setDisabled(self.state_tracker)
         self.view_combobox.setDisabled(self.state_tracker)
         self.laser_combobox.setDisabled(self.state_tracker)
+        self.save_parameters_checkbox.setDisabled(self.state_tracker)
         self.parent.live_widget.setDisabled(self.state_tracker)
 
         # disable parameter inputs
@@ -89,6 +112,9 @@ class TimelapseControl(QWidget):
         if self.state_tracker:
             self.section_button.setStyleSheet("background-color: red")
             self.launch_nidaq()
+
+            if self.save_parameters_checkbox.isChecked():
+                self.parent.parameters_widget.save_defaults(log=True)
         else:
             self.section_button.setStyleSheet("")
             self.trigger_stop_timelapse.emit()

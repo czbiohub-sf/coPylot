@@ -2,6 +2,7 @@ import json
 import threading
 import time
 import os
+from datetime import datetime
 from pathlib import Path
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
@@ -91,7 +92,7 @@ class ParametersWidget(QWidget):
         return parameter_vals
 
     @pyqtSlot()
-    def save_defaults(self):
+    def save_defaults(self, log=False):
         defaults = {"parameters": {}}
         for i in range(0, len(self.parameter_objects)):
             obj = self.parameter_objects[i]
@@ -105,10 +106,20 @@ class ParametersWidget(QWidget):
             self.parent.timelapse_widget.view_combobox.currentIndex(),
             self.parent.timelapse_widget.laser_combobox.currentIndex(),
         ]
-        with open(
-            os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
-        ) as outfile:
-            json.dump(defaults, outfile)
+        if not log:
+            with open(
+                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
+            ) as outfile:
+                json.dump(defaults, outfile)
+        else:
+            with open(
+                os.path.join(
+                    str(Path.home()),
+                    "log-" + datetime.now().strftime("%d-%m-%Y:%H:%M:%S") + ".txt",
+                ),
+                "w",
+            ) as outfile:
+                json.dump(defaults, outfile)
 
         def status():
             current_msg = self.parent.status_bar.currentMessage()
