@@ -1,7 +1,8 @@
 import json
 import threading
 import time
-
+import os
+from pathlib import Path
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton
@@ -104,8 +105,9 @@ class ParametersWidget(QWidget):
             self.parent.timelapse_widget.view_combobox.currentIndex(),
             self.parent.timelapse_widget.laser_combobox.currentIndex(),
         ]
-
-        with open("defaults.txt", "w") as outfile:
+        with open(
+            os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
+        ) as outfile:
             json.dump(defaults, outfile)
 
         def status():

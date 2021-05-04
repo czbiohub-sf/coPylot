@@ -1,6 +1,8 @@
 import json
+import os.path
 import sys
 import qdarkstyle
+from pathlib import Path
 from PyQt5.QtCore import Qt, QThreadPool
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -8,7 +10,6 @@ from PyQt5.QtWidgets import (
     QApplication,
     QWidget,
     QDockWidget,
-    QPushButton,
 )
 
 from copylot.gui.qt_live_control import LiveControl
@@ -51,7 +52,9 @@ class MainWindow(QMainWindow):
         ]
 
         try:
-            with open("defaults.txt") as json_file:
+            with open(
+                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "r"
+            ) as json_file:
                 self.defaults = json.load(json_file)
 
         except FileNotFoundError:  # construct initial defaults.txt file
@@ -60,7 +63,9 @@ class MainWindow(QMainWindow):
                 obj = self.init_defaults[i]
                 self.defaults["parameters"][obj[0]] = [obj[3], obj[1], obj[2]]
 
-            with open("defaults.txt", "w") as outfile:
+            with open(
+                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
+            ) as outfile:
                 json.dump(self.defaults, outfile)
 
         # initialize docks
