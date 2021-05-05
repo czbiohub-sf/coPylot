@@ -38,7 +38,6 @@ class TextboxAndSlider(QWidget):
 
         # widgets accessed by slot member functions
         self.slider = QSlider(Qt.Horizontal)
-        self.slider.mouseDoubleClickEvent = self.mouseDoubleClickEvent
         self.slider.mouseReleaseEvent = self.mouseReleaseEvent
 
         self.min_input_line = QLineEdit()
@@ -169,6 +168,3 @@ class TextboxAndSlider(QWidget):
 
     def mouseReleaseEvent(self, event):
         self.parent.parent.live_widget.launch_nidaq()
-
-    def mouseDoubleClickEvent(self, event):
-        self.toggle_range_widgets()

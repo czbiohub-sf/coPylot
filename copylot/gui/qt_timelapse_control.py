@@ -7,11 +7,11 @@ from copylot.gui.qt_nidaq_worker import NIDaqWorker
 class TimelapseControl(QWidget):
     trigger_stop_timelapse = pyqtSignal()
 
-    def __init__(self, parent, button_name, threadpool):
+    def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
 
         self.parent = parent
-        self.button_name = button_name
+        self.button_name = "Timelapse Mode"
         self.threadpool = threadpool
 
         self.state_tracker = (
@@ -50,7 +50,7 @@ class TimelapseControl(QWidget):
                 "timelapse",
                 self.combobox_view,
                 self.combobox_channel,
-                self.parent.parameters_widget.parameters
+                self.parent.parameters_widget.parameters,
             )
             print(
                 "called with:",
@@ -58,7 +58,7 @@ class TimelapseControl(QWidget):
                 "view",
                 self.combobox_view + 1 if self.combobox_view != 2 else "1 and 2",
                 "and channel",
-                *self.combobox_channel
+                *self.combobox_channel,
             )
 
             # connect signals
