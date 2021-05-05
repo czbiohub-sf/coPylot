@@ -76,12 +76,3 @@ class WaterDispenserControl:
         while not self.stop_now:
             self.run_pump(duration)
             time.sleep(waittime)
-
-
-if __name__ == "__main__":
-    # com = "COM7"
-    # baudrate = 9600
-    # set_pump_speed(20, 100)
-    # read_pump()
-    # run_pump(5)
-    WaterDispenserControl.run_for_recording(3, 6, 25, 100)
