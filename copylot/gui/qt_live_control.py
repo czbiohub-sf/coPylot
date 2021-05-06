@@ -32,7 +32,7 @@ class LiveControl(QWidget):
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
-        self.view_combobox.setCurrentIndex(self.parent.defaults["live"][0])
+        self.view_combobox.setCurrentIndex(self.parent.defaults["live"]["view"])
 
         self.layout.addWidget(self.view_combobox)
         self.view_combobox.activated.connect(self.launch_nidaq)
@@ -40,7 +40,7 @@ class LiveControl(QWidget):
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
-        self.laser_combobox.setCurrentIndex(self.parent.defaults["live"][1])
+        self.laser_combobox.setCurrentIndex(self.parent.defaults["live"]["laser"])
 
         self.layout.addWidget(self.laser_combobox)
         self.laser_combobox.activated.connect(self.launch_nidaq)

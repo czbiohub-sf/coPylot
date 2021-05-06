@@ -57,8 +57,20 @@ class MainWindow(QMainWindow):
             ) as json_file:
                 self.defaults = json.load(json_file)
 
-        except FileNotFoundError:  # construct initial defaults.txt file
-            self.defaults = {"parameters": {}, "live": [0, 0], "timelapse": [0, 0]}
+        except FileNotFoundError:  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
+            self.defaults = {
+                "parameters": {},
+                "live": {"view": 0, "laser": 0},
+                "timelapse": {"view": 0, "laser": 0},
+                "water": {
+                    "interval": 3,
+                    "duration": 6,
+                    "freq": 25,
+                    "amp": 100,
+                    "serial port": 0,
+                    "baudrate": 0,
+                },
+            }
             for i in range(0, len(self.init_defaults)):
                 obj = self.init_defaults[i]
                 self.defaults["parameters"][obj[0]] = [obj[3], obj[1], obj[2]]
@@ -86,7 +98,7 @@ class MainWindow(QMainWindow):
 
         # set maximum dock sizes
         self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 150)
+        self.timelapse_dock.setFixedSize(200, 170)
         self.water_dock.setFixedSize(200, 260)
         self.parameters_dock.setFixedSize(650, 650)
 

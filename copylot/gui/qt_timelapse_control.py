@@ -1,8 +1,3 @@
-import os
-from datetime import datetime
-from pathlib import Path
-import json
-
 from PyQt5.QtWidgets import (
     QWidget,
     QComboBox,
@@ -44,7 +39,7 @@ class TimelapseControl(QWidget):
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.view_combobox.addItem("view 1 and 2")
-        self.view_combobox.setCurrentIndex(self.parent.defaults["timelapse"][0])
+        self.view_combobox.setCurrentIndex(self.parent.defaults["timelapse"]["view"])
 
         self.layout.addWidget(self.view_combobox)
 
@@ -52,7 +47,7 @@ class TimelapseControl(QWidget):
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
         self.laser_combobox.addItem("488 and 561")
-        self.laser_combobox.setCurrentIndex(self.parent.defaults["timelapse"][1])
+        self.laser_combobox.setCurrentIndex(self.parent.defaults["timelapse"]["laser"])
 
         self.layout.addWidget(self.laser_combobox)
 
@@ -74,17 +69,11 @@ class TimelapseControl(QWidget):
             # launch worker thread with newest parameters
             daq_card_worker = NIDaqWorker(
                 "timelapse",
-                self.combobox_view,
-                self.combobox_channel,
+                self.view_combobox.currentIndex(),
+                [int(self.laser_combobox.currentText())]
+                if self.laser_combobox.currentIndex() != 2
+                else [488, 561],
                 self.parent.parameters_widget.parameters,
-            )
-            print(
-                "called with:",
-                self.parent.parameters_widget.parameters,
-                "view",
-                self.combobox_view + 1 if self.combobox_view != 2 else "1 and 2",
-                "and channel",
-                *self.combobox_channel,
             )
 
             # connect signals
@@ -118,18 +107,6 @@ class TimelapseControl(QWidget):
         else:
             self.section_button.setStyleSheet("")
             self.trigger_stop_timelapse.emit()
-
-    @property
-    def combobox_view(self):
-        return self.view_combobox.currentIndex()
-
-    @property
-    def combobox_channel(self):
-        return (
-            [int(self.laser_combobox.currentText())]
-            if self.laser_combobox.currentIndex() != 2
-            else [488, 561]
-        )
 
     @pyqtSlot()
     def status_finished(self):

@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton
+from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QComboBox
 
 from copylot.gui.qt_line_break import LineBreak
 from copylot.gui.qt_textbox_and_slider import TextboxAndSlider
@@ -93,24 +93,39 @@ class ParametersWidget(QWidget):
 
     @pyqtSlot()
     def save_defaults(self, log=False):
-        defaults = {"parameters": {}}
         for i in range(0, len(self.parameter_objects)):
             obj = self.parameter_objects[i]
-            defaults["parameters"][obj.label.text()] = [obj.spinbox.value(), *obj.range]
+            self.parent.defaults["parameters"][obj.label.text()] = [
+                obj.spinbox.value(),
+                *obj.range,
+            ]
 
-        defaults["live"] = [
-            self.parent.live_widget.view_combobox.currentIndex(),
-            self.parent.live_widget.laser_combobox.currentIndex(),
-        ]
-        defaults["timelapse"] = [
-            self.parent.timelapse_widget.view_combobox.currentIndex(),
-            self.parent.timelapse_widget.laser_combobox.currentIndex(),
-        ]
+        self.parent.defaults["timelapse"][
+            "view"
+        ] = self.parent.timelapse_widget.view_combobox.currentIndex()
+        self.parent.defaults["timelapse"][
+            "laser"
+        ] = self.parent.timelapse_widget.laser_combobox.currentIndex()
+
+        self.parent.defaults["live"][
+            "view"
+        ] = self.parent.live_widget.view_combobox.currentIndex()
+        self.parent.defaults["live"][
+            "laser"
+        ] = self.parent.live_widget.laser_combobox.currentIndex()
+
+        param_counter = 0
+        for param in self.parent.water_widget.param_list:
+            self.parent.defaults["water"][
+                self.parent.water_widget.param_names[param_counter]
+            ] = (param.currentIndex() if type(param) == QComboBox else param.value())
+            param_counter += 1
+
         if not log:
             with open(
                 os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
             ) as outfile:
-                json.dump(defaults, outfile)
+                json.dump(self.parent.defaults, outfile)
         else:
             with open(
                 os.path.join(
@@ -119,7 +134,7 @@ class ParametersWidget(QWidget):
                 ),
                 "w",
             ) as outfile:
-                json.dump(defaults, outfile)
+                json.dump(self.parent.defaults, outfile)
 
         def status():
             current_msg = self.parent.status_bar.currentMessage()
