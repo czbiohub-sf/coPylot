@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
         self.height = self.screenRect.height()
         self.width = self.screenRect.width()
 
-        QApplication.setFont(QFont("Arial", self.height / 70))
+        QApplication.setFont(QFont("Arial", self.height / 135))
 
         self.title = "Pisces Parameter Controller"
         self.left = 10
