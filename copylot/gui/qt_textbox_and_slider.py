@@ -16,25 +16,25 @@ class TextboxAndSlider(QWidget):
         self,
         parent,
         widget_name,
-        min_range,
-        max_range,
         data_type,
         increment,
-        default=0,
-        row=0,
+        row,
+        json_defaults,
     ):
         super(QWidget, self).__init__(parent)
 
+        self.json_defaults = json_defaults
+        self.val = self.json_defaults["parameters"][widget_name][0]
+        self.min = self.json_defaults["parameters"][widget_name][1]
+        self.max = self.json_defaults["parameters"][widget_name][2]
+
         self.parent = parent
         self.widget_name = widget_name
-        self.max_range = max_range
-        self.min_range = min_range
         self.data_type = data_type
         self.increment = increment
-        self.default = default
         self.row = row
 
-        self.range_visible = False
+        self.range_visible = False  # state tracker for visibility of range input lines
 
         # widgets accessed by slot member functions
         self.slider = QSlider(Qt.Horizontal)
@@ -51,7 +51,7 @@ class TextboxAndSlider(QWidget):
         # set spinbox type and connection based on data type
         if self.data_type == int:
             self.spinbox = QSpinBox()
-            self.slider_scaler = (
+            self.slider_scaling = (
                 1  # makes scaling in self.slider parameter have no effect
             )
 
@@ -64,7 +64,7 @@ class TextboxAndSlider(QWidget):
             self.spinbox.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
             self.spinbox.setDecimals(self.num_decimals)
 
-            self.slider_scaler = (
+            self.slider_scaling = (
                 self._max_int
             )  # scale self.slider parameters into integer range
 
@@ -74,21 +74,22 @@ class TextboxAndSlider(QWidget):
         else:
             raise TypeError("Only integers or floats acceptable for QSpinBox objects")
 
-        #  set universal spinbox parameters
+        # set parameters unaffected by datatype
+        # set ranges
+        self.spinbox.setRange(self.min, self.max)
+        self.slider.setMaximum(self.max * self.slider_scaling)
+        self.slider.setMinimum(self.min * self.slider_scaling)
+
+        # set values
+        self.spinbox.setValue(self.val)
+        self.slider.setValue(self.val * self.slider_scaling)
+
+        self.min_input_line.setText(str(self.min))
+        self.max_input_line.setText(str(self.max))
+
         self.spinbox.setSizeIncrement(self.increment, self.increment)
-        self.spinbox.setRange(self.min_range, self.max_range)
-        self.spinbox.setValue(self.default)
+
         self.spinbox.setFixedSize(75, 27)
-
-        #  set slider parameters based on data type (by value of self.slider_scaler)
-        self.slider.setMaximum(self.max_range * self.slider_scaler)
-        self.slider.setMinimum(self.min_range * self.slider_scaler)
-        self.slider.setValue(self.default * self.slider_scaler)
-
-        # set range input default values and connect to update slot
-        self.min_input_line.setText(str(self.min_range))
-        self.max_input_line.setText(str(self.max_range))
-
         self.min_input_line.setMaximumSize(66, 24)
         self.max_input_line.setMaximumSize(66, 24)
 
@@ -122,21 +123,22 @@ class TextboxAndSlider(QWidget):
     @pyqtSlot()
     def update_min_range(self):
         min_text = self.min_input_line.text()  # fetch QLineEdit contents
+
         try:
             min_text = float(min_text)  # if a number, convert to float
-            if min_text > self.max_range:
+            if min_text > self.max:
                 self.min_input_line.setText(
-                    str(self.min_range)
+                    str(self.min)
                 )  # reset to last acceptable min range
             else:
-                self.min_range = min_text
-                self.spinbox.setRange(self.min_range, self.max_range)
+                self.min = min_text
+                self.spinbox.setRange(self.min, self.max)
 
                 if self.data_type == int:
-                    self.slider.setMinimum(self.min_range)
+                    self.slider.setMinimum(self.min)
                 elif self.data_type == float:
-                    self.slider.setMinimum(self.min_range * self._max_int)
-        except:
+                    self.slider.setMinimum(self.min * self._max_int)
+        except ValueError:
             self.min_input_line.setText("NaN")
 
     @pyqtSlot()
@@ -144,19 +146,18 @@ class TextboxAndSlider(QWidget):
         max_text = self.max_input_line.text()
         try:
             max_text = float(max_text)
-            if max_text < self.min_range:
-                self.max_input_line.setText(str(self.max_range))
+            if max_text < self.min:
+                self.max_input_line.setText(str(self.max))
             else:
-                self.max_range = max_text
-                self.spinbox.setRange(self.min_range, self.max_range)
+                self.max = max_text
+                self.spinbox.setRange(self.min, self.max)
 
                 if self.data_type == int:
-                    self.slider.setMaximum(self.max_range)
+                    self.slider.setMaximum(self.max)
                 elif self.data_type == float:
-                    self.slider.setMaximum(self.max_range * self._max_int)
-        except:
+                    self.slider.setMaximum(self.max * self._max_int)
+        except ValueError:
             self.max_input_line.setText("NaN")
-        pass
 
     @pyqtSlot(float)
     def float_to_scaled_int(self, value):
@@ -168,3 +169,7 @@ class TextboxAndSlider(QWidget):
 
     def mouseReleaseEvent(self, event):
         self.parent.parent.live_widget.launch_nidaq()
+
+    @property
+    def range(self):
+        return [float(self.min_input_line.text()), float(self.max_input_line.text())]

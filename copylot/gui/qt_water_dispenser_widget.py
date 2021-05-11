@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox,
     QComboBox,
 )
+
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRunnable
 from copylot.hardware.water_dispenser_control import WaterDispenserControl
 from copylot.gui.qt_worker_signals import WorkerSignals
@@ -70,7 +71,6 @@ class WaterDispenser(QWidget):
         self.com = QComboBox()
         self.baudrate = QComboBox()
 
-        self.defaults = [3, 6, 25, 100]
         self.com.addItems(serial_ports())
         self.baudrate.addItems(map(str, serial.Serial.BAUDRATES))
 
@@ -90,14 +90,17 @@ class WaterDispenser(QWidget):
             "serial port",
             "baudrate",
         ]
-
         grid_counter = 0
         for param in self.param_list:
             if type(param) == QComboBox:
-                pass
+                param.setCurrentIndex(
+                    self.parent.defaults["water"][self.param_names[grid_counter]]
+                )
             else:
                 param.setMaximum(1000)
-                param.setValue(self.defaults[grid_counter])
+                param.setValue(
+                    self.parent.defaults["water"][self.param_names[grid_counter]]
+                )
 
                 if param == QDoubleSpinBox:
                     param.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
@@ -122,12 +125,15 @@ class WaterDispenser(QWidget):
             self.state_tracker = True
 
             parameters = [
-                self.interval_state,
-                self.duration_state,
-                self.freq_state,
-                self.amp_state,
+                self.interval.value(),
+                self.duration.value(),
+                self.freq.value(),
+                self.amp.value(),
             ]
-            serial_parameters = [self.serial_port_state, self.baudrate_state]
+            serial_parameters = [
+                self.com.currentText(),
+                int(self.baudrate.currentText()),
+            ]
 
             water_worker = WaterWorker(self, parameters, serial_parameters)
             self.trigger_stop.connect(water_worker.stop)
@@ -139,30 +145,6 @@ class WaterDispenser(QWidget):
             self.state_tracker = False
 
             self.trigger_stop.emit()
-
-    @property
-    def interval_state(self):
-        return self.interval.value()
-
-    @property
-    def duration_state(self):
-        return self.duration.value()
-
-    @property
-    def freq_state(self):
-        return self.freq.value()
-
-    @property
-    def amp_state(self):
-        return self.amp.value()
-
-    @property
-    def serial_port_state(self):
-        return self.com.currentText()
-
-    @property
-    def baudrate_state(self):
-        return int(self.baudrate.currentText())
 
 
 class WaterWorker(QRunnable):

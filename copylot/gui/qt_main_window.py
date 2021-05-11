@@ -1,7 +1,16 @@
+import json
+import os.path
 import sys
 import qdarkstyle
+from pathlib import Path
 from PyQt5.QtCore import Qt, QThreadPool
-from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QStatusBar,
+    QApplication,
+    QWidget,
+    QDockWidget,
+)
 
 from copylot.gui.qt_live_control import LiveControl
 from copylot.gui.qt_parameters_widget import ParametersWidget
@@ -25,6 +34,57 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
 
+        self.init_defaults = [
+            ["exposure", 0.001, 1, 0.02],
+            ["nb_timepoints", 1, 10000, 600],
+            ["scan_step", 0.01, 1, 0.1],
+            ["stage_scan_range", 0, 10000, 1000],
+            ["vertical_pixels", 0, 4000, 2048],
+            ["num_samples", 0, 100, 20],
+            ["offset_view1", 0, 3180, 1550],
+            ["offset_view2", 0, 3180, 1650],
+            ["view1_galvo1", -10, 10, 4.2],
+            ["view1_galvo2", -10, 10, -4.08],
+            ["view2_galvo1", -10, 10, -4.37],
+            ["view2_galvo2", -10, 10, 3.66],
+            ["stripe_reduction_range", 0, 10, 0.1],
+            ["stripe_reduction_offset", -10, 10, 0.58],
+        ]
+
+        try:
+            with open(
+                os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
+                "r",
+            ) as json_file:
+                self.defaults = json.load(json_file)
+
+        except FileNotFoundError:  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
+            if not os.path.isdir(os.path.join(str(Path.home()), ".coPylot")):
+                os.mkdir(os.path.join(str(Path.home()), ".coPylot"))
+
+            self.defaults = {
+                "parameters": {},
+                "live": {"view": 0, "laser": 0},
+                "timelapse": {"view": 0, "laser": 0},
+                "water": {
+                    "interval": 3,
+                    "duration": 6,
+                    "freq": 25,
+                    "amp": 100,
+                    "serial port": 0,
+                    "baudrate": 0,
+                },
+            }
+            for i in range(0, len(self.init_defaults)):
+                obj = self.init_defaults[i]
+                self.defaults["parameters"][obj[0]] = [obj[3], obj[1], obj[2]]
+
+            with open(
+                os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
+                "w",
+            ) as outfile:
+                json.dump(self.defaults, outfile)
+
         # initialize docks
         self.live_dock = QDockWidget("Live", self)
         self.timelapse_dock = QDockWidget("Timelapse", self)
@@ -39,11 +99,11 @@ class MainWindow(QMainWindow):
             self.parameters_dock,
         ]
         for dock in self.dock_list:
-            _applyDockConfig(dock)
+            _apply_dock_config(dock)
 
         # set maximum dock sizes
         self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 150)
+        self.timelapse_dock.setFixedSize(200, 170)
         self.water_dock.setFixedSize(200, 260)
         self.parameters_dock.setFixedSize(650, 650)
 
@@ -81,7 +141,7 @@ class MainWindow(QMainWindow):
         self.show()
 
 
-def _applyDockConfig(dock):
+def _apply_dock_config(dock):
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
     dock.setAllowedAreas(
         Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea | Qt.TopDockWidgetArea
