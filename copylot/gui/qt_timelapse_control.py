@@ -1,4 +1,11 @@
-from PyQt5.QtWidgets import QWidget, QComboBox, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QWidget,
+    QComboBox,
+    QPushButton,
+    QVBoxLayout,
+    QGridLayout,
+    QLabel,
+)
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 
 from copylot.gui.qt_nidaq_worker import NIDaqWorker
@@ -24,6 +31,7 @@ class TimelapseControl(QWidget):
         # button to call nidaq launcher
         self.section_button = QPushButton(self.button_name)
         self.section_button.pressed.connect(self.handle_nidaq_launch)
+        self.section_button.setFixedSize(self.parent.width / 4, self.parent.height / 24)
         self.layout.addWidget(self.section_button)
 
         # view and channel combobox widgets and options
@@ -31,14 +39,28 @@ class TimelapseControl(QWidget):
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
         self.view_combobox.addItem("view 1 and 2")
-        self.layout.addWidget(self.view_combobox)
 
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
         self.laser_combobox.addItem("488 and 561")
-        self.layout.addWidget(self.laser_combobox)
 
+        self.param_list = [self.view_combobox, self.laser_combobox]
+        self.param_names = ["view", "channel"]
+
+        self.parameter_layout = QGridLayout()
+        self.parameter_layout.setAlignment(Qt.AlignTop)
+
+        grid_counter = 0
+        for param in self.param_list:
+            label = QLabel(self.param_names[grid_counter])
+            label.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
+            self.parameter_layout.addWidget(label, grid_counter, 0)
+            self.parameter_layout.addWidget(param, grid_counter, 1)
+            param.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
+            grid_counter += 1
+
+        self.layout.addLayout(self.parameter_layout)
         self.setLayout(self.layout)
 
     def launch_nidaq(self):
@@ -48,7 +70,7 @@ class TimelapseControl(QWidget):
             # launch worker thread with newest parameters
             daq_card_worker = NIDaqWorker(
                 "timelapse",
-                self.combobox_view,
+                self.view_combobox.currentIndex(),
                 self.combobox_channel,
                 self.parent.parameters_widget.parameters,
             )
@@ -56,7 +78,9 @@ class TimelapseControl(QWidget):
                 "called with:",
                 self.parent.parameters_widget.parameters,
                 "view",
-                self.combobox_view + 1 if self.combobox_view != 2 else "1 and 2",
+                self.view_combobox.currentIndex() + 1
+                if self.view_combobox.currentIndex() != 2
+                else "1 and 2",
                 "and channel",
                 *self.combobox_channel,
             )
@@ -88,10 +112,6 @@ class TimelapseControl(QWidget):
         else:
             self.section_button.setStyleSheet("")
             self.trigger_stop_timelapse.emit()
-
-    @property
-    def combobox_view(self):
-        return self.view_combobox.currentIndex()
 
     @property
     def combobox_channel(self):

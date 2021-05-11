@@ -59,6 +59,7 @@ class WaterDispenser(QWidget):
 
         # add instance launching button
         self.section_button = QPushButton(self.button_name)
+        self.section_button.setFixedSize(self.parent.width / 6, self.parent.height / 24)
         self.section_button.pressed.connect(self.worker_handler)
 
         # add parameter inputs for run_for_recording
@@ -102,10 +103,11 @@ class WaterDispenser(QWidget):
                 if param == QDoubleSpinBox:
                     param.setStepType(QAbstractSpinBox.AdaptiveDecimalStepType)
                     param.setDecimals(3)
+            param.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
 
-            self.parameter_layout.addWidget(
-                QLabel(self.param_names[grid_counter]), grid_counter, 0
-            )
+            label = QLabel(self.param_names[grid_counter])
+            label.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
+            self.parameter_layout.addWidget(label, grid_counter, 0)
             self.parameter_layout.addWidget(param, grid_counter, 1)
             grid_counter += 1
 

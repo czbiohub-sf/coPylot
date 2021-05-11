@@ -1,4 +1,12 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import (
+    QWidget,
+    QApplication,
+    QComboBox,
+    QPushButton,
+    QVBoxLayout,
+    QGridLayout,
+    QLabel,
+)
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
 import time
 
@@ -24,6 +32,7 @@ class LiveControl(QWidget):
 
         # add instance launching button
         self.section_button = QPushButton(self.button_name)
+        self.section_button.setFixedSize(self.parent.width / 4, self.parent.height / 24)
 
         self.layout.addWidget(self.section_button)
         self.section_button.pressed.connect(self.handle_nidaq_launch)
@@ -32,15 +41,28 @@ class LiveControl(QWidget):
         self.view_combobox = QComboBox()
         self.view_combobox.addItem("view 1")
         self.view_combobox.addItem("view 2")
-        self.layout.addWidget(self.view_combobox)
-        self.view_combobox.activated.connect(self.launch_nidaq)
 
         self.laser_combobox = QComboBox()
         self.laser_combobox.addItem("488")
         self.laser_combobox.addItem("561")
-        self.layout.addWidget(self.laser_combobox)
-        self.laser_combobox.activated.connect(self.launch_nidaq)
 
+        self.param_list = [self.view_combobox, self.laser_combobox]
+        self.param_names = ["view", "channel"]
+
+        self.parameter_layout = QGridLayout()
+        self.parameter_layout.setAlignment(Qt.AlignTop)
+
+        grid_counter = 0
+        for param in self.param_list:
+            label = QLabel(self.param_names[grid_counter])
+            label.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
+            self.parameter_layout.addWidget(label, grid_counter, 0)
+            self.parameter_layout.addWidget(param, grid_counter, 1)
+            param.setFixedSize(self.parent.width / 12.5, self.parent.height / 30)
+            param.activated.connect(self.launch_nidaq)
+            grid_counter += 1
+
+        self.layout.addLayout(self.parameter_layout)
         self.setLayout(self.layout)
 
         self.thread_launching.connect(self.status_launching)

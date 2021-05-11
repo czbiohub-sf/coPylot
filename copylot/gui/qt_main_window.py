@@ -15,11 +15,14 @@ class MainWindow(QMainWindow):
 
         self.threadpool = QThreadPool()
 
+        self.desktop = QApplication.desktop()
+        self.screenRect = self.desktop.screenGeometry()
+        self.height = self.screenRect.height()
+        self.width = self.screenRect.width()
+
         self.title = "Pisces Parameter Controller"
         self.left = 10
         self.top = 10
-        self.width = 900
-        self.height = 1000
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -42,10 +45,10 @@ class MainWindow(QMainWindow):
             _applyDockConfig(dock)
 
         # set maximum dock sizes
-        self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 150)
-        self.water_dock.setFixedSize(200, 260)
-        self.parameters_dock.setFixedSize(650, 650)
+        self.live_dock.setFixedSize(self.width / 6, self.height / 5)
+        self.timelapse_dock.setFixedSize(self.width / 6, self.height / 5)
+        self.water_dock.setFixedSize(self.width / 6, self.height / 3)
+        self.parameters_dock.setFixedSize(self.width / 2.06, self.height)
 
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, self.threadpool)
