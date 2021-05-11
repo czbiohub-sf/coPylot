@@ -53,11 +53,15 @@ class MainWindow(QMainWindow):
 
         try:
             with open(
-                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "r"
+                os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
+                "r",
             ) as json_file:
                 self.defaults = json.load(json_file)
 
         except FileNotFoundError:  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
+            if not os.path.isdir(os.path.join(str(Path.home()), ".coPylot")):
+                os.mkdir(os.path.join(str(Path.home()), ".coPylot"))
+
             self.defaults = {
                 "parameters": {},
                 "live": {"view": 0, "laser": 0},
@@ -76,7 +80,8 @@ class MainWindow(QMainWindow):
                 self.defaults["parameters"][obj[0]] = [obj[3], obj[1], obj[2]]
 
             with open(
-                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
+                os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
+                "w",
             ) as outfile:
                 json.dump(self.defaults, outfile)
 

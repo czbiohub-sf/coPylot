@@ -123,13 +123,15 @@ class ParametersWidget(QWidget):
 
         if not log:
             with open(
-                os.path.join(str(Path.home()), "coPylot_parameters.txt"), "w"
+                os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
+                "w",
             ) as outfile:
                 json.dump(self.parent.defaults, outfile)
         else:
             with open(
                 os.path.join(
                     str(Path.home()),
+                    ".coPylot",
                     "log-" + datetime.now().strftime("%d-%m-%Y:%H:%M:%S") + ".txt",
                 ),
                 "w",
