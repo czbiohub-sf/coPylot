@@ -1,6 +1,7 @@
 import sys
 import qdarkstyle
 from PyQt5.QtCore import Qt, QThreadPool
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QMainWindow, QStatusBar, QApplication, QWidget, QDockWidget
 
 from copylot.gui.qt_live_control import LiveControl
@@ -19,6 +20,8 @@ class MainWindow(QMainWindow):
         self.screenRect = self.desktop.screenGeometry()
         self.height = self.screenRect.height()
         self.width = self.screenRect.width()
+
+        QApplication.setFont(QFont("Arial", self.height / 70))
 
         self.title = "Pisces Parameter Controller"
         self.left = 10
