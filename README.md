@@ -1,23 +1,31 @@
 # coPylot
-_coPylot_ is a UI software, providing  paramater input and control for the Pisces lightsheet microscope.
 
-The UI is started up by running **copylot/gui/main_window.py**. Its dependencies can be installed using the requiremets.txt file in a Python 3.7 Conda  environment. 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
+
+_coPylot_ is a python app to control the Pisces lightsheet microscope.
+Support for controling other microscopes planned to be added.
+
+It can be started up by running `copylot/gui/main_window.py` for now.
 
 
 ## Installation
-This installation guide uses Anaconda to set up a virtual environment with the required dependencies. 
 
-Install Anaconda here: https://www.anaconda.com/distribution/
+Using an environment manager is highly recommended. 
+Instructions below using [Anaconda](https://www.anaconda.com/distribution/)
+but you can pick your favorite environment manager and do not forget to
+have `pip`.
 
 
-### Clone coPylot Repository
+#### Clone coPylot Repository
+
 ```
 git clone https://github.com/royerlab/coPylot.git
 ```
 
-### Create Conda Environment and Install Dependencies
+#### Create Conda Environment and Install Dependencies
+
 ```
-conda create -n coPylot python=3.7
+conda create -n coPylot python=3.9
 conda activate coPylot
 pip install -r requirements.txt
 ```
