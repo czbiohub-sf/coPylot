@@ -3,8 +3,8 @@ import os.path
 import sys
 import qdarkstyle
 from pathlib import Path
-from PyQt5.QtCore import Qt, QThreadPool
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt, QThreadPool
+from qtpy.QtWidgets import (
     QMainWindow,
     QStatusBar,
     QApplication,

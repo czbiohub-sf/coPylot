@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QFrame
+from qtpy.QtWidgets import QWidget, QHBoxLayout, QFrame
 
 
 class LineBreak(QWidget):

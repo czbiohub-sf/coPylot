@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from qtpy.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxLayout
+from qtpy.QtCore import Qt, Signal, Slot
 import time
 
 from copylot.gui.qt_nidaq_worker import NIDaqWorker
 
 
 class LiveControl(QWidget):
-    trigger_stop_live = pyqtSignal()
-    thread_launching = pyqtSignal()
+    trigger_stop_live = Signal()
+    thread_launching = Signal()
 
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
@@ -108,11 +108,11 @@ class LiveControl(QWidget):
         if not self.state_tracker:
             self.parent.status_bar.showMessage("NIDaq idle...")
 
-    @pyqtSlot()
+    @Slot()
     def status_launching(self):
         self.parent.status_bar.showMessage("Live mode launching...")
 
-    @pyqtSlot()
+    @Slot()
     def status_running(self):
         self.parent.status_bar.showMessage("Live mode running...")
 

@@ -1,7 +1,7 @@
 import sys
 import glob
 import serial
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget,
     QPushButton,
     QVBoxLayout,
@@ -12,8 +12,8 @@ from PyQt5.QtWidgets import (
     QAbstractSpinBox,
     QComboBox,
 )
+from qtpy.QtCore import Qt, Signal, Slot, QRunnable
 
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRunnable
 from copylot.hardware.water_dispenser_control import WaterDispenserControl
 from copylot.gui._qt.job_runners.worker import WorkerSignals
 
@@ -41,7 +41,7 @@ def serial_ports():
 
 
 class WaterDispenser(QWidget):
-    trigger_stop = pyqtSignal()
+    trigger_stop = Signal()
 
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
@@ -117,7 +117,7 @@ class WaterDispenser(QWidget):
 
         self.setLayout(self.layout)
 
-    @pyqtSlot()
+    @Slot()
     def worker_handler(self):
         if not self.state_tracker:
             self.section_button.setText("Stop Water")
@@ -155,7 +155,7 @@ class WaterWorker(QRunnable):
         self.water_control = WaterDispenserControl(*serial_parameters)
         self.signals = WorkerSignals()
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         self.water_control.run_for_recording(*self.parameters)
 

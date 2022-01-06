@@ -4,9 +4,9 @@ import time
 import os
 from datetime import datetime
 from pathlib import Path
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QComboBox
+from qtpy.QtCore import Qt, Slot
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QComboBox
 
 from copylot.gui._qt.custom_widgets.qt_line_break import LineBreak
 from copylot.gui.qt_textbox_and_slider import TextboxAndSlider
@@ -91,7 +91,7 @@ class ParametersWidget(QWidget):
 
         return parameter_vals
 
-    @pyqtSlot()
+    @Slot()
     def save_defaults(self, log=False):
         for i in range(0, len(self.parameter_objects)):
             obj = self.parameter_objects[i]

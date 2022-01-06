@@ -1,6 +1,6 @@
 from math import log10
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import (
+from qtpy.QtCore import Qt, Slot
+from qtpy.QtWidgets import (
     QWidget,
     QSlider,
     QLineEdit,
@@ -105,7 +105,7 @@ class TextboxAndSlider(QWidget):
             self.parent.parent.live_widget.launch_nidaq
         )
 
-    @pyqtSlot()
+    @Slot()
     def toggle_range_widgets(self):
         self.range_visible = not self.range_visible
         if self.range_visible:
@@ -120,7 +120,7 @@ class TextboxAndSlider(QWidget):
             self.max_input_line.setParent(None)
             self.parent.grid_layout.addWidget(self.slider, self.row, 2, 1, 3)
 
-    @pyqtSlot()
+    @Slot()
     def update_min_range(self):
         min_text = self.min_input_line.text()  # fetch QLineEdit contents
 
@@ -141,7 +141,7 @@ class TextboxAndSlider(QWidget):
         except ValueError:
             self.min_input_line.setText("NaN")
 
-    @pyqtSlot()
+    @Slot()
     def update_max_range(self):
         max_text = self.max_input_line.text()
         try:
@@ -159,11 +159,11 @@ class TextboxAndSlider(QWidget):
         except ValueError:
             self.max_input_line.setText("NaN")
 
-    @pyqtSlot(float)
+    @Slot(float)
     def float_to_scaled_int(self, value):
         self.slider.setValue(int(value * self._max_int))
 
-    @pyqtSlot(int)
+    @Slot(int)
     def int_to_scaled_float(self, value):
         self.spinbox.setValue(float(value / self._max_int))
 
