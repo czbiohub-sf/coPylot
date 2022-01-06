@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QRunnable, pyqtSlot
 
-from copylot.gui.qt_worker_signals import WorkerSignals
+from copylot.gui._qt.job_runners.worker import WorkerSignals
 from copylot.hardware.alternative_control import NIdaq
 
 

@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 
 from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot, QRunnable
 from copylot.hardware.water_dispenser_control import WaterDispenserControl
-from copylot.gui.qt_worker_signals import WorkerSignals
+from copylot.gui._qt.job_runners.worker import WorkerSignals
 
 
 # provide list of available serial ports
