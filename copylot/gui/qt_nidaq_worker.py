@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QRunnable, pyqtSlot
+from qtpy.QtCore import QRunnable, Slot
 
 from copylot.gui._qt.job_runners.worker import WorkerSignals
 from copylot.hardware.alternative_control import NIdaq
@@ -19,7 +19,7 @@ class NIDaqWorker(QRunnable):
         self.daq_card = NIdaq(self, **parameters)
         self.thread_running = True
 
-    @pyqtSlot()
+    @Slot()
     def run(self):
         try:
             self.signals.running.emit()

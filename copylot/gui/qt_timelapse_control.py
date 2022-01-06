@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QWidget,
     QComboBox,
     QPushButton,
@@ -7,13 +7,13 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QLabel,
 )
-from PyQt5.QtCore import Qt, pyqtSignal, pyqtSlot
+from qtpy.QtCore import Qt, Signal, Slot
 
 from copylot.gui.qt_nidaq_worker import NIDaqWorker
 
 
 class TimelapseControl(QWidget):
-    trigger_stop_timelapse = pyqtSignal()
+    trigger_stop_timelapse = Signal()
 
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
@@ -108,6 +108,6 @@ class TimelapseControl(QWidget):
             self.section_button.setStyleSheet("")
             self.trigger_stop_timelapse.emit()
 
-    @pyqtSlot()
+    @Slot()
     def status_finished(self):
         self.parent.status_bar.showMessage("NIDaq idle...")
