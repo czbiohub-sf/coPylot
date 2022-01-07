@@ -10,6 +10,16 @@ class Camera:
         self._camera_index = camera_index
 
     def run(self, nb_frame: int = 100000):
+        """
+        Method to run the camera. It handles camera initializations and
+        uninitializations as well as camera buffer allocation/deallocation.
+
+        Parameters
+        ----------
+        nb_frame : int
+            Number of frames to be acquired, default chosen just a big enough number.
+
+        """
         if Dcamapi.init():
             dcam = Dcam(self._camera_index)
             if dcam.dev_open():
