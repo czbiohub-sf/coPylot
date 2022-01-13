@@ -15,10 +15,19 @@ class ASIStageException(Exception):
 
 
 class ASIStage:
-    def __init__(self, com_port=None):
+    """
+    ASIStage
+
+    Parameters
+    ----------
+    com_port : str
+
+    """
+
+    def __init__(self, com_port: str = None):
         self.com_port = com_port if com_port else "COM6"
 
-        self.ser = serial.Serial('/dev/ttyUSB0')
+        self.ser = serial.Serial(self.com_port)
         print(self.ser.name)
 
     def __del__(self):
@@ -26,6 +35,11 @@ class ASIStage:
 
     def set_speed(self, speed):
         message = f"speed x={speed}\r"
+        print("set speed to scan: " + message)
+        self.ser.write(message)
+
+    def set_default_speed(self, speed):
+        message = "speed x=10 y=10\r"
         print("set speed to scan: " + message)
         self.ser.write(message)
 
@@ -52,5 +66,20 @@ class ASIStage:
         Set current position to zero.
         """
         message = f"zero\r"
+        print(message)
+        self.ser.write(message)
+
+    def start_scan(self):
+        message = "scan"
+        print(message)
+        self.ser.write(message)
+
+    def scanr(self, x=0, y=0):
+        message = f"scanr x={x} y={y}"
+        print(message)
+        self.ser.write(message)
+
+    def scanv(self, x=0, y=0, f=1.0):
+        message = f"scanv x={x} y={y} f={f}"
         print(message)
         self.ser.write(message)
