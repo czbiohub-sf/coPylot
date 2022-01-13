@@ -46,3 +46,11 @@ class ASIStage:
         message = f"scan f={mode}\r"
         print(message)
         self.ser.write(message)
+
+    def zero(self):
+        """
+        Set current position to zero.
+        """
+        message = f"zero\r"
+        print(message)
+        self.ser.write(message)
