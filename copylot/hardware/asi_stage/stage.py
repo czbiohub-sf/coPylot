@@ -1,4 +1,13 @@
 import serial
+from enum import Enum
+
+
+class ASIStageScanMode(Enum):
+    """
+    0 for raster, 1 for serpentine
+    """
+    RASTER = 0
+    SERPENTINE = 1
 
 
 class ASIStageException(Exception):
@@ -25,14 +34,13 @@ class ASIStage:
         print("set backlash: " + message)
         self.ser.write(message)
 
-    def set_scan_mode(self, mode: int = 0):
+    def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
         """
         Method to set scan mode.
 
         Parameters
         ----------
-        mode : int
-            0 for raster, 1 for serpantine
+        mode : ASIStageScanMode
 
         """
         message = f"scan f={mode}\r"
