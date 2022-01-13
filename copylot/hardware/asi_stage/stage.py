@@ -19,3 +19,22 @@ class ASIStage:
         message = f"speed x={speed}\r"
         print("set speed to scan: " + message)
         self.ser.write(message)
+
+    def set_backlash(self):
+        message = "backlash x=0.04 y=0.0\r"
+        print("set backlash: " + message)
+        self.ser.write(message)
+
+    def set_scan_mode(self, mode: int = 0):
+        """
+        Method to set scan mode.
+
+        Parameters
+        ----------
+        mode : int
+            0 for raster, 1 for serpantine
+
+        """
+        message = f"scan f={mode}\r"
+        print(message)
+        self.ser.write(message)
