@@ -1,7 +1,7 @@
 from qtpy.QtCore import QRunnable, Slot
 
 from copylot.gui._qt.job_runners.worker import WorkerSignals
-from copylot.hardware.ni_daq.alternative_control import NIdaq
+from copylot.hardware.ni_daq.control import NIDaq
 
 
 class NIDaqWorker(QRunnable):
@@ -16,7 +16,7 @@ class NIDaqWorker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-        self.daq_card = NIdaq(self, **parameters)
+        self.daq_card = NIDaq(self, **parameters)
         self.thread_running = True
 
     @Slot()
