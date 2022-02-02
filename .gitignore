@@ -131,3 +131,5 @@ dmypy.json
 ToDo.txt
 .idea
 defaults.txt
+
+copylot/_version.py

@@ -148,8 +148,12 @@ def _apply_dock_config(dock):
     )
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()
