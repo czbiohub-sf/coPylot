@@ -22,10 +22,13 @@ have `pip`.
 git clone https://github.com/royerlab/coPylot.git
 ```
 
-#### Create Conda Environment and Install Dependencies
+#### Create Conda Environment and Install coPylot 
+
+We currently have no release on pypi, so you can follow the steps below to 
+install editable version of coPylot with help of `pip`:
 
 ```
 conda create -n coPylot python=3.9
 conda activate coPylot
-pip install -r requirements.txt
+pip install -e .
 ```
