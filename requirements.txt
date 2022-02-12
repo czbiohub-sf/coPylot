@@ -1,8 +1,0 @@
-pyqt5==5.15.6
-qdarkstyle==2.8
-nidaqmx==0.5.7
-black
-pre-commit
-pyserial==3.5
-numpy==1.21.0
-qtpy==1.11.2
