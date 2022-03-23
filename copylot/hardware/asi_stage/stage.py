@@ -6,6 +6,7 @@ class ASIStageScanMode(Enum):
     """
     0 for raster, 1 for serpentine
     """
+
     RASTER = 0
     SERPENTINE = 1
 
@@ -38,7 +39,7 @@ class ASIStage:
         print("set speed to scan: " + message)
         self.ser.write(message)
 
-    def set_default_speed(self, speed):
+    def set_default_speed(self):
         message = "speed x=10 y=10\r"
         print("set speed to scan: " + message)
         self.ser.write(message)
