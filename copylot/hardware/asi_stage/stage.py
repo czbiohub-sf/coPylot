@@ -1,11 +1,12 @@
 import serial
-from enum import Enum
+from enum import IntEnum
 
 
-class ASIStageScanMode(Enum):
+class ASIStageScanMode(IntEnum):
     """
     0 for raster, 1 for serpentine
     """
+
     RASTER = 0
     SERPENTINE = 1
 
@@ -36,17 +37,17 @@ class ASIStage:
     def set_speed(self, speed):
         message = f"speed x={speed}\r"
         print("set speed to scan: " + message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def set_default_speed(self, speed):
         message = "speed x=10 y=10\r"
         print("set speed to scan: " + message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def set_backlash(self):
         message = "backlash x=0.04 y=0.0\r"
         print("set backlash: " + message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
         """
@@ -59,7 +60,7 @@ class ASIStage:
         """
         message = f"scan f={mode}\r"
         print(message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def zero(self):
         """
@@ -67,19 +68,19 @@ class ASIStage:
         """
         message = f"zero\r"
         print(message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def start_scan(self):
         message = "scan"
         print(message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def scanr(self, x=0, y=0):
         message = f"scanr x={x} y={y}"
         print(message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
 
     def scanv(self, x=0, y=0, f=1.0):
         message = f"scanv x={x} y={y} f={f}"
         print(message)
-        self.ser.write(message)
+        self.ser.write(message.encode())
