@@ -58,7 +58,7 @@ class ASIStage:
         mode : ASIStageScanMode
 
         """
-        message = f"scan f={mode}\r"
+        message = f"scan f={int(mode)}\r"
         print(message)
         self.ser.write(message.encode())
 
