@@ -3,16 +3,19 @@ This is a script to run basic timelapse together with the
 nidaq script. This script tries to mimic the behavior given
 in the stageScan_multiPos.bsh script.
 """
+import time
 from os.path import join
+import tensorstore as ts
 
 from copylot.hardware.asi_stage.stage import ASIStage, ASIStageScanMode
+from copylot.hardware.hamamatsu_camera.dcam import Dcamapi, Dcam, DCAM_IDPROP, DCAMPROP
 
 path = "D:/data/20210506_xiang"
 path_prefix = "stage_TL100_range500um_step0.31_4um_30ms_view2_interval_2s_488_20mW_561_10mW_1800tp_3pos"
 
-nb_channel = 2
+nb_channel = 1
 nb_view = 2
-channels = ["488", "561"]
+channels = ["488"]
 interleave = False
 
 nb_frames = 1  # number of timepoint
@@ -39,7 +42,7 @@ alignment_offset_in_um = 0
 galvo_offset_in_um = 0
 offset = alignment_offset_in_um + galvo_offset_in_um + custom_offset_in_um
 
-nb_slices = range_in_um / step_size_um
+nb_slices = int(range_in_um // step_size_um)
 # reset the scanning range for multi channel imaging
 if nb_slices % nb_channel != 0 and interleave:
     nb_slices -= nb_slices % nb_channel
@@ -62,37 +65,134 @@ save_path = join(path, path_prefix)
 
 axis_order = ["z", "channel", "time", "position"]
 
-asi_stage.set_scan_mode(scan_mode)
-asi_stage.set_backlash()
-asi_stage.set_speed(speed=speed)
-asi_stage.zero()
 
+def main():
+    dataset = ts.open(
+        {
+            "driver": "zarr",
+            'kvstore': {
+                'driver': 'file',
+                'path': r'C:\Users\PiscesScope\Documents\acs\coPylot\test_zarr',
+            },
+            "key_encoding": ".",
+            "metadata": {
+                "shape": [nb_slices, nb_view, nb_frames, 2048, 2048],
+                "chunks": [128, 1, 128, 128, 128],
+                "dtype": "<i2",
+                "order": "C",
+                "compressor": {
+                    "id": "blosc",
+                    "shuffle": -1,
+                    "clevel": 5,
+                    "cname": "lz4",
+                },
+            },
+            'create': True,
+            'delete_existing': True,
+        }
+    ).result()
 
-# Set camera for external trigger and validate
+    write_futures = [None] * int(nb_slices * nb_view * nb_frames)
 
-# Set camera trigger delay and validate
+    asi_stage.set_scan_mode(scan_mode)
+    asi_stage.set_backlash()
+    asi_stage.set_speed(speed=speed)
+    asi_stage.zero()
 
+    if Dcamapi.init():
+        dcam = Dcam(0)
+        if dcam.dev_open():
 
-# Acquisition loop
-for f in range(nb_frames):
-    for view in range(nb_view):
+            # Set camera for external trigger and validate
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGERSOURCE, DCAMPROP.TRIGGERSOURCE.EXTERNAL
+            )
 
-        if view == 0:
-            asi_stage.scanr(x=0, y=range_in_um / 1000)
-            asi_stage.scanv(x=0, y=0, f=1.0)
+            # Set camera trigger delay and validate
+            dcam.prop_setvalue(DCAM_IDPROP.TRIGGERDELAY, 0.0)
+
+            if dcam.buf_alloc(3):
+                start_time = time.time()
+
+                # Acquisition loop
+                for f in range(nb_frames):
+                    for view in range(nb_view):
+
+                        if view == 0:
+                            asi_stage.scanr(x=0, y=range_in_um / 1000)
+                            asi_stage.scanv(x=0, y=0, f=1.0)
+                        else:
+                            asi_stage.scanr(
+                                x=-offset / 1000, y=(-offset + range_in_um) / 1000
+                            )
+                            asi_stage.scanv(x=0, y=0, f=1.0)
+                        print(f"scan range in um: {range_in_um}")
+
+                        # if interleave:
+                        print(f"start interleaved acquisition: {interleave}")
+                        asi_stage.start_scan()
+
+                        counter = 0
+                        slice = 0
+                        timeout_milisec = 100
+                        fps_calculation_interval = 1
+
+                        while slice < nb_slices:
+                            if dcam.wait_capevent_frameready(timeout_milisec):
+                                data = dcam.buf_getlastframedata()
+
+                                # Async write
+                                write_futures[
+                                    f * (nb_slices * nb_view) + view * nb_slices + slice
+                                ] = dataset[slice, view, f, :, :].write(data)
+
+                                slice += 1
+                                counter += 1
+                            else:
+                                dcamerr = dcam.lasterr()
+                                if dcamerr.is_timeout():
+                                    print('===: timeout')
+                                else:
+                                    print(
+                                        '-NG: Dcam.wait_event() fails with error {}'.format(
+                                            dcamerr
+                                        )
+                                    )
+                                    break
+
+                            if (time.time() - start_time) > fps_calculation_interval:
+                                print("FPS: ", counter / (time.time() - start_time))
+                                counter = 0
+                                start_time = time.time()
+
+                for f in range(nb_frames):
+                    for view in range(nb_view):
+                        for slice in range(nb_slices):
+                            write_futures[
+                                f * (nb_slices * nb_view) + view * nb_slices + slice
+                            ].result()
+
+                # Set camera for internal trigger and validate
+                dcam.prop_setvalue(
+                    DCAM_IDPROP.TRIGGERSOURCE, DCAMPROP.TRIGGERSOURCE.INTERNAL
+                )
+
+            else:
+                print(
+                    '-NG: Dcam.buf_alloc(3) fails with error {}'.format(dcam.lasterr())
+                )
+            dcam.dev_close()
+
         else:
-            asi_stage.scanr(x=-offset / 1000, y=(-offset + range_in_um) / 1000)
-            asi_stage.scanv(x=0, y=0, f=1.0)
-        print(f"scan range in um: {range_in_um}")
+            print('-NG: Dcam.dev_open() fails with error {}'.format(dcam.lasterr()))
 
-        if interleave:
-            print(f"start interleaved acquisition: {interleave}")
-            asi_stage.start_scan()
+    else:
+        print(f"Dcamapi.init() fails with error {Dcamapi.lasterr()}")
 
-            slice = 0
+    Dcamapi.uninit()
 
-
-# Set camera for internal trigger and validate
+    asi_stage.set_default_speed()
 
 
-asi_stage.set_default_speed()
+if __name__ == '__main__':
+    main()
