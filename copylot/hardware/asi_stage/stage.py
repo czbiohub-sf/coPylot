@@ -28,7 +28,7 @@ class ASIStage:
     def __init__(self, com_port: str = None):
         self.com_port = com_port if com_port else "COM6"
 
-        self.ser = serial.Serial(self.com_port)
+        self.ser = serial.Serial(self.com_port, baudrate=1000000)
         print(self.ser.name)
 
     def __del__(self):
