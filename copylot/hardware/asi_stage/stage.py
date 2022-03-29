@@ -28,7 +28,25 @@ class ASIStage:
     def __init__(self, com_port: str = None):
         self.com_port = com_port if com_port else "COM6"
 
-        self.ser = serial.Serial(self.com_port)
+        self.ser = serial.Serial()
+        self.ser.port = self.com_port
+        self.ser.baudrate = 9600
+        self.ser.parity = serial.PARITY_NONE
+        self.ser.bytesize = serial.EIGHTBITS
+        self.ser.stopbits = serial.STOPBITS_ONE
+        self.ser.xonoff = False
+        self.ser.rtscts = False
+        self.ser.dsrdtr = False
+        self.ser.write_timeout = 1
+        self.ser.timeout = 1
+
+        self.ser.set_buffer_size(12800, 12800)
+        self.ser.open()
+
+        if self.ser.is_open:
+            self.ser.reset_input_buffer()
+            self.ser.reset_output_buffer()
+
         print(self.ser.name)
 
     def __del__(self):
@@ -39,7 +57,7 @@ class ASIStage:
         print("set speed to scan: " + message)
         self.ser.write(message.encode())
 
-    def set_default_speed(self, speed):
+    def set_default_speed(self):
         message = "speed x=10 y=10\r"
         print("set speed to scan: " + message)
         self.ser.write(message.encode())
@@ -84,3 +102,31 @@ class ASIStage:
         message = f"scanv x={x} y={y} f={f}"
         print(message)
         self.ser.write(message.encode())
+
+    def info_x(self):
+        self.ser.reset_input_buffer()
+        self.ser.reset_output_buffer()
+
+        command = "INFO x"
+        message = bytes(f"{command}\r", encoding="ascii")
+        print(message)
+        self.ser.write(message)
+        response = self.ser.readline()
+        response = response.decode(encoding="ascii")
+        print(response)
+        print(f"Recv: {response.strip()}")
+
+        response = self.ser.readline()
+        response = response.decode(encoding="ascii")
+        print(response)
+        print(f"Recv: {response.strip()}")
+
+        response = self.ser.readline()
+        response = response.decode(encoding="ascii")
+        print(response)
+        print(f"Recv: {response.strip()}")
+
+        response = self.ser.readline()
+        response = response.decode(encoding="ascii")
+        print(response)
+        print(f"Recv: {response.strip()}")
