@@ -52,6 +52,9 @@ class ASIStage:
     def __del__(self):
         self.serial_connection.close()
 
+    def _send_message(self, message: str):
+        self.serial_connection.write(bytes(f"{message}\r", encoding="ascii"))
+
     def set_speed(self, speed):
         message = f"speed x={speed}\r"
         print("set speed to scan: " + message)
