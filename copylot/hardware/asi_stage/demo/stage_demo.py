@@ -22,15 +22,15 @@ def raster_scan_demo():
     stage.zero()
 
 
-def serpentine_scan_demo():
-    stage = ASIStage()
-    stage.zero()
-
-    stage.set_scan_mode(mode=ASIStageScanMode.SERPENTINE)
-
-    stage.start_scan()
-
-    stage.zero()
+# def serpentine_scan_demo():
+#     stage = ASIStage()
+#     stage.zero()
+#
+#     stage.set_scan_mode(mode=ASIStageScanMode.SERPENTINE)
+#
+#     stage.start_scan()
+#
+#     stage.zero()
 
 
 if __name__ == '__main__':
@@ -38,4 +38,4 @@ if __name__ == '__main__':
 
     raster_scan_demo()
 
-    serpentine_scan_demo()
+    # serpentine_scan_demo()
