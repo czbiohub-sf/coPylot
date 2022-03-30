@@ -58,17 +58,17 @@ class ASIStage:
     def set_speed(self, speed):
         message = f"speed x={speed}\r"
         print("set speed to scan: " + message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def set_default_speed(self, speed):
         message = "speed x=10 y=10\r"
         print("set speed to scan: " + message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def set_backlash(self):
         message = "backlash x=0.04 y=0.0\r"
         print("set backlash: " + message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
         """
@@ -81,7 +81,7 @@ class ASIStage:
         """
         message = f"scan f={int(mode)}\r"
         print(message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def zero(self):
         """
@@ -89,19 +89,19 @@ class ASIStage:
         """
         message = f"zero\r"
         print(message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def start_scan(self):
         message = "scan"
         print(message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def scanr(self, x=0, y=0):
         message = f"scanr x={x} y={y}"
         print(message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
 
     def scanv(self, x=0, y=0, f=1.0):
         message = f"scanv x={x} y={y} f={f}"
         print(message)
-        self.serial_connection.write(message.encode())
+        self._send_message(message)
