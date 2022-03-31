@@ -9,7 +9,7 @@ jobs:
   style:
     name: Style Check
     runs-on: ubuntu-latest
-    if: github.repository == 'royerlab/copylot'
+#    if: github.repository == 'royerlab/copylot'
 
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
   lint:
       name: Lint Check
       runs-on: ubuntu-latest
-      if: github.repository == 'royerlab/copylot'
+#      if: github.repository == 'royerlab/copylot'
 
       strategy:
         matrix:
