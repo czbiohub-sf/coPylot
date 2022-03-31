@@ -31,7 +31,9 @@ class Camera:
 
                         for _ in range(nb_frame):
                             if dcam.wait_capevent_frameready(timeout_milisec):
-                                data = dcam.buf_getlastframedata()  # Data is here  # noqa: F841
+                                data = (
+                                    dcam.buf_getlastframedata()
+                                )  # Data is here  # noqa: F841
                             else:
                                 dcamerr = dcam.lasterr()
                                 if dcamerr.is_timeout():
