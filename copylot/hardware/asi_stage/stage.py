@@ -93,7 +93,7 @@ class ASIStage:
         """
         Set current position to zero.
         """
-        message = f"ZERO\r"
+        message = "ZERO\r"
         self._send_message(message)
         print(self._read_response())
 
