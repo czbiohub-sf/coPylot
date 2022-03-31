@@ -3,13 +3,13 @@ name: Pull Requests
 on:
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   style:
     name: Style Check
     runs-on: ubuntu-latest
-    if: github.repository == 'royerlab/copylot'
+    if: github.repository == 'royerlab/coPylot'
 
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
   lint:
       name: Lint Check
       runs-on: ubuntu-latest
-      if: github.repository == 'royerlab/copylot'
+      if: github.repository == 'royerlab/coPylot'
 
       strategy:
         matrix:
