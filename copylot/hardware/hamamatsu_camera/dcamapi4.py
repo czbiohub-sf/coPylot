@@ -1,3 +1,4 @@
+# flake8: noqa
 # dcamapi4.py : Jun 18, 2021
 #
 # Copyright (C) 2021 Hamamatsu Photonics K.K.. All right reserved.
