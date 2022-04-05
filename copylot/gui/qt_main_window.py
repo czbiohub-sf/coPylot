@@ -150,7 +150,7 @@ def _apply_dock_config(dock):
 
 def main():
     app = QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow()  # noqa: F841
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     sys.exit(app.exec())
 

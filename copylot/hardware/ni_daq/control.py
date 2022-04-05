@@ -22,10 +22,10 @@ def set_ao_value(ch, value):
 
 class NIDaq:
     # Channel information
-    ch_ao0 = "cDAQ1AO/ao0"   # scanning channel
-    ch_ao1 = "cDAQ1AO/ao1"   # view switching
-    ch_ao2 = "cDAQ1AO/ao2"   # view switching
-    ch_ao3 = "cDAQ1AO/ao3"   # gamma angle, stripe reduction
+    ch_ao0 = "cDAQ1AO/ao0"  # scanning channel
+    ch_ao1 = "cDAQ1AO/ao1"  # view switching
+    ch_ao2 = "cDAQ1AO/ao2"  # view switching
+    ch_ao3 = "cDAQ1AO/ao3"  # gamma angle, stripe reduction
     ch_ao4 = "cDAQ1AO2/ao0"  # beta angle, light sheet incident angle
     ch_ao5 = "cDAQ1AO2/ao1"  # O1 PIFOC control
     ch_ao6 = "cDAQ1AO2/ao2"  # O3 PIFOC control
@@ -61,12 +61,8 @@ class NIDaq:
     CONVERT_RATIO_SCAN_GALVO = (
         159  # unit: um / v, to convert from voltage to the scan distance of the galvo
     )
-    CONVERT_RATIO_PIFOC_O1 = (
-        40  # unit: um / v, to convert from voltage to the scan distance of the PIFOC O1 [-400, 400]
-    )
-    CONVERT_RATIO_PIFOC_O3 = (
-        10  # unit: um / v, to convert from voltage to the scan distance of the PIFOC O3 [0, 100]
-    )
+    CONVERT_RATIO_PIFOC_O1 = 40  # unit: um / v, to convert from voltage to the scan distance of the PIFOC O1 [-400, 400]
+    CONVERT_RATIO_PIFOC_O3 = 10  # unit: um / v, to convert from voltage to the scan distance of the PIFOC O3 [0, 100]
     READOUT_TIME_FULL_CHIP = (
         0.01  # unit: second, the readout time of the full chip camera
     )
@@ -95,7 +91,7 @@ class NIDaq:
         stripe_reduction_offset: float = 0.58,  # unit: v, to apply on glavo gamma to reduce stripe
         o1_pifoc=0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
         light_sheet_angle=-2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
-        laser_power=100  # unit: percentage [0, 100], for laser analog control
+        laser_power=100,  # unit: percentage [0, 100], for laser analog control
     ):
         """
         Constructor of NIDaq.
@@ -148,9 +144,7 @@ class NIDaq:
 
     @property
     def nb_slices(self):
-        return int(
-            self.scan_range / self.scan_step
-        )
+        return int(self.scan_range / self.scan_step)
 
     @property
     def sampling_rate(self):
@@ -170,7 +164,9 @@ class NIDaq:
         data_ao4 = [self.light_sheet_angle] * self.num_samples
 
         # AO7, for laser analog control
-        data_ao7 = [self.laser_power_percent / 100 * self.MAX_LASER_ANALOG] * self.num_samples
+        data_ao7 = [
+            self.laser_power_percent / 100 * self.MAX_LASER_ANALOG
+        ] * self.num_samples
 
         # AO1, AO2 and AO6, for view switching and light sheet stabilization
         if view == "view1":
@@ -198,25 +194,32 @@ class NIDaq:
                 np.linspace(max_range + offset, min_range + offset, self.num_samples)
             )
             data_ao0_off = list(
-                np.linspace(data_ao0_on[nb_on_sample], max_range + offset, nb_off_sample)
+                np.linspace(
+                    data_ao0_on[nb_on_sample], max_range + offset, nb_off_sample
+                )
             )
             data_ao0 = data_ao0_on[:nb_on_sample] + data_ao0_off
 
             # AO5, for fixed O1 position
             data_ao5 = [self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1] * self.num_samples
 
-        return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5, data_ao6, data_ao7]
+        return [
+            data_ao0,
+            data_ao1,
+            data_ao2,
+            data_ao3,
+            data_ao4,
+            data_ao5,
+            data_ao6,
+            data_ao7,
+        ]
 
     def _get_do_data(self, nr_channels, interleave=False, current_ch=0):
         """
         Method to get digital output data.
         """
-        nb_on_sample = round(
-            (self.exposure - self.readout_time) * self.sampling_rate
-        )
-        data_on = [True] * nb_on_sample + [False] * (
-                self.num_samples - nb_on_sample
-        )
+        nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
+        data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
         data_off = [False] * self.num_samples
 
         if nr_channels == 1:
@@ -226,7 +229,9 @@ class NIDaq:
             # only generate data once if interleaved channel acquisition
             if interleave:
                 for i in range(nr_channels):
-                    data.append(data_off * i + data_on + data_off * (nr_channels - i - 1))
+                    data.append(
+                        data_off * i + data_on + data_off * (nr_channels - i - 1)
+                    )
             # generate data for each channel for sequential channel acquisition
             else:
                 for ch in range(nr_channels):
@@ -269,8 +274,15 @@ class NIDaq:
                 raise ValueError("Channel not supported")
         return task_do
 
-    def acquire_stacks(self, channels, view, scan_option='Stage', interleave=True,
-                       low_power=10, high_power=100):
+    def acquire_stacks(
+        self,
+        channels,
+        view,
+        scan_option='Stage',
+        interleave=True,
+        low_power=10,
+        high_power=100,
+    ):
         """acquire stackes, depending on the given channel and view.
         view=1, first view only;
         view=2, second view only;
@@ -304,25 +316,38 @@ class NIDaq:
             # if scan_option == 'Interleave_denoising':
             #     fn_acquire(task_ao, task_do, nr_channels, ['view1'], scan_option, interleave, low_power, high_power)
             # else:
-            fn_acquire(task_ao, task_do, nr_channels, ['view1'], scan_option, interleave)
+            fn_acquire(
+                task_ao, task_do, nr_channels, ['view1'], scan_option, interleave
+            )
         elif view == 2:
             # if scan_option == 'Interleave_denoising':
             #     fn_acquire(task_ao, task_do, nr_channels, ['view2'], scan_option, interleave, low_power, high_power)
             # else:
-            fn_acquire(task_ao, task_do, nr_channels, ['view2'], scan_option, interleave)
+            fn_acquire(
+                task_ao, task_do, nr_channels, ['view2'], scan_option, interleave
+            )
         elif view == 3:
             # if scan_option == 'Interleave_denoising':
             #     fn_acquire(task_ao, task_do, nr_channels, ['view1', 'view2'], scan_option, interleave,
             #                low_power, high_power)
             # else:
-            fn_acquire(task_ao, task_do, nr_channels, ['view1', 'view2'], scan_option, interleave)
+            fn_acquire(
+                task_ao,
+                task_do,
+                nr_channels,
+                ['view1', 'view2'],
+                scan_option,
+                interleave,
+            )
         else:
             raise ValueError("View not supported")
 
         task_ao.close()
         task_do.close()
 
-    def _acquire_stacks(self, task_ao, task_do, nr_channels, views, scan_option, interleave):
+    def _acquire_stacks(
+        self, task_ao, task_do, nr_channels, views, scan_option, interleave
+    ):
         """set up the workflow to acquire multiple stacks"""
 
         data_ao = [
@@ -376,9 +401,7 @@ class NIDaq:
                 task_ao.write(data_ao[v])
                 task_ao.start()
                 print("number of slices to acquire:", self.nb_slices)
-                for ch in range(
-                    nr_channels
-                ):
+                for ch in range(nr_channels):
                     # regenerate do date for non-interleaved multichannel acquisition
                     if not interleave and nr_channels > 1:
                         data_do = self._get_do_data(
@@ -439,7 +462,9 @@ class NIDaq:
             # AO0, for fixed scan galvo position
             data_ao0 = [offset] * nb_samples
             # AO5, for O1  scanning
-            min_range = (self.o1_pifoc - self.scan_range / 2) / self.CONVERT_RATIO_PIFOC_O1
+            min_range = (
+                self.o1_pifoc - self.scan_range / 2
+            ) / self.CONVERT_RATIO_PIFOC_O1
             step = self.scan_step / self.CONVERT_RATIO_PIFOC_O1
             data_ao5 = [x * step + min_range for x in range(nb_samples)]
         elif scan_option == "Galvo":
@@ -452,7 +477,9 @@ class NIDaq:
 
         return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5, data_ao6]
 
-    def _acquire_stacks_galvo(self, task_ao, task_do, channels, views, scan_option, interleave):
+    def _acquire_stacks_galvo(
+        self, task_ao, task_do, channels, views, scan_option, interleave
+    ):
         """set up the workflow to acquire multiple stacks
         todo, support multichanel imaging"""
         data_ao = [
@@ -493,7 +520,7 @@ class NIDaq:
             samps_per_chan=nb_samples,
             source=self.PFI1,
             sample_mode=nidaqmx.constants.AcquisitionType.CONTINUOUS,
-            active_edge=nidaqmx.constants.Slope.FALLING
+            active_edge=nidaqmx.constants.Slope.FALLING,
         )
 
         task_ao.triggers.start_trigger.cfg_dig_edge_start_trig(
@@ -538,8 +565,17 @@ class NIDaq:
         task_ctr_retrig.close()
         task_ctr_loop.close()
 
-    def _acquire_stacks_interleave_denoising(self, task_ao, task_do, nr_channels, views, scan_option, interleave,
-                                             low_power, high_power):
+    def _acquire_stacks_interleave_denoising(
+        self,
+        task_ao,
+        task_do,
+        nr_channels,
+        views,
+        scan_option,
+        interleave,
+        low_power,
+        high_power,
+    ):
         """set up the workflow to acquire multiple stacks, for interleaved denoisng purpose only"""
 
         data_ao = [
@@ -593,9 +629,7 @@ class NIDaq:
                 task_ao.write(data_ao[v])
                 task_ao.start()
                 print("number of slices to acquire:", self.nb_slices)
-                for ch in range(
-                    nr_channels
-                ):
+                for ch in range(nr_channels):
                     # regenerate do date for non-interleaved multichannel acquisition
                     if not interleave and nr_channels > 1:
                         data_do = self._get_do_data(
@@ -626,7 +660,9 @@ class NIDaq:
         task_ctr_retrig.close()
         task_ctr_loop.close()
 
-    def _set_initial_ao_states(self, scan_galvo, galvo1, galvo2, angle_galvo, o1, o3, laser_power):
+    def _set_initial_ao_states(
+        self, scan_galvo, galvo1, galvo2, angle_galvo, o1, o3, laser_power
+    ):
         """
         select the initial states for the AO channels, by using the correct offset of the scanning gavlo and the
         voltages of the switching galvos
@@ -647,23 +683,25 @@ class NIDaq:
         """select one view in live mode
         Note: ao3 is not included here, it's with the select_channel function"""
         if view == 1:
-            self._set_initial_ao_states(self._offset_dis_to_vol(self.offset_view1),
-                                        self.view1_galvo1,
-                                        self.view1_galvo2,
-                                        self.light_sheet_angle,
-                                        self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
-                                        self.o3_view1 / self.CONVERT_RATIO_PIFOC_O3,
-                                        self.laser_power_percent / 100 * self.MAX_LASER_ANALOG
-                                        )
+            self._set_initial_ao_states(
+                self._offset_dis_to_vol(self.offset_view1),
+                self.view1_galvo1,
+                self.view1_galvo2,
+                self.light_sheet_angle,
+                self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
+                self.o3_view1 / self.CONVERT_RATIO_PIFOC_O3,
+                self.laser_power_percent / 100 * self.MAX_LASER_ANALOG,
+            )
         elif view == 2:
-            self._set_initial_ao_states(self._offset_dis_to_vol(self.offset_view2),
-                                        self.view2_galvo1,
-                                        self.view2_galvo2,
-                                        self.light_sheet_angle,
-                                        self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
-                                        self.o3_view2 / self.CONVERT_RATIO_PIFOC_O3,
-                                        self.laser_power_percent / 100 * self.MAX_LASER_ANALOG
-                                        )
+            self._set_initial_ao_states(
+                self._offset_dis_to_vol(self.offset_view2),
+                self.view2_galvo1,
+                self.view2_galvo2,
+                self.light_sheet_angle,
+                self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
+                self.o3_view2 / self.CONVERT_RATIO_PIFOC_O3,
+                self.laser_power_percent / 100 * self.MAX_LASER_ANALOG,
+            )
         else:
             raise ValueError("View not supported")
 
@@ -681,23 +719,25 @@ class NIDaq:
             o3 = self.o3_view2 / self.CONVERT_RATIO_PIFOC_O3
 
         if scan_option == 'O1':
-            self._set_initial_ao_states(self._offset_dis_to_vol(offset),
-                                        galvo1,
-                                        galvo2,
-                                        self.light_sheet_angle,
-                                        (self.o1_pifoc - self.scan_range / 2) / self.CONVERT_RATIO_PIFOC_O1,
-                                        o3,
-                                        self.laser_power_percent / 100 * self.MAX_LASER_ANALOG
-                                        )
+            self._set_initial_ao_states(
+                self._offset_dis_to_vol(offset),
+                galvo1,
+                galvo2,
+                self.light_sheet_angle,
+                (self.o1_pifoc - self.scan_range / 2) / self.CONVERT_RATIO_PIFOC_O1,
+                o3,
+                self.laser_power_percent / 100 * self.MAX_LASER_ANALOG,
+            )
         elif scan_option == 'Galvo':
-            self._set_initial_ao_states(self._offset_dis_to_vol(offset - self.scan_range / 2),
-                                        galvo1,
-                                        galvo2,
-                                        self.light_sheet_angle,
-                                        self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
-                                        o3,
-                                        self.laser_power_percent / 100 * self.MAX_LASER_ANALOG
-                                        )
+            self._set_initial_ao_states(
+                self._offset_dis_to_vol(offset - self.scan_range / 2),
+                galvo1,
+                galvo2,
+                self.light_sheet_angle,
+                self.o1_pifoc / self.CONVERT_RATIO_PIFOC_O1,
+                o3,
+                self.laser_power_percent / 100 * self.MAX_LASER_ANALOG,
+            )
         else:
             raise ValueError("Scanning mode not supported")
 
@@ -817,7 +857,7 @@ if __name__ == "__main__":
         stripe_reduction_range=0.5,  # 2-axes galvo, range of gamma control
         stripe_reduction_offset=-0.9,  # 2-axes galvo, offset of gamma control
         o1_pifoc=0,  # position of O1 pifoc, range [-400, 400] um
-        light_sheet_angle=-2.72  # 2-axes galvo, beta control of light sheet angle, -0.22 -> epi
+        light_sheet_angle=-2.72,  # 2-axes galvo, beta control of light sheet angle, -0.22 -> epi
     )
     """Methods are separated into live mode and aacquisition mode"""
 
@@ -834,4 +874,6 @@ if __name__ == "__main__":
     # channel = ['405'], ['488'], ['561'], ['639'], ['bf'] or anY combination;
     # scanning mode: 'Stage', 'Gavlo', 'O1'
 
-    daq_card.acquire_stacks(channels=['488', '561'], view=3, scan_option="Stage", interleave=False)
+    daq_card.acquire_stacks(
+        channels=['488', '561'], view=3, scan_option="Stage", interleave=False
+    )

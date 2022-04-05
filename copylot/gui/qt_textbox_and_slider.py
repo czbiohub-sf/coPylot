@@ -46,7 +46,7 @@ class TextboxAndSlider(QWidget):
         self.label = QLabel(self.widget_name)
 
         self.num_decimals = -log10(self.increment)
-        self._max_int = 10 ** self.num_decimals
+        self._max_int = 10**self.num_decimals
 
         # set spinbox type and connection based on data type
         if self.data_type == int:
