@@ -64,7 +64,7 @@ class ASIStage:
         self._send_message(message)
         print(self._read_response())
 
-    def set_default_speed(self, speed):
+    def set_default_speed(self):
         message = "SPEED x=10 y=10\r"
         print("set speed to scan: " + message)
         self._send_message(message)
@@ -111,3 +111,23 @@ class ASIStage:
         message = f"SCANV x={x} y={y} f={f}"
         self._send_message(message)
         print(self._read_response())
+
+    def info(self, axis_letter):
+        """
+        Method to fetch various information on stage axes.
+
+        Parameters
+        ----------
+        axis_letter : str
+            Single letter, can be 'X' or 'Y' with XY stage.
+
+        """
+        message = f"INFO {axis_letter}"
+        self._send_message(message)
+
+        # Read and parse the response in the specific required way
+        lines = self.serial_connection.readlines()[1].split(
+            bytes('\r', encoding="ascii")
+        )
+        response = "\n".join([line.decode() for line in lines])
+        print(response)
