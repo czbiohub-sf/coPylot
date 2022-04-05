@@ -126,6 +126,8 @@ class ASIStage:
         self._send_message(message)
 
         # Read and parse the response in the specific required way
-        lines = self.serial_connection.readlines()[1].split(bytes('\r', encoding="ascii"))
+        lines = self.serial_connection.readlines()[1].split(
+            bytes('\r', encoding="ascii")
+        )
         response = "\n".join([line.decode() for line in lines])
         print(response)
