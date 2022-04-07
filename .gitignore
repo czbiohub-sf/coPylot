@@ -133,3 +133,5 @@ ToDo.txt
 defaults.txt
 
 copylot/_version.py
+
+test_zarr
