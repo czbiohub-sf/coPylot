@@ -33,7 +33,9 @@ class Camera:
 
                         for _ in range(nb_frame):
                             if dcam.wait_capevent_frameready(timeout_milisec):
-                                data = dcam.buf_getlastframedata()  # Data is here
+                                data = (  # noqa: F841
+                                    dcam.buf_getlastframedata()
+                                )  # Data is here
                                 visualization_napari_layer.data = data
                                 print("data is here")
                             else:
