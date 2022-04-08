@@ -25,10 +25,15 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
-        self.left = 10
-        self.top = 10
-        self.width = 900
-        self.height = 1000
+
+        self.desktop = QApplication.desktop()
+        self.screenRect = self.desktop.screenGeometry()
+        height, width = self.screenRect.height(), self.screenRect.width()
+
+        self.width = width // 3
+        self.height = height // 2
+        self.left = (width - self.width) // 2
+        self.top = (height - self.height) // 2
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
