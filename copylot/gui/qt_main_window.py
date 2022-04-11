@@ -9,7 +9,8 @@ from qtpy.QtWidgets import (
     QStatusBar,
     QApplication,
     QWidget,
-    QDockWidget, QLabel,
+    QDockWidget,
+    QLabel,
 )
 
 from copylot.gui.qt_live_control import LiveControl
