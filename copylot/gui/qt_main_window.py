@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
     QStatusBar,
     QApplication,
     QWidget,
-    QDockWidget,
+    QDockWidget, QLabel,
 )
 
 from copylot.gui.qt_live_control import LiveControl
@@ -91,10 +91,14 @@ class MainWindow(QMainWindow):
                 json.dump(self.defaults, outfile)
 
         # initialize docks
-        self.live_dock = QDockWidget("Live", self)
-        self.timelapse_dock = QDockWidget("Timelapse", self)
-        self.water_dock = QDockWidget("Water", self)
-        self.parameters_dock = QDockWidget("Parameters", self)
+        self.live_dock = QDockWidget(self)
+        self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
+        self.timelapse_dock = QDockWidget(self)
+        self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
+        self.water_dock = QDockWidget(self)
+        self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
+        self.parameters_dock = QDockWidget(self)
+        self.parameters_dock.setTitleBarWidget(QLabel("NI DAQ Parameters"))
 
         # set common configurations for docks
         self.dock_list = [
