@@ -106,12 +106,6 @@ class MainWindow(QMainWindow):
         for dock in self.dock_list:
             _apply_dock_config(dock)
 
-        # set maximum dock sizes
-        self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 170)
-        self.water_dock.setFixedSize(200, 260)
-        self.parameters_dock.setFixedSize(650, 650)
-
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, self.threadpool)
         self.live_dock.setWidget(self.live_widget)
