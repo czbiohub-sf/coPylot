@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
     QApplication,
     QWidget,
     QDockWidget,
+    QLabel,
 )
 
 from copylot.gui.qt_live_control import LiveControl
@@ -25,10 +26,15 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
-        self.left = 10
-        self.top = 10
-        self.width = 900
-        self.height = 1000
+
+        self.desktop = QApplication.desktop()
+        self.screenRect = self.desktop.screenGeometry()
+        height, width = self.screenRect.height(), self.screenRect.width()
+
+        self.width = width // 3
+        self.height = height // 2
+        self.left = (width - self.width) // 2
+        self.top = (height - self.height) // 2
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -86,10 +92,14 @@ class MainWindow(QMainWindow):
                 json.dump(self.defaults, outfile)
 
         # initialize docks
-        self.live_dock = QDockWidget("Live", self)
-        self.timelapse_dock = QDockWidget("Timelapse", self)
-        self.water_dock = QDockWidget("Water", self)
-        self.parameters_dock = QDockWidget("Parameters", self)
+        self.live_dock = QDockWidget(self)
+        self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
+        self.timelapse_dock = QDockWidget(self)
+        self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
+        self.water_dock = QDockWidget(self)
+        self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
+        self.parameters_dock = QDockWidget(self)
+        self.parameters_dock.setTitleBarWidget(QLabel("NI DAQ Parameters"))
 
         # set common configurations for docks
         self.dock_list = [
@@ -100,12 +110,6 @@ class MainWindow(QMainWindow):
         ]
         for dock in self.dock_list:
             _apply_dock_config(dock)
-
-        # set maximum dock sizes
-        self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 170)
-        self.water_dock.setFixedSize(200, 260)
-        self.parameters_dock.setFixedSize(650, 650)
 
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, self.threadpool)
