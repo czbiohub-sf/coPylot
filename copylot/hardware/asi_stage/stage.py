@@ -59,19 +59,19 @@ class ASIStage:
         return self.serial_connection.readline().decode(encoding="ascii")
 
     def set_speed(self, speed):
-        message = f"SPEED x={speed}\r"
+        message = f"SPEED x={speed}"
         print("set speed to scan: " + message)
         self._send_message(message)
         print(self._read_response())
 
     def set_default_speed(self):
-        message = "SPEED x=10 y=10\r"
+        message = "SPEED x=10 y=10"
         print("set speed to scan: " + message)
         self._send_message(message)
         print(self._read_response())
 
     def set_backlash(self):
-        message = "BACKLASH x=0.04 y=0.0\r"
+        message = "BACKLASH x=0.04 y=0.0"
         print("set backlash: " + message)
         self._send_message(message)
         print(self._read_response())
@@ -85,7 +85,7 @@ class ASIStage:
         mode : ASIStageScanMode
 
         """
-        message = f"SCAN f={int(mode)}\r"
+        message = f"SCAN f={int(mode)}"
         self._send_message(message)
         print(self._read_response())
 
@@ -98,7 +98,7 @@ class ASIStage:
         print(self._read_response())
 
     def start_scan(self):
-        message = "SCAN"
+        message = "SCAN\r"
         self._send_message(message)
         print(self._read_response())
 

@@ -34,6 +34,7 @@ class Camera:
                                 data = (  # noqa: F841
                                     dcam.buf_getlastframedata()
                                 )  # Data is here
+                                print(data.shape, type(data))
                             else:
                                 dcamerr = dcam.lasterr()
                                 if dcamerr.is_timeout():
