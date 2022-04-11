@@ -14,7 +14,9 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, Signal, Slot, QRunnable
 
-from copylot.hardware.water_dispenser.water_dispenser_control import WaterDispenserControl
+from copylot.hardware.water_dispenser.water_dispenser_control import (
+    WaterDispenserControl,
+)
 from copylot.gui._qt.job_runners.worker import WorkerSignals
 
 
