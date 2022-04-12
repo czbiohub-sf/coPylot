@@ -144,6 +144,18 @@ class MainWindow(QMainWindow):
 
         self.show()
 
+        # Menu bar
+        self.setupMenubar()
+
+    def closeEvent(self, event):
+        print("closeEvent of mainwindow is called")
+        app = QApplication.instance()
+        app.quit()
+
+    def setupMenubar(self):
+        """Method to populate menubar."""
+        pass
+
 
 def _apply_dock_config(dock):
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
