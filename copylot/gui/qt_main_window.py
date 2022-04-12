@@ -10,13 +10,14 @@ from qtpy.QtWidgets import (
     QApplication,
     QWidget,
     QDockWidget,
-    QLabel,
+    QLabel, QAction,
 )
 
 from copylot.gui.qt_live_control import LiveControl
 from copylot.gui.qt_parameters_widget import ParametersWidget
 from copylot.gui.qt_timelapse_control import TimelapseControl
 from copylot.gui.qt_water_dispenser_widget import WaterDispenser
+from copylot import __version__
 
 
 class MainWindow(QMainWindow):
@@ -26,6 +27,7 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
+        self.version = __version__
 
         self.desktop = QApplication.desktop()
         self.screenRect = self.desktop.screenGeometry()
@@ -154,7 +156,14 @@ class MainWindow(QMainWindow):
 
     def setupMenubar(self):
         """Method to populate menubar."""
-        pass
+        mainMenu = self.menuBar()
+        mainMenu.setNativeMenuBar(False)
+
+        helpMenu = mainMenu.addMenu(' &Help')
+
+        # Help Menu
+        versionButton = QAction("ver" + self.version, self)
+        helpMenu.addAction(versionButton)
 
 
 def _apply_dock_config(dock):
