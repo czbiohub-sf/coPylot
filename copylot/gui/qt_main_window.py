@@ -13,6 +13,7 @@ from qtpy.QtWidgets import (
     QLabel, QAction,
 )
 
+from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
 from copylot.gui.qt_live_control import LiveControl
 from copylot.gui.qt_parameters_widget import ParametersWidget
 from copylot.gui.qt_timelapse_control import TimelapseControl
@@ -115,7 +116,7 @@ class MainWindow(QMainWindow):
 
         # initialize widgets and assign to their dock
         self.live_widget = LiveControl(self, self.threadpool)
-        self.live_dock.setWidget(self.live_widget)
+        self.live_dock.setWidget(DockPlaceholder(self, self.live_widget))
         self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
 
         self.timelapse_widget = TimelapseControl(self, self.threadpool)
@@ -127,7 +128,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
 
         self.parameters_widget = ParametersWidget(self)
-        self.parameters_dock.setWidget(self.parameters_widget)
+        self.parameters_dock.setWidget(DockPlaceholder(self, self.parameters_widget))
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
