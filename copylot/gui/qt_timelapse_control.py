@@ -9,7 +9,7 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, Signal, Slot
 
-from copylot.gui.qt_nidaq_worker import NIDaqWorker
+from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
 
 
 class TimelapseControl(QWidget):
