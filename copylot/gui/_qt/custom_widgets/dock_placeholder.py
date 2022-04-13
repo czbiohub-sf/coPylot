@@ -2,10 +2,11 @@ from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton
 
 
 class DockPlaceholder(QWidget):
-    def __init__(self, parent, widget_to_load, *args, **kwargs):
+    def __init__(self, parent, dock, widget_to_load, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.parent = parent
+        self.dock = dock
         self.widget_to_load = widget_to_load
 
         self.placeholder_layout = QHBoxLayout()
@@ -18,4 +19,5 @@ class DockPlaceholder(QWidget):
         self.setLayout(self.placeholder_layout)
 
     def load_widget(self):
-        self.parent.layout().replaceWidget(self, self.widget_to_load)
+        self.dock.setWidget(self.widget_to_load)
+        self.parent.restoreDockWidget(self.dock)
