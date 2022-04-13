@@ -8,15 +8,14 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QStatusBar,
     QApplication,
-    QWidget,
     QDockWidget,
     QLabel,
 )
 
-from copylot.gui.qt_live_control import LiveControl
-from copylot.gui.qt_parameters_widget import ParametersWidget
-from copylot.gui.qt_timelapse_control import TimelapseControl
-from copylot.gui.qt_water_dispenser_widget import WaterDispenser
+from copylot.gui._qt.dockables.live_control import LiveControl
+from copylot.gui._qt.dockables.parameters_widget import ParametersWidget
+from copylot.gui._qt.dockables.timelapse_control import TimelapseControl
+from copylot.gui._qt.dockables.water_dispenser_widget import WaterDispenser
 
 
 class MainWindow(QMainWindow):
@@ -137,13 +136,6 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-        # set placeholder central widget
-        self.central_widget = QWidget()
-        self.central_widget.hide()
-        self.setCentralWidget(self.central_widget)
-
-        self.show()
-
 
 def _apply_dock_config(dock):
     dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
@@ -152,12 +144,21 @@ def _apply_dock_config(dock):
     )
 
 
-def main():
+def run():
+    """Method to run GUI
+
+    Parameters
+    ----------
+    ver : str
+        string of aydin version number
+
+    """
     app = QApplication(sys.argv)
-    window = MainWindow()  # noqa: F841
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    ex = MainWindow()
+    ex.show()
     sys.exit(app.exec())
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    run()

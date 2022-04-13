@@ -2,7 +2,7 @@ from qtpy.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxL
 from qtpy.QtCore import Qt, Signal, Slot
 import time
 
-from copylot.gui.qt_nidaq_worker import NIDaqWorker
+from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
 
 
 class LiveControl(QWidget):
