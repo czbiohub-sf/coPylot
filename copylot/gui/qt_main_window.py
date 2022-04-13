@@ -13,10 +13,10 @@ from qtpy.QtWidgets import (
     QLabel,
 )
 
-from copylot.gui.qt_live_control import LiveControl
-from copylot.gui.qt_parameters_widget import ParametersWidget
-from copylot.gui.qt_timelapse_control import TimelapseControl
-from copylot.gui.qt_water_dispenser_widget import WaterDispenser
+from copylot.gui._qt.dockables.live_control import LiveControl
+from copylot.gui._qt.dockables.parameters_widget import ParametersWidget
+from copylot.gui._qt.dockables.timelapse_control import TimelapseControl
+from copylot.gui._qt.dockables.water_dispenser_widget import WaterDispenser
 
 
 class MainWindow(QMainWindow):
