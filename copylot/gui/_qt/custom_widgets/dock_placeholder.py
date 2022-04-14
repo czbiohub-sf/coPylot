@@ -6,8 +6,10 @@ from copylot.gui._qt import dockables
 
 
 class DockPlaceholder(QWidget):
-    def __init__(self, parent, dock, widget_to_load, *args, **kwargs):
+    def __init__(self, parent, dock, widget_to_load, widget_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        get_widget_instance_from_name(parent, widget_name)
 
         self.parent = parent
         self.dock = dock
@@ -29,14 +31,16 @@ class DockPlaceholder(QWidget):
 
 def get_widget_instance_from_name(parent, name: str):
     response = importlib.import_module(dockables.__name__ + '.' + name)
-    elem = [
-        x
-        for x in dir(response)
-        if (name.replace("_", "") + "Regressor").lower() in x.lower()
-    ][
-        0
-    ]  # class name
+    print(response)
+    print(dir(response))
+    # elem = [
+    #     x
+    #     for x in dir(response)
+    #     if (name.replace("_", "") + "Regressor").lower() in x.lower()
+    # ][
+    #     0
+    # ]  # class name
 
-    elem_class = response.__getattribute__(elem)
-
-    return elem_class(parent)
+    # elem_class = response.__getattribute__(elem)
+    #
+    # return elem_class(parent)

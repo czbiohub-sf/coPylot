@@ -12,7 +12,7 @@ from copylot.gui._qt.custom_widgets.line_break import LineBreak
 from copylot.gui._qt.custom_widgets.textbox_and_slider import TextboxAndSlider
 
 
-class ParametersWidget(QWidget):
+class ParametersDockWidget(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
         self.parent = parent

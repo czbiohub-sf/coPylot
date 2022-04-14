@@ -14,9 +14,9 @@ from qtpy.QtWidgets import (
 )
 
 from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
-from copylot.gui._qt.dockables.live_control import LiveControl
-from copylot.gui._qt.dockables.parameters_widget import ParametersWidget
-from copylot.gui._qt.dockables.timelapse_control import TimelapseControl
+from copylot.gui._qt.dockables.live_control import LiveControlDockWidget
+from copylot.gui._qt.dockables.parameters import ParametersDockWidget
+from copylot.gui._qt.dockables.timelapse_control import TimelapseControlDockWidget
 
 # from copylot.gui.qt_water_dispenser_widget import WaterDispenser
 from copylot import __version__
@@ -116,25 +116,25 @@ class MainWindow(QMainWindow):
             _apply_dock_config(dock)
 
         # initialize widgets and assign to their dock
-        self.live_widget = LiveControl(self, self.threadpool)
+        self.live_widget = LiveControlDockWidget(self, self.threadpool)
         self.live_dock.setWidget(
-            DockPlaceholder(self, self.live_dock, self.live_widget)
+            DockPlaceholder(self, self.live_dock, self.live_widget, "live_control")
         )
-        self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
-
-        self.timelapse_widget = TimelapseControl(self, self.threadpool)
-        self.timelapse_dock.setWidget(
-            DockPlaceholder(self, self.timelapse_dock, self.timelapse_widget)
-        )
-        self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
+        #
+        # self.timelapse_widget = TimelapseControl(self, self.threadpool)
+        # self.timelapse_dock.setWidget(
+        #     DockPlaceholder(self, self.timelapse_dock, self.timelapse_widget)
+        # )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
         # self.water_widget = WaterDispenser(self, self.threadpool)
         # self.water_dock.setWidget(DockPlaceholder(self, self.water_widget))
         # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
 
-        self.parameters_widget = ParametersWidget(self)
+        self.parameters_widget = ParametersDockWidget(self)
         self.parameters_placeholder = DockPlaceholder(
-            self, self.parameters_dock, self.parameters_widget
+            self, self.parameters_dock, self.parameters_widget, "parameters_widget"
         )
         self.parameters_dock.setWidget(self.parameters_placeholder)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
