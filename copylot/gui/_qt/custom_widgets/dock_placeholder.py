@@ -23,18 +23,15 @@ class DockPlaceholder(QWidget):
         self.setLayout(self.placeholder_layout)
 
     def load_widget(self):
-        print("load widget")
-        widget = get_widget_instance_from_name(self.widget_name, self.widget_init_args)
-        print("widget returned")
-        self.dock.setWidget(widget)
+        self.dock.setWidget(
+            get_widget_instance_from_name(self.widget_name, self.widget_init_args)
+        )
         self.parent.restoreDockWidget(self.dock)
 
 
 def get_widget_instance_from_name(name: str, widget_init_args):
-    print("begin")
     response = importlib.import_module(dockables.__name__ + '.' + name)
 
-    print(f"response {response}")
     elem = [
         x
         for x in dir(response)
@@ -43,11 +40,6 @@ def get_widget_instance_from_name(name: str, widget_init_args):
         0
     ]  # class name
 
-    print(elem)
-
     elem_class = response.__getattribute__(elem)
-
-    print(elem_class)
-    print(*widget_init_args)
 
     return elem_class(*widget_init_args)

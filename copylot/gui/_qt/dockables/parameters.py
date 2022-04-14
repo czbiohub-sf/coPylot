@@ -6,10 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QComboBox
-
-from copylot.gui._qt.custom_widgets.line_break import LineBreak
-from copylot.gui._qt.custom_widgets.textbox_and_slider import TextboxAndSlider
+from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QComboBox
 
 
 class ParametersDockWidget(QWidget):

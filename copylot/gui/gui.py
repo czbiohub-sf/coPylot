@@ -112,18 +112,26 @@ class MainWindow(QMainWindow):
 
         # initialize widgets and assign to their dock
         self.live_dock.setWidget(
-            DockPlaceholder(self, self.live_dock, "live_control", [self, self.threadpool])
+            DockPlaceholder(
+                self, self.live_dock, "live_control", [self, self.threadpool]
+            )
         )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
         #
         # self.timelapse_widget = TimelapseControl(self, self.threadpool)
         self.timelapse_dock.setWidget(
-            DockPlaceholder(self, self.timelapse_dock, "timelapse_control", [self, self.threadpool])
+            DockPlaceholder(
+                self, self.timelapse_dock, "timelapse_control", [self, self.threadpool]
+            )
         )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
         # self.water_widget = WaterDispenser(self, self.threadpool)
-        self.water_dock.setWidget(DockPlaceholder(self, self.water_dock, "water_dispenser", [self, self.threadpool]))
+        self.water_dock.setWidget(
+            DockPlaceholder(
+                self, self.water_dock, "water_dispenser", [self, self.threadpool]
+            )
+        )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
 
         # self.parameters_widget = ParametersDockWidget(self)
