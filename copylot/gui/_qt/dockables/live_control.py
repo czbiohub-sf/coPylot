@@ -5,7 +5,7 @@ import time
 from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
 
 
-class LiveControl(QWidget):
+class LiveControlDockWidget(QWidget):
     trigger_stop_live = Signal()
     thread_launching = Signal()
 

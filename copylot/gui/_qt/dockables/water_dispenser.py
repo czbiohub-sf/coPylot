@@ -42,7 +42,7 @@ def serial_ports():
     return result
 
 
-class WaterDispenser(QWidget):
+class WaterDispenserDockWidget(QWidget):
     trigger_stop = Signal()
 
     def __init__(self, parent, threadpool):

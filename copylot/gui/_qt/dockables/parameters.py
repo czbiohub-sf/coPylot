@@ -6,13 +6,10 @@ from datetime import datetime
 from pathlib import Path
 from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QPushButton, QComboBox
-
-from copylot.gui._qt.custom_widgets.line_break import LineBreak
-from copylot.gui._qt.custom_widgets.textbox_and_slider import TextboxAndSlider
+from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QComboBox
 
 
-class ParametersWidget(QWidget):
+class ParametersDockWidget(QWidget):
     def __init__(self, parent):
         super(QWidget, self).__init__(parent)
         self.parent = parent
@@ -59,27 +56,30 @@ class ParametersWidget(QWidget):
         self.row_counter = 1
         self.parameter_objects = []
 
-        for i in self.parameter_list:
-            textbox_and_slider = TextboxAndSlider(
-                *i, self.row_counter, self.parent.defaults
-            )
-            self.parameter_objects.append(textbox_and_slider)
-            self.grid_layout.addWidget(
-                LineBreak(Qt.AlignTop), self.row_counter + 1, 0, 1, 5
-            )
+        print(self.parent.defaults)
 
-            self.row_counter += 2
+        # for i in self.parameter_list:
+        #     print(i)
+        #     textbox_and_slider = TextboxAndSlider(
+        #         *i, self.row_counter, self.parent.defaults
+        #     )
+        #     self.parameter_objects.append(textbox_and_slider)
+        #     self.grid_layout.addWidget(
+        #         LineBreak(Qt.AlignTop), self.row_counter + 1, 0, 1, 5
+        #     )
+        #
+        #     self.row_counter += 2
 
-        # addition of button to toggle visibility of parameter range input boxes
-        self.toggle_button = QPushButton("set range")
-        for obj in self.parameter_objects:
-            self.toggle_button.pressed.connect(obj.toggle_range_widgets)
-
-        self.grid_layout.addWidget(self.toggle_button, self.row_counter, 0, 1, 4)
-
-        self.defaults_button = QPushButton("set as defaults")
-        self.defaults_button.pressed.connect(self.save_defaults)
-        self.grid_layout.addWidget(self.defaults_button, self.row_counter, 4, 1, 1)
+        # # addition of button to toggle visibility of parameter range input boxes
+        # self.toggle_button = QPushButton("set range")
+        # for obj in self.parameter_objects:
+        #     self.toggle_button.pressed.connect(obj.toggle_range_widgets)
+        #
+        # self.grid_layout.addWidget(self.toggle_button, self.row_counter, 0, 1, 4)
+        #
+        # self.defaults_button = QPushButton("set as defaults")
+        # self.defaults_button.pressed.connect(self.save_defaults)
+        # self.grid_layout.addWidget(self.defaults_button, self.row_counter, 4, 1, 1)
 
     @property
     def parameters(self):

@@ -12,7 +12,7 @@ from qtpy.QtCore import Qt, Signal, Slot
 from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
 
 
-class TimelapseControl(QWidget):
+class TimelapseControlDockWidget(QWidget):
     trigger_stop_timelapse = Signal()
 
     def __init__(self, parent, threadpool):

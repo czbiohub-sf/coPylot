@@ -10,12 +10,11 @@ from qtpy.QtWidgets import (
     QApplication,
     QDockWidget,
     QLabel,
+    QAction,
 )
 
-from copylot.gui._qt.dockables.live_control import LiveControl
-from copylot.gui._qt.dockables.parameters_widget import ParametersWidget
-from copylot.gui._qt.dockables.timelapse_control import TimelapseControl
-from copylot.gui._qt.dockables.water_dispenser_widget import WaterDispenser
+from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
+from copylot import __version__
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +24,7 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
+        self.version = __version__
 
         self.desktop = QApplication.desktop()
         self.screenRect = self.desktop.screenGeometry()
@@ -111,20 +111,34 @@ class MainWindow(QMainWindow):
             _apply_dock_config(dock)
 
         # initialize widgets and assign to their dock
-        self.live_widget = LiveControl(self, self.threadpool)
-        self.live_dock.setWidget(self.live_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
+        self.live_dock.setWidget(
+            DockPlaceholder(
+                self, self.live_dock, "live_control", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
+        #
+        # self.timelapse_widget = TimelapseControl(self, self.threadpool)
+        self.timelapse_dock.setWidget(
+            DockPlaceholder(
+                self, self.timelapse_dock, "timelapse_control", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
-        self.timelapse_widget = TimelapseControl(self, self.threadpool)
-        self.timelapse_dock.setWidget(self.timelapse_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
+        # self.water_widget = WaterDispenser(self, self.threadpool)
+        self.water_dock.setWidget(
+            DockPlaceholder(
+                self, self.water_dock, "water_dispenser", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
 
-        self.water_widget = WaterDispenser(self, self.threadpool)
-        self.water_dock.setWidget(self.water_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
-
-        self.parameters_widget = ParametersWidget(self)
-        self.parameters_dock.setWidget(self.parameters_widget)
+        # self.parameters_widget = ParametersDockWidget(self)
+        self.parameters_placeholder = DockPlaceholder(
+            self, self.parameters_dock, "parameters", [self]
+        )
+        self.parameters_dock.setWidget(self.parameters_placeholder)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
@@ -135,6 +149,25 @@ class MainWindow(QMainWindow):
         # create status bar that is updated from live and timelapse control classes
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
+
+        # Menu bar
+        self.setupMenubar()
+
+    def closeEvent(self, event):
+        print("closeEvent of mainwindow is called")
+        app = QApplication.instance()
+        app.quit()
+
+    def setupMenubar(self):
+        """Method to populate menubar."""
+        mainMenu = self.menuBar()
+        mainMenu.setNativeMenuBar(False)
+
+        helpMenu = mainMenu.addMenu(' &Help')
+
+        # Help Menu
+        versionButton = QAction("ver" + self.version, self)
+        helpMenu.addAction(versionButton)
 
 
 def _apply_dock_config(dock):
