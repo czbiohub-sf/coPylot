@@ -1,4 +1,8 @@
+import importlib
+
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QPushButton
+
+from copylot.gui._qt import dockables
 
 
 class DockPlaceholder(QWidget):
@@ -21,3 +25,18 @@ class DockPlaceholder(QWidget):
     def load_widget(self):
         self.dock.setWidget(self.widget_to_load)
         self.parent.restoreDockWidget(self.dock)
+
+
+def get_widget_instance_from_name(parent, name: str):
+    response = importlib.import_module(dockables.__name__ + '.' + name)
+    elem = [
+        x
+        for x in dir(response)
+        if (name.replace("_", "") + "Regressor").lower() in x.lower()
+    ][
+        0
+    ]  # class name
+
+    elem_class = response.__getattribute__(elem)
+
+    return elem_class(parent)
