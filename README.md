@@ -5,7 +5,7 @@
 _coPylot_ is a python app to control the Pisces lightsheet microscope.
 Support for controling other microscopes planned to be added.
 
-It can be started up by running `copylot/gui/main_window.py` for now.
+It can be started up by running `copylot/gui/gui.py`.
 
 
 ## Installation
