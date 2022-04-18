@@ -91,10 +91,8 @@ class MainWindow(QMainWindow):
                 json.dump(self.defaults, outfile)
 
         # initialize docks
-        self.live_dock = QDockWidget(self)
-        self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
-        self.timelapse_dock = QDockWidget(self)
-        self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
+        self.livetimelapse_dock = QDockWidget(self)
+        self.livetimelapse_dock.setTitleBarWidget(QLabel("Live/Timelapse Mode"))
         self.water_dock = QDockWidget(self)
         self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
         self.parameters_dock = QDockWidget(self)
@@ -102,8 +100,7 @@ class MainWindow(QMainWindow):
 
         # set common configurations for docks
         self.dock_list = [
-            self.live_dock,
-            self.timelapse_dock,
+            self.livetimelapse_dock,
             self.water_dock,
             self.parameters_dock,
         ]
@@ -111,20 +108,12 @@ class MainWindow(QMainWindow):
             _apply_dock_config(dock)
 
         # initialize widgets and assign to their dock
-        self.live_dock.setWidget(
+        self.livetimelapse_dock.setWidget(
             DockPlaceholder(
-                self, self.live_dock, "live_control", [self, self.threadpool]
+                self, self.livetimelapse_dock, "live_timelapse", [self, self.threadpool]
             )
         )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
-        #
-        # self.timelapse_widget = TimelapseControl(self, self.threadpool)
-        self.timelapse_dock.setWidget(
-            DockPlaceholder(
-                self, self.timelapse_dock, "timelapse_control", [self, self.threadpool]
-            )
-        )
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
         # self.water_widget = WaterDispenser(self, self.threadpool)
         self.water_dock.setWidget(
@@ -142,9 +131,8 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
-        self.splitDockWidget(self.parameters_dock, self.live_dock, Qt.Horizontal)
-        self.splitDockWidget(self.live_dock, self.timelapse_dock, Qt.Vertical)
-        self.splitDockWidget(self.timelapse_dock, self.water_dock, Qt.Vertical)
+        self.splitDockWidget(self.parameters_dock, self.livetimelapse_dock, Qt.Horizontal)
+        self.splitDockWidget(self.livetimelapse_dock, self.water_dock, Qt.Vertical)
 
         # create status bar that is updated from live and timelapse control classes
         self.status_bar = QStatusBar()
