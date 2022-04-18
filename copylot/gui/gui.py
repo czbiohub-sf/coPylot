@@ -131,7 +131,9 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
-        self.splitDockWidget(self.parameters_dock, self.livetimelapse_dock, Qt.Horizontal)
+        self.splitDockWidget(
+            self.parameters_dock, self.livetimelapse_dock, Qt.Horizontal
+        )
         self.splitDockWidget(self.livetimelapse_dock, self.water_dock, Qt.Vertical)
 
         # create status bar that is updated from live and timelapse control classes

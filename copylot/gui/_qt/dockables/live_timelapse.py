@@ -3,7 +3,6 @@ from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 
 
 class LiveTimelapseDockWidget(QWidget):
-
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
 
