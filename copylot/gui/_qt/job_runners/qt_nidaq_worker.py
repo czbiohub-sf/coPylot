@@ -17,12 +17,13 @@ class NIDaqWorker(QRunnable):
         self.signals = WorkerSignals()
 
         self.daq_card = NIDaq(self, **parameters)
-        self.thread_running = True
+        self.thread_running = False
 
     @Slot()
     def run(self):
         try:
             self.signals.running.emit()
+            self.thread_running = True
             # self.fn(self, *self.args, **self.kwargs)
             if self.program_type == "live":
                 self.daq_card.select_view(self.view)
@@ -35,4 +36,4 @@ class NIDaqWorker(QRunnable):
 
     def stop(self):
         self.daq_card.stop_now = True
-        # self.thread_running = False
+        self.thread_running = False
