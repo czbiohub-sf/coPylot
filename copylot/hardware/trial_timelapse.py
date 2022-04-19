@@ -158,15 +158,16 @@ def main():
 
                         while slice < nb_slices:
                             asi_stage.start_scan()
+                            dcam.cap_start()
 
                             if dcam.wait_capevent_frameready(timeout_milisec):
                                 data = dcam.buf_getlastframedata()
                                 print(data.shape)
 
                                 # Async write
-                                write_futures[
-                                    f * (nb_slices * nb_view) + view * nb_slices + slice
-                                ] = dataset[slice, view, f, :, :].write(data)
+                                # write_futures[
+                                #     f * (nb_slices * nb_view) + view * nb_slices + slice
+                                # ] = dataset[slice, view, f, :, :].write(data)
 
                             else:
                                 dcamerr = dcam.lasterr()
@@ -179,6 +180,9 @@ def main():
                                         )
                                     )
                                     break
+
+                            print(dcam.cap_status())
+                            print(dcam.cap_transferinfo().nNewestFrameIndex, dcam.cap_transferinfo().nFrameCount)
 
                             slice += 1
                             counter += 1
