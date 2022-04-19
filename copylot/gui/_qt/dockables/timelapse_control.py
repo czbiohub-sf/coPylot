@@ -42,13 +42,7 @@ class TimelapseControlDockWidget(QWidget):
         self.layout.addWidget(self.view_combobox)
 
         self.laser_combobox = QComboBox()
-        self.laser_combobox.addItems(
-            [
-                "488",
-                "561",
-                "488 and 561",
-            ]
-        )
+        self.laser_combobox.addItems(["488", "561", "488 and 561"])
         self.laser_combobox.setCurrentIndex(self.parent.defaults["timelapse"]["laser"])
 
         self.layout.addWidget(self.laser_combobox)

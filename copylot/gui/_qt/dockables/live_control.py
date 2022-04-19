@@ -30,24 +30,14 @@ class LiveControlDockWidget(QWidget):
 
         # view and channel combobox widgets and options
         self.view_combobox = QComboBox()
-        self.view_combobox.addItems(
-            [
-                "view 1",
-                "view 2",
-            ]
-        )
+        self.view_combobox.addItems(["view 1", "view 2"])
         self.view_combobox.setCurrentIndex(self.parent.defaults["live"]["view"])
 
         self.layout.addWidget(self.view_combobox)
         self.view_combobox.activated.connect(self.launch_nidaq)
 
         self.laser_combobox = QComboBox()
-        self.laser_combobox.addItems(
-            [
-                "488",
-                "561",
-            ]
-        )
+        self.laser_combobox.addItems(["488", "561"])
         self.laser_combobox.setCurrentIndex(self.parent.defaults["live"]["laser"])
 
         self.layout.addWidget(self.laser_combobox)
