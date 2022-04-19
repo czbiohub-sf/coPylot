@@ -20,7 +20,7 @@ interleave = False
 
 nb_frames = 1  # number of timepoint
 step_size_um = 0.155 * 5
-range_in_um = 250
+range_in_um = 5
 interval_timepoint_in_seconds = 0
 interval_in_seconds = 2
 
@@ -105,7 +105,27 @@ def main():
 
             # Set camera for external trigger and validate
             dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGER_MODE, DCAMPROP.TRIGGER_MODE.NORMAL
+            )
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGERPOLARITY, DCAMPROP.TRIGGERPOLARITY.POSITIVE
+            )
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGER_CONNECTOR, DCAMPROP.TRIGGER_CONNECTOR.BNC
+            )
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGERTIMES, 1
+            )
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGERDELAY, 0
+            )
+
+
+            dcam.prop_setvalue(
                 DCAM_IDPROP.TRIGGERSOURCE, DCAMPROP.TRIGGERSOURCE.EXTERNAL
+            )
+            dcam.prop_setvalue(
+                DCAM_IDPROP.TRIGGERACTIVE, DCAMPROP.TRIGGERACTIVE.SYNCREADOUT
             )
 
             # Set camera trigger delay and validate
@@ -130,24 +150,24 @@ def main():
 
                         # if interleave:
                         print(f"start interleaved acquisition: {interleave}")
-                        asi_stage.start_scan()
 
                         counter = 0
                         slice = 0
-                        timeout_milisec = 100
+                        timeout_milisec = 1000
                         fps_calculation_interval = 1
 
                         while slice < nb_slices:
+                            asi_stage.start_scan()
+
                             if dcam.wait_capevent_frameready(timeout_milisec):
                                 data = dcam.buf_getlastframedata()
+                                print(data.shape)
 
                                 # Async write
                                 write_futures[
                                     f * (nb_slices * nb_view) + view * nb_slices + slice
                                 ] = dataset[slice, view, f, :, :].write(data)
 
-                                slice += 1
-                                counter += 1
                             else:
                                 dcamerr = dcam.lasterr()
                                 if dcamerr.is_timeout():
@@ -159,6 +179,9 @@ def main():
                                         )
                                     )
                                     break
+
+                            slice += 1
+                            counter += 1
 
                             if (time.time() - start_time) > fps_calculation_interval:
                                 print("FPS: ", counter / (time.time() - start_time))
