@@ -17,6 +17,9 @@ class FilterWheel:
         self.serial_connection = serial.Serial()
         self.serial_connection.port = self.com_port
         self.serial_connection.baudrate = 1000000
+        self.serial_connection.stopbits = serial.STOPBITS_ONE
+
+        self.serial_connection.open()
 
         print(self.serial_connection.name)
 
@@ -24,7 +27,7 @@ class FilterWheel:
         self.serial_connection.close()
 
     def _send_message(self, message: str):
-        self.serial_connection.write(bytes(f"{message}\r", encoding="ascii"))
+        self.serial_connection.write(bytes(f"{message}\n", encoding="ascii"))
 
     def _read_response(self) -> str:
         return self.serial_connection.readline().decode(encoding="ascii")
