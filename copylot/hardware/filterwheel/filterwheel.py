@@ -16,6 +16,6 @@ class FilterWheel:
 
         self.serial_connection = serial.Serial()
         self.serial_connection.port = self.com_port
-        self.serial_connection.baudrate = 9600
+        self.serial_connection.baudrate = 1000000
 
         print(self.serial_connection.name)
