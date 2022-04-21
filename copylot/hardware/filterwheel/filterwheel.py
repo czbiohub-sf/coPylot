@@ -1,3 +1,4 @@
+import time
 import serial
 
 
@@ -22,6 +23,8 @@ class FilterWheel:
         self.serial_connection.open()
 
         print(self.serial_connection.name)
+
+        time.sleep(0.5)
 
     def __del__(self):
         self.serial_connection.close()
