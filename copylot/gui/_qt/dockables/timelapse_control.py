@@ -65,7 +65,11 @@ class TimelapseControlDockWidget(QWidget):
 
     def timelapse_worker_method(self):
         view = self.view_combobox.currentIndex()
-        channel = [int(self.laser_combobox.currentText())] if self.laser_combobox.currentIndex() != 2 else [488, 561]
+        channel = (
+            [int(self.laser_combobox.currentText())]
+            if self.laser_combobox.currentIndex() != 2
+            else [488, 561]
+        )
         parameters = self.parent.parameters_widget.parameters
 
         daq_card = NIDaq(self, **parameters)
