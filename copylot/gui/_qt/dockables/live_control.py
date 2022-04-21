@@ -2,7 +2,8 @@ from qtpy.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxL
 from qtpy.QtCore import Qt, Signal, Slot
 import time
 
-from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
+from copylot.gui._qt.job_runners.worker import Worker
+from copylot.hardware.ni_daq.nidaq import NIDaq
 
 
 class LiveControlDockWidget(QWidget):
@@ -49,6 +50,14 @@ class LiveControlDockWidget(QWidget):
 
         self.thread_launching.connect(self.status_launching)
 
+    def timelapse_worker_method(self):
+        view = self.combobox_view
+        channel = self.combobox_channel
+        parameters = self.parent.parameters_widget.parameters
+
+        daq_card = NIDaq(self, **parameters)
+        daq_card.acquire_stacks(channels=channel, view=view)
+
     def launch_nidaq(self):
         if self.state_tracker:
             self.thread_launching.emit()
@@ -62,12 +71,7 @@ class LiveControlDockWidget(QWidget):
                 QApplication.processEvents()
             self.wait_shutdown = True  # reset to true for next call
 
-            daq_card_worker = NIDaqWorker(
-                "live",
-                self.combobox_view,
-                self.combobox_channel,
-                self.parent.parameters_widget.parameters,
-            )
+            daq_card_worker = Worker(self.timelapse_worker_method)
 
             print(
                 "called with:",

@@ -9,7 +9,6 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, Signal, Slot
 
-from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
 from copylot.gui._qt.job_runners.worker import Worker
 from copylot.hardware.ni_daq.nidaq import NIDaq
 
