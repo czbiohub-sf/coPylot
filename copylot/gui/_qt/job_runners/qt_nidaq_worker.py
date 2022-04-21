@@ -16,7 +16,7 @@ class NIDaqWorker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-        self.daq_card = NIDaq(self, **parameters)
+
         self.thread_running = False
 
     @Slot()
@@ -29,7 +29,7 @@ class NIDaqWorker(QRunnable):
                 self.daq_card.select_view(self.view)
                 self.daq_card.select_channel_remove_stripes(self.channel)
             elif self.program_type == "timelapse":
-                self.daq_card.acquire_stacks(channels=self.channel, view=self.view)
+
 
         finally:
             self.signals.finished.emit()
