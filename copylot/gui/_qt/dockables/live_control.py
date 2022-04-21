@@ -56,7 +56,8 @@ class LiveControlDockWidget(QWidget):
         parameters = self.parent.parameters_widget.parameters
 
         daq_card = NIDaq(self, **parameters)
-        daq_card.acquire_stacks(channels=channel, view=view)
+        daq_card.select_view(self.view)
+        daq_card.select_channel_remove_stripes(self.channel)
 
     def launch_nidaq(self):
         if self.state_tracker:
