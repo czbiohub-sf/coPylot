@@ -1,0 +1,34 @@
+name: daxi
+hardware:
+  - asi_stage:
+      show_gui: false
+      com_port: "COM6"
+  - ni_daq:
+      show_gui: true
+      ch_ao0: "cDAQ1AO/ao0"  # scanning channel
+      ch_ao1: "cDAQ1AO/ao1"  # view switching
+      ch_ao2: "cDAQ1AO/ao2"  # view switching
+      ch_ao3: "cDAQ1AO/ao3"  # gamma angle, stripe reduction
+      ch_ao4: "cDAQ1AO2/ao0"  # beta angle, light sheet incident angle
+      ch_ao5: "cDAQ1AO2/ao1"  # O1 PIFOC control
+      ch_ao6: "cDAQ1AO2/ao2"  # O3 PIFOC control
+      ch_ao7: "cDAQ1AO2/ao3"  # analog control of laser power
+      ch_ctr0: "cDAQ1/_ctr0"  # for retrigger
+      ch_ctr0_internal_output: "/cDAQ1/Ctr0InternalOutput"
+      ch_ctr1: "cDAQ1/_ctr1"  # for counting number of frames
+      ch_ctr1_internal_output: "/cDAQ1/Ctr1InternalOutput"
+      ch_ctr2: "cDAQ1/_ctr2"  # idle
+      ch_ctr3: "cDAQ1/_ctr3"  # idle
+      PFI0: "/cDAQ1/PFI0"  # camera exposure input
+      PFI1: "/cDAQ1/PFI1"  # idle
+      ch_dio0: "cDAQ1DIO/port0/line0"  # 405 digital channel
+      ch_dio1: "cDAQ1DIO/port0/line1"  # 488 digital channel
+      ch_dio2: "cDAQ1DIO/port0/line2"  # 561 digital channel
+      ch_dio3: "cDAQ1DIO/port0/line3"  # 639 digital channel
+      ch_dio4: "cDAQ1DIO/port0/line4"  # bright field
+      ch_dio5: "cDAQ1DIO/port0/line5"  # idle
+      ch_dio6: "cDAQ1DIO/port0/line6"  # idle
+      ch_dio7: "cDAQ1DIO/port0/line7"  # idle
+  - filterwheel:
+      show_gui: false
+      com_port: "COM8"
