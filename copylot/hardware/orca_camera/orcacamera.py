@@ -1,11 +1,11 @@
-from copylot.hardware.hamamatsu_camera.dcam import Dcamapi, Dcam
+from copylot.hardware.orca_camera.dcam import Dcamapi, Dcam
 
 
-class CameraException(Exception):
+class OrcaCameraException(Exception):
     pass
 
 
-class Camera:
+class OrcaCamera:
     def __init__(self, camera_index: int = 0):
         self._camera_index = camera_index
 
@@ -47,22 +47,22 @@ class Camera:
 
                         dcam.cap_stop()
                     else:
-                        raise CameraException(
+                        raise OrcaCameraException(
                             f"dcam.cap_start() fails with error {dcam.lasterr()}"
                         )
 
                     dcam.buf_release()  # release buffer
                 else:
-                    raise CameraException(
+                    raise OrcaCameraException(
                         f"dcam.buf_alloc({nb_buffer_frames}) fails with error {dcam.lasterr()}"
                     )
                 dcam.dev_close()
             else:
-                raise CameraException(
+                raise OrcaCameraException(
                     f"dcam.dev_open() fails with error {dcam.lasterr()}"
                 )
         else:
-            raise CameraException(
+            raise OrcaCameraException(
                 f"Dcamapi.init() fails with error {Dcamapi.lasterr()}"
             )
 
