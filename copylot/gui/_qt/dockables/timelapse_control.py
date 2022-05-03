@@ -9,7 +9,8 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, Signal, Slot
 
-from copylot.gui._qt.job_runners.qt_nidaq_worker import NIDaqWorker
+from copylot.gui._qt.job_runners.worker import Worker
+from copylot.hardware.ni_daq.nidaq import NIDaq
 
 
 class TimelapseControlDockWidget(QWidget):
@@ -58,19 +59,24 @@ class TimelapseControlDockWidget(QWidget):
 
         self.setLayout(self.layout)
 
+    def timelapse_worker_method(self):
+        view = self.view_combobox.currentIndex()
+        channel = (
+            [int(self.laser_combobox.currentText())]
+            if self.laser_combobox.currentIndex() != 2
+            else [488, 561]
+        )
+        parameters = self.parent.parameters_widget.parameters
+
+        daq_card = NIDaq(self, **parameters)
+        daq_card.acquire_stacks(channels=channel, view=view)
+
     def launch_nidaq(self):
         if self.state_tracker:
             self.parent.status_bar.showMessage("Timelapse mode running...")
 
             # launch worker thread with newest parameters
-            daq_card_worker = NIDaqWorker(
-                "timelapse",
-                self.view_combobox.currentIndex(),
-                [int(self.laser_combobox.currentText())]
-                if self.laser_combobox.currentIndex() != 2
-                else [488, 561],
-                self.parent.parameters_widget.parameters,
-            )
+            daq_card_worker = Worker(self.timelapse_worker_method)
 
             # connect signals
             self.trigger_stop_timelapse.connect(daq_card_worker.stop)
