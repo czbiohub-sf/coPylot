@@ -35,3 +35,12 @@ class LiveTimelapseDockWidget(QWidget):
 
         daq_card = NIDaq(self, **parameters)
         daq_card.acquire_stacks(channels=channel, view=view)
+
+    def live_worker_method(self):
+        view = self.combobox_view
+        channel = self.combobox_channel
+        parameters = self.parent.parameters_widget.parameters
+
+        daq_card = NIDaq(self, **parameters)
+        daq_card.select_view(view)
+        daq_card.select_channel_remove_stripes(channel)
