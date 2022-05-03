@@ -1,6 +1,8 @@
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton
 
+from copylot.hardware.ni_daq.nidaq import NIDaq
+
 
 class LiveTimelapseDockWidget(QWidget):
     def __init__(self, parent, threadpool):
@@ -21,3 +23,15 @@ class LiveTimelapseDockWidget(QWidget):
         self.layout.addWidget(self.section_button)
 
         self.setLayout(self.layout)
+
+    def timelapse_worker_method(self):
+        view = self.view_combobox.currentIndex()
+        channel = (
+            [int(self.laser_combobox.currentText())]
+            if self.laser_combobox.currentIndex() != 2
+            else [488, 561]
+        )
+        parameters = self.parent.parameters_widget.parameters
+
+        daq_card = NIDaq(self, **parameters)
+        daq_card.acquire_stacks(channels=channel, view=view)
