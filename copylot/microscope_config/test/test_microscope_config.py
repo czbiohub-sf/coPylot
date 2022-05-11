@@ -4,7 +4,7 @@ from copylot.microscope_config.microscope_config import MicroscopeConfig
 
 
 def test_read_config():
-    config_path = pathlib.Path("../configs/daxi.yaml").absolute()
+    config_path = pathlib.Path("../configs/daxi.yaml").resolve()
     scope_config = MicroscopeConfig.read_config(config_path)
 
     assert scope_config.name == "daxi"
