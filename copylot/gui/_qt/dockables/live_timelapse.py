@@ -18,9 +18,11 @@ class LiveTimelapseDockWidget(QWidget):
         self.layout.setAlignment(Qt.AlignTop)
 
         # add instance launching button
-        self.section_button = QPushButton("Live/Timelapse Button")
+        self.live_button = QPushButton("Live Button")
+        self.timelapse_button = QPushButton("Timelapse Button")
 
-        self.layout.addWidget(self.section_button)
+        self.layout.addWidget(self.live_button)
+        self.layout.addWidget(self.timelapse_button)
 
         self.setLayout(self.layout)
 
