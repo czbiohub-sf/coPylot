@@ -8,14 +8,13 @@ from qtpy.QtWidgets import (
     QMainWindow,
     QStatusBar,
     QApplication,
-    QWidget,
     QDockWidget,
+    QLabel,
+    QAction,
 )
 
-from copylot.gui.qt_live_control import LiveControl
-from copylot.gui.qt_parameters_widget import ParametersWidget
-from copylot.gui.qt_timelapse_control import TimelapseControl
-from copylot.gui.qt_water_dispenser_widget import WaterDispenser
+from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
+from copylot import __version__
 
 
 class MainWindow(QMainWindow):
@@ -25,10 +24,16 @@ class MainWindow(QMainWindow):
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
-        self.left = 10
-        self.top = 10
-        self.width = 900
-        self.height = 1000
+        self.version = __version__
+
+        self.desktop = QApplication.desktop()
+        self.screenRect = self.desktop.screenGeometry()
+        height, width = self.screenRect.height(), self.screenRect.width()
+
+        self.width = width // 3
+        self.height = height // 2
+        self.left = (width - self.width) // 2
+        self.top = (height - self.height) // 2
 
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
@@ -86,10 +91,14 @@ class MainWindow(QMainWindow):
                 json.dump(self.defaults, outfile)
 
         # initialize docks
-        self.live_dock = QDockWidget("Live", self)
-        self.timelapse_dock = QDockWidget("Timelapse", self)
-        self.water_dock = QDockWidget("Water", self)
-        self.parameters_dock = QDockWidget("Parameters", self)
+        self.live_dock = QDockWidget(self)
+        self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
+        self.timelapse_dock = QDockWidget(self)
+        self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
+        self.water_dock = QDockWidget(self)
+        self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
+        self.parameters_dock = QDockWidget(self)
+        self.parameters_dock.setTitleBarWidget(QLabel("NI DAQ Parameters"))
 
         # set common configurations for docks
         self.dock_list = [
@@ -101,27 +110,35 @@ class MainWindow(QMainWindow):
         for dock in self.dock_list:
             _apply_dock_config(dock)
 
-        # set maximum dock sizes
-        self.live_dock.setFixedSize(200, 150)
-        self.timelapse_dock.setFixedSize(200, 170)
-        self.water_dock.setFixedSize(200, 260)
-        self.parameters_dock.setFixedSize(650, 650)
-
         # initialize widgets and assign to their dock
-        self.live_widget = LiveControl(self, self.threadpool)
-        self.live_dock.setWidget(self.live_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
+        self.live_dock.setWidget(
+            DockPlaceholder(
+                self, self.live_dock, "live_control", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
+        #
+        # self.timelapse_widget = TimelapseControl(self, self.threadpool)
+        self.timelapse_dock.setWidget(
+            DockPlaceholder(
+                self, self.timelapse_dock, "timelapse_control", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
-        self.timelapse_widget = TimelapseControl(self, self.threadpool)
-        self.timelapse_dock.setWidget(self.timelapse_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
+        # self.water_widget = WaterDispenser(self, self.threadpool)
+        self.water_dock.setWidget(
+            DockPlaceholder(
+                self, self.water_dock, "water_dispenser", [self, self.threadpool]
+            )
+        )
+        # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
 
-        self.water_widget = WaterDispenser(self, self.threadpool)
-        self.water_dock.setWidget(self.water_widget)
-        self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
-
-        self.parameters_widget = ParametersWidget(self)
-        self.parameters_dock.setWidget(self.parameters_widget)
+        # self.parameters_widget = ParametersDockWidget(self)
+        self.parameters_placeholder = DockPlaceholder(
+            self, self.parameters_dock, "parameters", [self]
+        )
+        self.parameters_dock.setWidget(self.parameters_placeholder)
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
@@ -133,12 +150,24 @@ class MainWindow(QMainWindow):
         self.status_bar = QStatusBar()
         self.setStatusBar(self.status_bar)
 
-        # set placeholder central widget
-        self.central_widget = QWidget()
-        self.central_widget.hide()
-        self.setCentralWidget(self.central_widget)
+        # Menu bar
+        self.setupMenubar()
 
-        self.show()
+    def closeEvent(self, event):
+        print("closeEvent of mainwindow is called")
+        app = QApplication.instance()
+        app.quit()
+
+    def setupMenubar(self):
+        """Method to populate menubar."""
+        mainMenu = self.menuBar()
+        mainMenu.setNativeMenuBar(False)
+
+        helpMenu = mainMenu.addMenu(' &Help')
+
+        # Help Menu
+        versionButton = QAction("ver" + self.version, self)
+        helpMenu.addAction(versionButton)
 
 
 def _apply_dock_config(dock):
@@ -148,12 +177,21 @@ def _apply_dock_config(dock):
     )
 
 
-def main():
+def run():
+    """Method to run GUI
+
+    Parameters
+    ----------
+    ver : str
+        string of aydin version number
+
+    """
     app = QApplication(sys.argv)
-    window = MainWindow()
     app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    ex = MainWindow()
+    ex.show()
     sys.exit(app.exec())
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    run()

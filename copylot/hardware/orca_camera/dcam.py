@@ -1,10 +1,11 @@
+# flake8: noqa
 # dcam.py : Jun 30, 2021
 #
 # Copyright (C) 2021 Hamamatsu Photonics K.K.. All right reserved.
 #
 # The declarations of classes and functions in this file are subject to change without notice.
 
-from dcamapi4 import *
+from .dcamapi4 import *
 import numpy as np
 
 
