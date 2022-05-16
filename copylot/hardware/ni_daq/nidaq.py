@@ -21,6 +21,44 @@ def set_ao_value(ch, value):
 
 
 class NIDaq:
+    """
+    Parameters
+    ----------
+    exposure : float
+        Expose time. Its unit is seconds.
+    nb_timepoints : int
+        Number of timepoints. Number of stacks to acquire.
+    scan_step : float
+        Scanning step size. unit: um.
+    scan_range : float
+        Total range of stage scanning. unit: um.
+    vertical_pixels : int
+        Number of pixels along the vertical direction, unit: pixels
+    num_samples: int
+        Number of samples of each channel (AO and DO) during each camera exposure
+    galvo_offset_view1: float
+        Offset of scanning galvo needed for view1, unit: um
+    galvo_offset_view2: float
+        Offset of scanning galvo needed for view2, unit: um
+    o3_view1 : float
+        Offset of O3(objective-3) needed for view1, focus control
+    o3_view2 : float
+        Offset of O3(objective-3) needed for view2, focus control
+    view1_galvo1 : float
+        Voltage to apply on galvo 1 for view 1
+    view1_galvo2 : float
+        Voltage to apply on galvo 2 for view 1
+    view2_galvo1 : float
+        Voltage to apply on galvo 1 for view 2
+    view2_galvo2 : float
+        Voltage to apply on galvo 2 for view 2
+    stripe_reduction_range : float
+    stripe_reduction_offset : float
+    o1_pifoc : int
+    light_sheet_angle : float
+    laser_power
+    """
+
     # Channel information
     ch_ao0 = "cDAQ1AO/ao0"  # scanning channel
     ch_ao1 = "cDAQ1AO/ao1"  # view switching
@@ -87,35 +125,12 @@ class NIDaq:
         view1_galvo2: float = -4.08,  # unit: v, to apply on galvo 2 for view 1
         view2_galvo1: float = -4.37,  # unit: v, to apply on galvo 1 for view 2
         view2_galvo2: float = 3.66,  # unit: v, to apply on galvo 2 for view 2
-        stripe_reduction_range: float = 0.1,  # unit: v, to apply on glavo gamma to reduce stripe
-        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on glavo gamma to reduce stripe
-        o1_pifoc=0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
-        light_sheet_angle=-2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
+        stripe_reduction_range: float = 0.1,  # unit: v, to apply on galvo gamma to reduce stripe
+        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on galvo gamma to reduce stripe
+        o1_pifoc: int = 0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
+        light_sheet_angle: float = -2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
         laser_power=100,  # unit: percentage [0, 100], for laser analog control
     ):
-        """
-        Constructor of NIDaq.
-
-        Parameters
-        ----------
-        exposure : float
-            Expose time. Its unit is seconds.
-        nb_timepoints : int
-            Number of timepoints. Number of stacks to acquire.
-        scan_step : float
-            Scanning step size. unit: um.
-        scan_range : float
-            Total range of stage scanning. unit: um.
-        vertical_pixels : int
-            Number of pixels along the vertical direction, unit: pixels
-        num_samples: int
-            Number of samples of each channel (AO and DO) during each camera exposure
-        galvo_offset_view1: float
-            Offset of scanning galvo needed for view1, unit: um
-        galvo_offset_view2: float
-            Offset of scanning galvo needed for view2, unit: um
-        # TODO: add missing docstrings for rest of the optional arguments.
-        """
         self.stop_now = False
 
         self.exposure = exposure
