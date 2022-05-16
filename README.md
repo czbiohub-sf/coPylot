@@ -2,7 +2,9 @@
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
-_coPylot_ is a python app to control the Pisces lightsheet microscope.
+_coPylot_ is a python app to control the lightsheet microscopes
+we build here at @czbiohub
+.
 Support for controling other microscopes planned to be added.
 
 It can be started up by running `copylot/gui/gui.py`.
