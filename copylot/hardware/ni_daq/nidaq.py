@@ -22,6 +22,8 @@ def set_ao_value(ch, value):
 
 class NIDaq:
     """
+    NI DAQ card adapter.
+
     Parameters
     ----------
     exposure : float
@@ -53,10 +55,16 @@ class NIDaq:
     view2_galvo2 : float
         Voltage to apply on galvo 2 for view 2
     stripe_reduction_range : float
+        Voltage to apply on galvo gamma to reduce stripe range
     stripe_reduction_offset : float
+        Voltage to apply on galvo gamma to reduce stripe offset
     o1_pifoc : int
+        Offset of O1(Objective-1) PIFOC in um, range [-400, 400] um.
     light_sheet_angle : float
+        Voltage to apply on galvo beta to adjust light sheet angle
     laser_power
+        Percentage value in [0, 100], for laser analog control
+
     """
 
     # Channel information
@@ -128,7 +136,7 @@ class NIDaq:
         stripe_reduction_range: float = 0.1,  # unit: v, to apply on galvo gamma to reduce stripe
         stripe_reduction_offset: float = 0.58,  # unit: v, to apply on galvo gamma to reduce stripe
         o1_pifoc: int = 0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
-        light_sheet_angle: float = -2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
+        light_sheet_angle: float = -2.2,  # unit: v, to apply on galvo beta to adjust light sheet angle
         laser_power=100,  # unit: percentage [0, 100], for laser analog control
     ):
         self.stop_now = False
@@ -159,10 +167,12 @@ class NIDaq:
 
     @property
     def nb_slices(self):
+        """Number of slices"""
         return int(self.scan_range / self.scan_step)
 
     @property
     def sampling_rate(self):
+        """Sampling rate."""
         return self.num_samples / self.exposure
 
     def _get_ao_data(self, view: str, scan_option="Stage"):
@@ -230,8 +240,18 @@ class NIDaq:
         ]
 
     def _get_do_data(self, nr_channels, interleave=False, current_ch=0):
-        """
-        Method to get digital output data.
+        """Method to get digital output data.
+
+        Parameters
+        ----------
+        nr_channels
+        interleave
+        current_ch
+
+        Returns
+        -------
+        list
+
         """
         nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
         data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
@@ -270,7 +290,17 @@ class NIDaq:
         return task_ao
 
     def _crate_do_task_for_acquisition(self, channels):
-        """create ao task for acquisition, include all the needed ao channels"""
+        """Create ao task for acquisition, include all the needed ao channels
+
+        Parameters
+        ----------
+        channels : Sequence[str]
+
+        Returns
+        -------
+        nidaqmx.Task
+
+        """
         task_do = nidaqmx.Task("do0")  # for laser control
 
         # select channel
