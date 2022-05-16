@@ -3,6 +3,9 @@ import yaml
 
 class MicroscopeConfig:
     """
+    Abstraction that parses the config yaml files that
+    help us to initialize required hardware and gui modules
+    accordingly.
 
     Parameters
     ----------
