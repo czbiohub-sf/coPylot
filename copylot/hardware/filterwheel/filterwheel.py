@@ -29,8 +29,7 @@ class FilterWheel:
         self.serial_connection.close()
 
     def _send_message(self, message: str):
-        """
-        Send message over serial connection.
+        """Send message over serial connection.
 
         Parameters
         ----------
@@ -40,8 +39,7 @@ class FilterWheel:
         self.serial_connection.write(bytes(f"{message}\n", encoding="ascii"))
 
     def _read_response(self) -> str:
-        """
-        Receive and read the response from serial communication.
+        """Receive and read the response from serial communication.
 
         Returns
         -------
