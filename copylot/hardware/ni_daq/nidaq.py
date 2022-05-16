@@ -561,9 +561,7 @@ class NIDaq:
 
         return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5, data_ao6]
 
-    def _acquire_stacks_galvo(
-        self, task_ao, task_do, channels, views, scan_option
-    ):
+    def _acquire_stacks_galvo(self, task_ao, task_do, channels, views, scan_option):
         """Set up the workflow to acquire multiple stacks
         todo, support multichanel imaging
 

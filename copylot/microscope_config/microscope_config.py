@@ -12,6 +12,7 @@ class MicroscopeConfig:
     config_dict
 
     """
+
     def __init__(self, config_dict: dict):
         self.name = config_dict['name']
         self.config_dict = config_dict

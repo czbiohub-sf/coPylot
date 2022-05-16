@@ -24,6 +24,7 @@ class WaterDispenserControl:
     baudrate : int
 
     """
+
     def __init__(self, com, baudrate):
         self.stop_now = False
         self.com = com
