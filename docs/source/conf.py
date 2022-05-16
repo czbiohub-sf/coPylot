@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# aydin documentation build configuration file, created by
+# coPylot documentation build configuration file, created by
 # sphinx-quickstart on Sun Jan  4 08:58:22 2015.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -174,6 +174,6 @@ html_show_sphinx = False
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "aydindoc"
+htmlhelp_basename = "copylotdoc"
 
 numpydoc_show_class_members = False
