@@ -53,32 +53,56 @@ class ASIStage:
         self.serial_connection.close()
 
     def _send_message(self, message: str):
+        """Send message over serial connection.
+
+        Parameters
+        ----------
+        message : str
+
+        """
         self.serial_connection.write(bytes(f"{message}\r", encoding="ascii"))
 
     def _read_response(self) -> str:
+        """Receive and read the response from serial communication.
+
+        Returns
+        -------
+        str
+
+        """
         return self.serial_connection.readline().decode(encoding="ascii")
 
     def set_speed(self, speed):
+        """Set speed of the stage.
+
+        Parameters
+        ----------
+        speed
+
+        """
         message = f"SPEED x={speed}"
         print("set speed to scan: " + message)
         self._send_message(message)
         print(self._read_response())
 
     def set_default_speed(self):
+        """Set the default speed as the stage speed.
+        Currently default values are x=10 y=10.
+        """
         message = "SPEED x=10 y=10"
         print("set speed to scan: " + message)
         self._send_message(message)
         print(self._read_response())
 
     def set_backlash(self):
+        """Set backlash on the stage."""
         message = "BACKLASH x=0.04 y=0.0"
         print("set backlash: " + message)
         self._send_message(message)
         print(self._read_response())
 
     def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
-        """
-        Method to set scan mode.
+        """Method to set scan mode.
 
         Parameters
         ----------
@@ -90,31 +114,49 @@ class ASIStage:
         print(self._read_response())
 
     def zero(self):
-        """
-        Set current position to zero.
-        """
+        """Set current position to zero."""
         message = "ZERO\r"
         self._send_message(message)
         print(self._read_response())
 
     def start_scan(self):
+        """Start the stage scan"""
         message = "SCAN\r"
         self._send_message(message)
         print(self._read_response())
 
     def scanr(self, x=0, y=0):
+        """Set scan raster scan start and stop.
+
+        Parameters
+        ----------
+        x
+        y
+
+        """
         message = f"SCANR x={x} y={y}"
         self._send_message(message)
         print(self._read_response())
 
     def scanv(self, x=0, y=0, f=1.0):
+        """Set vertical scan.
+
+        Parameters
+        ----------
+        x
+        y
+        f
+
+        Returns
+        -------
+
+        """
         message = f"SCANV x={x} y={y} f={f}"
         self._send_message(message)
         print(self._read_response())
 
     def info(self, axis_letter):
-        """
-        Method to fetch various information on stage axes.
+        """Method to fetch various information on stage axes.
 
         Parameters
         ----------

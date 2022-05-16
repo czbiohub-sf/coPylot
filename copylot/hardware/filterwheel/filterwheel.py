@@ -3,8 +3,7 @@ import serial
 
 
 class FilterWheel:
-    """
-    FilterWheel
+    """FilterWheel
 
     Parameters
     ----------
@@ -30,12 +29,34 @@ class FilterWheel:
         self.serial_connection.close()
 
     def _send_message(self, message: str):
+        """Send message over serial connection.
+
+        Parameters
+        ----------
+        message : str
+
+        """
         self.serial_connection.write(bytes(f"{message}\n", encoding="ascii"))
 
     def _read_response(self) -> str:
+        """Receive and read the response from serial communication.
+
+        Returns
+        -------
+        str
+
+        """
         return self.serial_connection.readline().decode(encoding="ascii")
 
     def set_position(self, position_index: int):
+        """
+        Set position of the filterwheel.
+
+        Parameters
+        ----------
+        position_index : int
+
+        """
         if position_index < 0 or position_index > 5:
             raise ValueError("Bad value for position_index argument...")
 

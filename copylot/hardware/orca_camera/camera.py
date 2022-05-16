@@ -6,7 +6,17 @@ class OrcaCameraException(Exception):
 
 
 class OrcaCamera:
+    """
+    Hamamatsu Orca Flash 4 Camera adapter.
+
+    Parameters
+    ----------
+    camera_index : int
+
+    """
+
     def __init__(self, camera_index: int = 0):
+
         self._camera_index = camera_index
 
     def run(self, nb_frame: int = 100000):

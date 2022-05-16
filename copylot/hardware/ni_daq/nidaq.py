@@ -21,6 +21,52 @@ def set_ao_value(ch, value):
 
 
 class NIDaq:
+    """
+    NI DAQ card adapter.
+
+    Parameters
+    ----------
+    exposure : float
+        Expose time. Its unit is seconds.
+    nb_timepoints : int
+        Number of timepoints. Number of stacks to acquire.
+    scan_step : float
+        Scanning step size. unit: um.
+    scan_range : float
+        Total range of stage scanning. unit: um.
+    vertical_pixels : int
+        Number of pixels along the vertical direction, unit: pixels
+    num_samples: int
+        Number of samples of each channel (AO and DO) during each camera exposure
+    galvo_offset_view1: float
+        Offset of scanning galvo needed for view1, unit: um
+    galvo_offset_view2: float
+        Offset of scanning galvo needed for view2, unit: um
+    o3_view1 : float
+        Offset of O3(objective-3) needed for view1, focus control
+    o3_view2 : float
+        Offset of O3(objective-3) needed for view2, focus control
+    view1_galvo1 : float
+        Voltage to apply on galvo 1 for view 1
+    view1_galvo2 : float
+        Voltage to apply on galvo 2 for view 1
+    view2_galvo1 : float
+        Voltage to apply on galvo 1 for view 2
+    view2_galvo2 : float
+        Voltage to apply on galvo 2 for view 2
+    stripe_reduction_range : float
+        Voltage to apply on galvo gamma to reduce stripe range
+    stripe_reduction_offset : float
+        Voltage to apply on galvo gamma to reduce stripe offset
+    o1_pifoc : int
+        Offset of O1(Objective-1) PIFOC in um, range [-400, 400] um.
+    light_sheet_angle : float
+        Voltage to apply on galvo beta to adjust light sheet angle
+    laser_power
+        Percentage value in [0, 100], for laser analog control
+
+    """
+
     # Channel information
     ch_ao0 = "cDAQ1AO/ao0"  # scanning channel
     ch_ao1 = "cDAQ1AO/ao1"  # view switching
@@ -87,35 +133,12 @@ class NIDaq:
         view1_galvo2: float = -4.08,  # unit: v, to apply on galvo 2 for view 1
         view2_galvo1: float = -4.37,  # unit: v, to apply on galvo 1 for view 2
         view2_galvo2: float = 3.66,  # unit: v, to apply on galvo 2 for view 2
-        stripe_reduction_range: float = 0.1,  # unit: v, to apply on glavo gamma to reduce stripe
-        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on glavo gamma to reduce stripe
-        o1_pifoc=0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
-        light_sheet_angle=-2.2,  # unit: v, to apply on glavo beta to adjust light sheet angle
+        stripe_reduction_range: float = 0.1,  # unit: v, to apply on galvo gamma to reduce stripe
+        stripe_reduction_offset: float = 0.58,  # unit: v, to apply on galvo gamma to reduce stripe
+        o1_pifoc: int = 0,  # unit: um, to apply on O1 PIFOC, [-400, 400] um.
+        light_sheet_angle: float = -2.2,  # unit: v, to apply on galvo beta to adjust light sheet angle
         laser_power=100,  # unit: percentage [0, 100], for laser analog control
     ):
-        """
-        Constructor of NIDaq.
-
-        Parameters
-        ----------
-        exposure : float
-            Expose time. Its unit is seconds.
-        nb_timepoints : int
-            Number of timepoints. Number of stacks to acquire.
-        scan_step : float
-            Scanning step size. unit: um.
-        scan_range : float
-            Total range of stage scanning. unit: um.
-        vertical_pixels : int
-            Number of pixels along the vertical direction, unit: pixels
-        num_samples: int
-            Number of samples of each channel (AO and DO) during each camera exposure
-        galvo_offset_view1: float
-            Offset of scanning galvo needed for view1, unit: um
-        galvo_offset_view2: float
-            Offset of scanning galvo needed for view2, unit: um
-        # TODO: add missing docstrings for rest of the optional arguments.
-        """
         self.stop_now = False
 
         self.exposure = exposure
@@ -144,14 +167,27 @@ class NIDaq:
 
     @property
     def nb_slices(self):
+        """Number of slices"""
         return int(self.scan_range / self.scan_step)
 
     @property
     def sampling_rate(self):
+        """Sampling rate"""
         return self.num_samples / self.exposure
 
-    def _get_ao_data(self, view: str, scan_option="Stage"):
-        """generate the ndarray for an ao channel"""
+    def _get_ao_data(self, view: str, scan_option: str = "Stage"):
+        """Generate the ndarray for an ao channel
+
+        Parameters
+        ----------
+        view : str
+        scan_option : str
+
+        Returns
+        -------
+        TODO: right the return type and description
+
+        """
         # AO3. for stripe reduction
         stripe_min = -self.stripe_reduction_range + self.stripe_reduction_offset
         stripe_max = self.stripe_reduction_range + self.stripe_reduction_offset
@@ -215,8 +251,18 @@ class NIDaq:
         ]
 
     def _get_do_data(self, nr_channels, interleave=False, current_ch=0):
-        """
-        Method to get digital output data.
+        """Method to get digital output data.
+
+        Parameters
+        ----------
+        nr_channels
+        interleave
+        current_ch
+
+        Returns
+        -------
+        list
+
         """
         nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
         data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
@@ -255,7 +301,17 @@ class NIDaq:
         return task_ao
 
     def _crate_do_task_for_acquisition(self, channels):
-        """create ao task for acquisition, include all the needed ao channels"""
+        """Create ao task for acquisition, include all the needed ao channels
+
+        Parameters
+        ----------
+        channels : Sequence[str]
+
+        Returns
+        -------
+        nidaqmx.Task
+
+        """
         task_do = nidaqmx.Task("do0")  # for laser control
 
         # select channel
@@ -280,14 +336,19 @@ class NIDaq:
         view,
         scan_option='Stage',
         interleave=True,
-        low_power=10,
-        high_power=100,
     ):
-        """acquire stackes, depending on the given channel and view.
-        view=1, first view only;
-        view=2, second view only;
-        view=3, both views;
-        channel=['405'], ['488'], ['561'], ['639'], ['bf'] or any combination of them
+        """Acquire stackes, depending on the given channel and view.
+
+        Parameters
+        ----------
+        channels : List[str]
+            ['405'], ['488'], ['561'], ['639'], ['bf'] or any combination of them
+        view : int
+            view=1 first view only, view=2 second view only, view=3 both views
+        scan_option : str
+            valid values are 'Stage', 'O1, 'Galvo'
+        interleave : bool
+
         """
         # If using interleave mode
         # for multichannel acquistion, make sure each channel has the same number of slices
@@ -299,7 +360,7 @@ class NIDaq:
         # use different acquisition methods for each scanning option
         if scan_option == 'Stage':
             fn_acquire = self._acquire_stacks
-        elif scan_option == 'O1' or 'Gavlo':
+        elif scan_option == 'O1' or 'Galvo':
             # set the inital states of the AO devices before acquisition
             self.set_initial_states(scan_option, view)
             fn_acquire = self._acquire_stacks_galvo
@@ -348,7 +409,19 @@ class NIDaq:
     def _acquire_stacks(
         self, task_ao, task_do, nr_channels, views, scan_option, interleave
     ):
-        """set up the workflow to acquire multiple stacks"""
+        """
+        Set up the workflow to acquire multiple stacks
+
+        Parameters
+        ----------
+        task_ao
+        task_do
+        nr_channels
+        views
+        scan_option
+        interleave
+
+        """
 
         data_ao = [
             self._get_ao_data(v, scan_option) for v in views
@@ -433,7 +506,18 @@ class NIDaq:
         task_ctr_loop.close()
 
     def _get_ao_data_galvo(self, view: str, scan_option="O1"):
-        """generate the ndarray for an ao channel"""
+        """Generate the ndarray for an ao channel
+
+        Parameters
+        ----------
+        view : str
+        scan_option : str
+
+        Returns
+        -------
+        TODO: fill the correct return type and description
+
+        """
         nb_samples = self.NB_DUMMY_TTLS + self.nb_slices
         # AO3. not stripe reduction in this mode
         data_ao3 = [self.stripe_reduction_offset] * nb_samples
@@ -477,11 +561,19 @@ class NIDaq:
 
         return [data_ao0, data_ao1, data_ao2, data_ao3, data_ao4, data_ao5, data_ao6]
 
-    def _acquire_stacks_galvo(
-        self, task_ao, task_do, channels, views, scan_option, interleave
-    ):
-        """set up the workflow to acquire multiple stacks
-        todo, support multichanel imaging"""
+    def _acquire_stacks_galvo(self, task_ao, task_do, channels, views, scan_option):
+        """Set up the workflow to acquire multiple stacks
+        todo, support multichanel imaging
+
+        Parameters
+        ----------
+        task_ao
+        task_do
+        channels
+        views
+        scan_option
+
+        """
         data_ao = [
             self._get_ao_data_galvo(v, scan_option) for v in views
         ]  # different for each view due to different offsets
@@ -573,11 +665,20 @@ class NIDaq:
         views,
         scan_option,
         interleave,
-        low_power,
-        high_power,
     ):
-        """set up the workflow to acquire multiple stacks, for interleaved denoisng purpose only"""
+        """Set up the workflow to acquire multiple stacks,
+        for interleaved denoising purpose only
 
+        Parameters
+        ----------
+        task_ao
+        task_do
+        nr_channels
+        views
+        scan_option
+        interleave
+
+        """
         data_ao = [
             self._get_ao_data(v, scan_option) for v in views
         ]  # different for each view due to different offsets
@@ -663,10 +764,19 @@ class NIDaq:
     def _set_initial_ao_states(
         self, scan_galvo, galvo1, galvo2, angle_galvo, o1, o3, laser_power
     ):
-        """
-        select the initial states for the AO channels, by using the correct offset of the scanning gavlo and the
-        voltages of the switching galvos
-        float -> void
+        """Select the initial states for the AO channels, by using the correct
+        offset of the scanning galvo and the voltages of the switching galvos
+
+        Parameters
+        ----------
+        scan_galvo
+        galvo1
+        galvo2
+        angle_galvo
+        o1
+        o3
+        laser_power
+
         """
         data = [scan_galvo, galvo1, galvo2, angle_galvo, o1, o3, laser_power]
         with nidaqmx.Task() as task:
@@ -680,8 +790,17 @@ class NIDaq:
             task.write(data, auto_start=True)
 
     def select_view(self, view):
-        """select one view in live mode
-        Note: ao3 is not included here, it's with the select_channel function"""
+        """Select one view in live mode
+
+        TODO: why?
+        Note: ao3 is not included here,
+        it's with the select_channel function
+
+        Parameters
+        ----------
+        view : int
+
+        """
         if view == 1:
             self._set_initial_ao_states(
                 self._offset_dis_to_vol(self.offset_view1),
@@ -706,7 +825,14 @@ class NIDaq:
             raise ValueError("View not supported")
 
     def set_initial_states(self, scan_option, view):
-        """set the initial states of the AO channels during acquistion"""
+        """Set the initial states of the AO channels during acquistion
+
+        Parameters
+        ----------
+        scan_option : str
+        view : int
+
+        """
         if view == 1:
             offset = self.offset_view1
             galvo1 = self.view1_galvo1
@@ -741,17 +867,33 @@ class NIDaq:
         else:
             raise ValueError("Scanning mode not supported")
 
-    def _offset_dis_to_vol(self, offset):
-        """
-        convert the offset of each view from um to voltage
-        float -> float
-        um    -> v
+    def _offset_dis_to_vol(self, offset: float) -> float:
+        """Convert the offset of each view from um to voltage
+
+        Parameters
+        ----------
+        offset : float
+            unit in um
+
+        Returns
+        -------
+        float
+            unit in V
+
         """
         return offset / self.CONVERT_RATIO_SCAN_GALVO - self.MAX_VOL
 
     def _select_channel(self, ch, t=None):
-        """Helper. Set up DIO channel and Gamma AO channel.
-        Now always do remove shadow. Set gamma AO range to 0 if no need for shadow removal."""
+        """Set up DIO channel and Gamma AO channel. Now always do
+        remove shadow. Set gamma AO range to 0 if no need for shadow
+        removal.
+
+        Parameters
+        ----------
+        ch
+        t
+
+        """
         nb_on_sample = round((self.exposure - self.readout_time) * self.sampling_rate)
         # nb_off_sample = round(self.readout_time * self.sampling_rate)
         data_do = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
@@ -773,7 +915,14 @@ class NIDaq:
         set_dio_state(ch, False)
 
     def select_channel(self, ch, t=None):
-        """select one channel in live mode"""
+        """Select one channel in live mode
+
+        Parameters
+        ----------
+        ch
+        t
+
+        """
         if ch == '405':
             self._select_channel(self.ch_dio0, t)
         elif ch == '488':
@@ -788,7 +937,17 @@ class NIDaq:
             raise ValueError("Channel not supported!")
 
     def _set_up_retriggerable_counter(self, counter):
-        """set up a retriggerable counter task"""
+        """Set up a retriggerable counter task
+
+        Parameters
+        ----------
+        counter
+
+        Returns
+        -------
+        nidaqmx.Task
+
+        """
         task_ctr = nidaqmx.Task()
         task_ctr.co_channels.add_co_pulse_chan_freq(
             counter, idle_state=nidaqmx.constants.Level.LOW, freq=self.sampling_rate
@@ -804,8 +963,18 @@ class NIDaq:
         return task_ctr
 
     def _retriggable_task(self, task_do, data_do, task_ao, data_ao, t=None):
-        """set up a retriggeable task using a counter
-        Using counter0 as default"""
+        """Set up a retriggeable task using a counter
+        Using counter0 as default
+
+        Parameters
+        ----------
+        task_do
+        data_do
+        task_ao
+        data_ao
+        t
+
+        """
         task_do.timing.cfg_samp_clk_timing(
             rate=self.sampling_rate,
             source=self.ch_ctr0_internal_output,

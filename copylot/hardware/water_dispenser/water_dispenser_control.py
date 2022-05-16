@@ -1,5 +1,4 @@
 """
-controller the micropump (Bartels XU7 controller) to dispenser water to the water objective
 useful serial commands:
 bon         : turns pump on
 boff        : turns pump off
@@ -10,19 +9,39 @@ mr          : set signal to rectangular
 mc          : set signal to srs
 (enter key) : display present settings
 """
-
 import serial
 import time
 
 
 class WaterDispenserControl:
+    """
+    Controller for the micropump (Bartels XU7 controller) to dispense
+    water to the water objectives.
+
+    Parameters
+    ----------
+    com : str
+    baudrate : int
+
+    """
+
     def __init__(self, com, baudrate):
         self.stop_now = False
         self.com = com
         self.baudrate = baudrate
 
     def set_pump_speed(self, freq: int, amp: int):
-        """set the speed for pump by setting the frequency and amplitude"""
+        """
+        Set the speed for pump by setting the frequency and amplitude.
+
+        Parameters
+        ----------
+        freq : int
+            Frequency.
+        amp : int
+            Amplitude.
+
+        """
         ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
@@ -37,7 +56,14 @@ class WaterDispenserControl:
         ser.close()
 
     def run_pump(self, duration: float):
-        """start pump for the duration and then stop"""
+        """
+        Start pump for the duration and then stop
+
+        Parameters
+        ----------
+        duration : float
+
+        """
         ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
@@ -50,7 +76,7 @@ class WaterDispenserControl:
         ser.close()
 
     def read_pump(self):
-        """read out the current status and print"""
+        """Read out the current status of the pump and print"""
         ser = serial.Serial(self.com, self.baudrate, timeout=5)
         if ser.is_open:
             ser.close()
@@ -61,11 +87,19 @@ class WaterDispenserControl:
         ser.close()
 
     def run_for_recording(self, interval: float, duration: float, freq: int, amp: int):
-        """run the pump for a recording session
-        interval: float, unit: minute, interval to wait to run pump again
-        duration: fload, unit: second, duration when pump is on
-        freq: int, pump control frequency
-        amp : int, pump control amplitude
+        """Run the pump for a recording session
+
+        Parameters
+        ----------
+        interval: float
+            its unit is minute, interval to wait to run pump again
+        duration: float
+            its unit is second, duration when pump is on
+        freq: int
+            pump control frequency
+        amp : int
+            pump control amplitude
+
         """
         waittime = interval * 60 - duration
         if waittime <= 0:
