@@ -34,6 +34,12 @@ NIDaq
 ..     .. autosummary::
         OrcaCamera
 
+WaterDispenserControl
+    .. currentmodule:: copylot.hardware.water_dispenser.water_dispenser_control
+
+    .. autosummary::
+        WaterDispenserControl
+
 
 ASI Stage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -71,5 +77,15 @@ NIDaq
 .. .. currentmodule:: copylot.hardware.orca_camera.camera
 
 .. .. autoclass:: OrcaCamera
+    :members:
+    :inherited-members:
+
+
+WaterDispenserControl
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: copylot.hardware.water_dispenser.water_dispenser_control
+
+.. autoclass:: WaterDispenserControl
     :members:
     :inherited-members:
