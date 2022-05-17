@@ -28,6 +28,12 @@ NIDaq
     .. autosummary::
         NIDaq
 
+.. OrcaCamera
+    .. currentmodule:: copylot.hardware.orca_camera.camera
+
+..     .. autosummary::
+        OrcaCamera
+
 
 ASI Stage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -58,3 +64,12 @@ NIDaq
     :members:
     :inherited-members:
 
+
+.. OrcaCamera
+ ~~~~~~~~~~~~~~
+
+.. .. currentmodule:: copylot.hardware.orca_camera.camera
+
+.. .. autoclass:: OrcaCamera
+    :members:
+    :inherited-members:
