@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>copylot.hardware.ni_daq.nidaq &mdash; coPylot  documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/copylot_logo.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/hardware.html">Hardware</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">coPylot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>copylot.hardware.ni_daq.nidaq</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for copylot.hardware.ni_daq.nidaq</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;making ao channel to send a sequence of signals&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">nidaqmx</span>
+<span class="kn">import</span> <span class="nn">nidaqmx.system</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+
+<span class="k">def</span> <span class="nf">set_dio_state</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set a DIO channel,</span>
+<span class="sd">    false to low, true to high&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="n">value</span><span class="p">],</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">set_ao_value</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;set the ao channel to value&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">write</span><span class="p">([</span><span class="n">value</span><span class="p">],</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="NIDaq"><a class="viewcode-back" href="../../../../api/hardware.html#copylot.hardware.ni_daq.nidaq.NIDaq">[docs]</a><span class="k">class</span> <span class="nc">NIDaq</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NI DAQ card adapter.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    exposure : float</span>
+<span class="sd">        Expose time. Its unit is seconds.</span>
+<span class="sd">    nb_timepoints : int</span>
+<span class="sd">        Number of timepoints. Number of stacks to acquire.</span>
+<span class="sd">    scan_step : float</span>
+<span class="sd">        Scanning step size. unit: um.</span>
+<span class="sd">    scan_range : float</span>
+<span class="sd">        Total range of stage scanning. unit: um.</span>
+<span class="sd">    vertical_pixels : int</span>
+<span class="sd">        Number of pixels along the vertical direction, unit: pixels</span>
+<span class="sd">    num_samples: int</span>
+<span class="sd">        Number of samples of each channel (AO and DO) during each camera exposure</span>
+<span class="sd">    galvo_offset_view1: float</span>
+<span class="sd">        Offset of scanning galvo needed for view1, unit: um</span>
+<span class="sd">    galvo_offset_view2: float</span>
+<span class="sd">        Offset of scanning galvo needed for view2, unit: um</span>
+<span class="sd">    o3_view1 : float</span>
+<span class="sd">        Offset of O3(objective-3) needed for view1, focus control</span>
+<span class="sd">    o3_view2 : float</span>
+<span class="sd">        Offset of O3(objective-3) needed for view2, focus control</span>
+<span class="sd">    view1_galvo1 : float</span>
+<span class="sd">        Voltage to apply on galvo 1 for view 1</span>
+<span class="sd">    view1_galvo2 : float</span>
+<span class="sd">        Voltage to apply on galvo 2 for view 1</span>
+<span class="sd">    view2_galvo1 : float</span>
+<span class="sd">        Voltage to apply on galvo 1 for view 2</span>
+<span class="sd">    view2_galvo2 : float</span>
+<span class="sd">        Voltage to apply on galvo 2 for view 2</span>
+<span class="sd">    stripe_reduction_range : float</span>
+<span class="sd">        Voltage to apply on galvo gamma to reduce stripe range</span>
+<span class="sd">    stripe_reduction_offset : float</span>
+<span class="sd">        Voltage to apply on galvo gamma to reduce stripe offset</span>
+<span class="sd">    o1_pifoc : int</span>
+<span class="sd">        Offset of O1(Objective-1) PIFOC in um, range [-400, 400] um.</span>
+<span class="sd">    light_sheet_angle : float</span>
+<span class="sd">        Voltage to apply on galvo beta to adjust light sheet angle</span>
+<span class="sd">    laser_power</span>
+<span class="sd">        Percentage value in [0, 100], for laser analog control</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Channel information</span>
+    <span class="n">ch_ao0</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO/ao0&quot;</span>  <span class="c1"># scanning channel</span>
+    <span class="n">ch_ao1</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO/ao1&quot;</span>  <span class="c1"># view switching</span>
+    <span class="n">ch_ao2</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO/ao2&quot;</span>  <span class="c1"># view switching</span>
+    <span class="n">ch_ao3</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO/ao3&quot;</span>  <span class="c1"># gamma angle, stripe reduction</span>
+    <span class="n">ch_ao4</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO2/ao0&quot;</span>  <span class="c1"># beta angle, light sheet incident angle</span>
+    <span class="n">ch_ao5</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO2/ao1&quot;</span>  <span class="c1"># O1 PIFOC control</span>
+    <span class="n">ch_ao6</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO2/ao2&quot;</span>  <span class="c1"># O3 PIFOC control</span>
+    <span class="n">ch_ao7</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1AO2/ao3&quot;</span>  <span class="c1"># analog control of laser power</span>
+
+    <span class="n">ch_ctr0</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1/_ctr0&quot;</span>  <span class="c1"># for retrigger</span>
+    <span class="n">ch_ctr0_internal_output</span> <span class="o">=</span> <span class="s2">&quot;/cDAQ1/Ctr0InternalOutput&quot;</span>
+    <span class="n">ch_ctr1</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1/_ctr1&quot;</span>  <span class="c1"># for counting number of frames</span>
+    <span class="n">ch_ctr1_internal_output</span> <span class="o">=</span> <span class="s2">&quot;/cDAQ1/Ctr1InternalOutput&quot;</span>
+    <span class="n">ch_ctr2</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1/_ctr2&quot;</span>  <span class="c1"># idle</span>
+    <span class="n">ch_ctr3</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1/_ctr3&quot;</span>  <span class="c1"># idle</span>
+
+    <span class="n">PFI0</span> <span class="o">=</span> <span class="s2">&quot;/cDAQ1/PFI0&quot;</span>  <span class="c1"># camera exposure input</span>
+    <span class="n">PFI1</span> <span class="o">=</span> <span class="s2">&quot;/cDAQ1/PFI1&quot;</span>  <span class="c1"># idle</span>
+
+    <span class="n">ch_dio0</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line0&quot;</span>  <span class="c1"># 405 digital channel</span>
+    <span class="n">ch_dio1</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line1&quot;</span>  <span class="c1"># 488 digital channel</span>
+    <span class="n">ch_dio2</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line2&quot;</span>  <span class="c1"># 561 digital channel</span>
+    <span class="n">ch_dio3</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line3&quot;</span>  <span class="c1"># 639 digital channel</span>
+    <span class="n">ch_dio4</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line4&quot;</span>  <span class="c1"># bright field</span>
+    <span class="n">ch_dio5</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line5&quot;</span>  <span class="c1"># idle</span>
+    <span class="n">ch_dio6</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line6&quot;</span>  <span class="c1"># idle</span>
+    <span class="n">ch_dio7</span> <span class="o">=</span> <span class="s2">&quot;cDAQ1DIO/port0/line7&quot;</span>  <span class="c1"># idle</span>
+
+    <span class="n">NB_DUMMY_TTLS</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># the number of dummy TTLs from the Flash4 camera</span>
+
+    <span class="c1"># constants</span>
+    <span class="n">MAX_VOL</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># unit: v, maximum voltage of the ao channels</span>
+    <span class="n">MIN_VOL</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span>  <span class="c1"># unit: v, minimal voltage of the ao channels</span>
+    <span class="n">MIN_VOL_O3</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span>  <span class="c1"># unit: v, minimal voltage of the PIFOC O3</span>
+    <span class="n">MIN_LASER_ANALOG</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># unit: v, minimal voltage for laser analog control</span>
+    <span class="n">MAX_LASER_ANALOG</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># unit: v, maximal voltage for laser analog control</span>
+    <span class="n">CONVERT_RATIO_SCAN_GALVO</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mi">159</span>  <span class="c1"># unit: um / v, to convert from voltage to the scan distance of the galvo</span>
+    <span class="p">)</span>
+    <span class="n">CONVERT_RATIO_PIFOC_O1</span> <span class="o">=</span> <span class="mi">40</span>  <span class="c1"># unit: um / v, to convert from voltage to the scan distance of the PIFOC O1 [-400, 400]</span>
+    <span class="n">CONVERT_RATIO_PIFOC_O3</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># unit: um / v, to convert from voltage to the scan distance of the PIFOC O3 [0, 100]</span>
+    <span class="n">READOUT_TIME_FULL_CHIP</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">0.01</span>  <span class="c1"># unit: second, the readout time of the full chip camera</span>
+    <span class="p">)</span>
+    <span class="n">MAX_VERTICAL_PIXELS</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mi">2048</span>  <span class="c1"># unit: pixels, maximal number of pixels along the vertical direction</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">exposure</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">nb_timepoints</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">scan_step</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">scan_range</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">vertical_pixels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>  <span class="c1"># unit: pixels, number of pixels along the vertical direction</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>  <span class="c1"># default value, for timing, only important for scan galvo during stage scan</span>
+        <span class="n">galvo_offset_view1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1550</span><span class="p">,</span>  <span class="c1"># unit: um, offset of scanning gavlo needed for view1</span>
+        <span class="n">galvo_offset_view2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1650</span><span class="p">,</span>  <span class="c1"># unit: um, offset of scanning gavlo needed for view2</span>
+        <span class="n">o3_view1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>  <span class="c1"># unit: um, offset of O3 needed for view1, focus control</span>
+        <span class="n">o3_view2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>  <span class="c1"># unit: um, offset of O3 needed for view2, focus control</span>
+        <span class="n">view1_galvo1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">4.2</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo 1 for view 1</span>
+        <span class="n">view1_galvo2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.08</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo 2 for view 1</span>
+        <span class="n">view2_galvo1</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">4.37</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo 1 for view 2</span>
+        <span class="n">view2_galvo2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3.66</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo 2 for view 2</span>
+        <span class="n">stripe_reduction_range</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo gamma to reduce stripe</span>
+        <span class="n">stripe_reduction_offset</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.58</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo gamma to reduce stripe</span>
+        <span class="n">o1_pifoc</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>  <span class="c1"># unit: um, to apply on O1 PIFOC, [-400, 400] um.</span>
+        <span class="n">light_sheet_angle</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.2</span><span class="p">,</span>  <span class="c1"># unit: v, to apply on galvo beta to adjust light sheet angle</span>
+        <span class="n">laser_power</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>  <span class="c1"># unit: percentage [0, 100], for laser analog control</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stop_now</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">=</span> <span class="n">exposure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nb_timepoints</span> <span class="o">=</span> <span class="n">nb_timepoints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span> <span class="o">=</span> <span class="n">scan_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">=</span> <span class="n">scan_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">READOUT_TIME_FULL_CHIP</span> <span class="o">*</span> <span class="n">vertical_pixels</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_VERTICAL_PIXELS</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">=</span> <span class="n">num_samples</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset_view1</span> <span class="o">=</span> <span class="n">galvo_offset_view1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset_view2</span> <span class="o">=</span> <span class="n">galvo_offset_view2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">o3_view1</span> <span class="o">=</span> <span class="n">o3_view1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">=</span> <span class="n">o3_view2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo1</span> <span class="o">=</span> <span class="n">view1_galvo1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo2</span> <span class="o">=</span> <span class="n">view1_galvo2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo1</span> <span class="o">=</span> <span class="n">view2_galvo1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo2</span> <span class="o">=</span> <span class="n">view2_galvo2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_range</span> <span class="o">=</span> <span class="n">stripe_reduction_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span> <span class="o">=</span> <span class="n">stripe_reduction_offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">=</span> <span class="n">o1_pifoc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span> <span class="o">=</span> <span class="n">light_sheet_angle</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">=</span> <span class="n">laser_power</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of slices:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;current sampling_rate is:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nb_slices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Number of slices&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sampling_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sampling rate&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span>
+
+    <span class="k">def</span> <span class="nf">_get_ao_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Stage&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the ndarray for an ao channel</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        view : str</span>
+<span class="sd">        scan_option : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        TODO: right the return type and description</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># AO3. for stripe reduction</span>
+        <span class="n">stripe_min</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span>
+        <span class="n">stripe_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span>
+        <span class="n">nb_on_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">nb_off_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">data_ao3</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">stripe_min</span><span class="p">,</span> <span class="n">stripe_max</span><span class="p">,</span> <span class="n">nb_on_sample</span><span class="p">))</span>
+        <span class="n">data_ao3</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">stripe_min</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_off_sample</span><span class="p">)</span>
+
+        <span class="c1"># AO4, for fixed light sheet angle</span>
+        <span class="n">data_ao4</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+
+        <span class="c1"># AO7, for laser analog control</span>
+        <span class="n">data_ao7</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_LASER_ANALOG</span>
+        <span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+
+        <span class="c1"># AO1, AO2 and AO6, for view switching and light sheet stabilization</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="o">==</span> <span class="s2">&quot;view1&quot;</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">offset_view1</span>
+            <span class="p">)</span>  <span class="c1"># convert the offset from um to v</span>
+            <span class="n">data_ao1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+            <span class="n">data_ao2</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo2</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+            <span class="n">data_ao6</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o3_view1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="s2">&quot;view2&quot;</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">offset_view2</span>
+            <span class="p">)</span>  <span class="c1"># convert the offset from um to v</span>
+            <span class="n">data_ao1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+            <span class="n">data_ao2</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo2</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+            <span class="n">data_ao6</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+
+        <span class="c1"># AO0 and AO5 depends in scanning option</span>
+        <span class="k">if</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s2">&quot;Stage&quot;</span><span class="p">:</span>
+            <span class="c1"># AO0, stablize light sheet during stage scanning</span>
+            <span class="n">min_range</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_SCAN_GALVO</span>
+            <span class="n">max_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_SCAN_GALVO</span>
+            <span class="c1"># v change scan for stablizing galvo</span>
+            <span class="n">data_ao0_on</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">max_range</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">min_range</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">data_ao0_off</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span>
+                    <span class="n">data_ao0_on</span><span class="p">[</span><span class="n">nb_on_sample</span><span class="p">],</span> <span class="n">max_range</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">nb_off_sample</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">data_ao0</span> <span class="o">=</span> <span class="n">data_ao0_on</span><span class="p">[:</span><span class="n">nb_on_sample</span><span class="p">]</span> <span class="o">+</span> <span class="n">data_ao0_off</span>
+
+            <span class="c1"># AO5, for fixed O1 position</span>
+            <span class="n">data_ao5</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">data_ao0</span><span class="p">,</span>
+            <span class="n">data_ao1</span><span class="p">,</span>
+            <span class="n">data_ao2</span><span class="p">,</span>
+            <span class="n">data_ao3</span><span class="p">,</span>
+            <span class="n">data_ao4</span><span class="p">,</span>
+            <span class="n">data_ao5</span><span class="p">,</span>
+            <span class="n">data_ao6</span><span class="p">,</span>
+            <span class="n">data_ao7</span><span class="p">,</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_get_do_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nr_channels</span><span class="p">,</span> <span class="n">interleave</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">current_ch</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Method to get digital output data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nr_channels</span>
+<span class="sd">        interleave</span>
+<span class="sd">        current_ch</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        list</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nb_on_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">data_on</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_on_sample</span> <span class="o">+</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">-</span> <span class="n">nb_on_sample</span><span class="p">)</span>
+        <span class="n">data_off</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span>
+
+        <span class="k">if</span> <span class="n">nr_channels</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data_on</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="c1"># only generate data once if interleaved channel acquisition</span>
+            <span class="k">if</span> <span class="n">interleave</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_channels</span><span class="p">):</span>
+                    <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">data_off</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="n">data_on</span> <span class="o">+</span> <span class="n">data_off</span> <span class="o">*</span> <span class="p">(</span><span class="n">nr_channels</span> <span class="o">-</span> <span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="c1"># generate data for each channel for sequential channel acquisition</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_channels</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">current_ch</span><span class="p">:</span>
+                        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_on</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_off</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_crate_ao_task_for_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;create ao task for acquisition, include all the needed ao channels&quot;&quot;&quot;</span>
+        <span class="n">task_ao</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;ao0&quot;</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao0</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao1</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao2</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao3</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao4</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao5</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao6</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao7</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">task_ao</span>
+
+    <span class="k">def</span> <span class="nf">_crate_do_task_for_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channels</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create ao task for acquisition, include all the needed ao channels</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        channels : Sequence[str]</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        nidaqmx.Task</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task_do</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;do0&quot;</span><span class="p">)</span>  <span class="c1"># for laser control</span>
+
+        <span class="c1"># select channel</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">channels</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;405&#39;</span><span class="p">:</span>
+                <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio0</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;488&#39;</span><span class="p">:</span>
+                <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;561&#39;</span><span class="p">:</span>
+                <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio2</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;639&#39;</span><span class="p">:</span>
+                <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio3</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;bf&#39;</span><span class="p">:</span>
+                <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio4</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel not supported&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">task_do</span>
+
+<div class="viewcode-block" id="NIDaq.acquire_stacks"><a class="viewcode-back" href="../../../../api/hardware.html#copylot.hardware.ni_daq.nidaq.NIDaq.acquire_stacks">[docs]</a>    <span class="k">def</span> <span class="nf">acquire_stacks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">channels</span><span class="p">,</span>
+        <span class="n">view</span><span class="p">,</span>
+        <span class="n">scan_option</span><span class="o">=</span><span class="s1">&#39;Stage&#39;</span><span class="p">,</span>
+        <span class="n">interleave</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Acquire stackes, depending on the given channel and view.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        channels : List[str]</span>
+<span class="sd">            [&#39;405&#39;], [&#39;488&#39;], [&#39;561&#39;], [&#39;639&#39;], [&#39;bf&#39;] or any combination of them</span>
+<span class="sd">        view : int</span>
+<span class="sd">            view=1 first view only, view=2 second view only, view=3 both views</span>
+<span class="sd">        scan_option : str</span>
+<span class="sd">            valid values are &#39;Stage&#39;, &#39;O1, &#39;Galvo&#39;</span>
+<span class="sd">        interleave : bool</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If using interleave mode</span>
+        <span class="c1"># for multichannel acquistion, make sure each channel has the same number of slices</span>
+        <span class="k">if</span> <span class="n">interleave</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">nb_slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">=</span> <span class="n">nb_slices</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span>
+
+        <span class="c1"># use different acquisition methods for each scanning option</span>
+        <span class="k">if</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s1">&#39;Stage&#39;</span><span class="p">:</span>
+            <span class="n">fn_acquire</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acquire_stacks</span>
+        <span class="k">elif</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s1">&#39;O1&#39;</span> <span class="ow">or</span> <span class="s1">&#39;Galvo&#39;</span><span class="p">:</span>
+            <span class="c1"># set the inital states of the AO devices before acquisition</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_initial_states</span><span class="p">(</span><span class="n">scan_option</span><span class="p">,</span> <span class="n">view</span><span class="p">)</span>
+            <span class="n">fn_acquire</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acquire_stacks_galvo</span>
+        <span class="c1"># elif scan_option == &#39;Interleave_denoising&#39;:</span>
+        <span class="c1">#     fn_acquire = self._acquire_stacks_interleave_denoising</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scanning mode not supported&quot;</span><span class="p">)</span>
+        <span class="n">task_ao</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crate_ao_task_for_acquisition</span><span class="p">()</span>
+        <span class="n">task_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crate_do_task_for_acquisition</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+
+        <span class="c1"># select view</span>
+        <span class="n">nr_channels</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">channels</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># if scan_option == &#39;Interleave_denoising&#39;:</span>
+            <span class="c1">#     fn_acquire(task_ao, task_do, nr_channels, [&#39;view1&#39;], scan_option, interleave, low_power, high_power)</span>
+            <span class="c1"># else:</span>
+            <span class="n">fn_acquire</span><span class="p">(</span>
+                <span class="n">task_ao</span><span class="p">,</span> <span class="n">task_do</span><span class="p">,</span> <span class="n">nr_channels</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;view1&#39;</span><span class="p">],</span> <span class="n">scan_option</span><span class="p">,</span> <span class="n">interleave</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># if scan_option == &#39;Interleave_denoising&#39;:</span>
+            <span class="c1">#     fn_acquire(task_ao, task_do, nr_channels, [&#39;view2&#39;], scan_option, interleave, low_power, high_power)</span>
+            <span class="c1"># else:</span>
+            <span class="n">fn_acquire</span><span class="p">(</span>
+                <span class="n">task_ao</span><span class="p">,</span> <span class="n">task_do</span><span class="p">,</span> <span class="n">nr_channels</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;view2&#39;</span><span class="p">],</span> <span class="n">scan_option</span><span class="p">,</span> <span class="n">interleave</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="c1"># if scan_option == &#39;Interleave_denoising&#39;:</span>
+            <span class="c1">#     fn_acquire(task_ao, task_do, nr_channels, [&#39;view1&#39;, &#39;view2&#39;], scan_option, interleave,</span>
+            <span class="c1">#                low_power, high_power)</span>
+            <span class="c1"># else:</span>
+            <span class="n">fn_acquire</span><span class="p">(</span>
+                <span class="n">task_ao</span><span class="p">,</span>
+                <span class="n">task_do</span><span class="p">,</span>
+                <span class="n">nr_channels</span><span class="p">,</span>
+                <span class="p">[</span><span class="s1">&#39;view1&#39;</span><span class="p">,</span> <span class="s1">&#39;view2&#39;</span><span class="p">],</span>
+                <span class="n">scan_option</span><span class="p">,</span>
+                <span class="n">interleave</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;View not supported&quot;</span><span class="p">)</span>
+
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_acquire_stacks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">task_ao</span><span class="p">,</span> <span class="n">task_do</span><span class="p">,</span> <span class="n">nr_channels</span><span class="p">,</span> <span class="n">views</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">,</span> <span class="n">interleave</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set up the workflow to acquire multiple stacks</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        task_ao</span>
+<span class="sd">        task_do</span>
+<span class="sd">        nr_channels</span>
+<span class="sd">        views</span>
+<span class="sd">        scan_option</span>
+<span class="sd">        interleave</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">data_ao</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_ao_data</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">views</span>
+        <span class="p">]</span>  <span class="c1"># different for each view due to different offsets</span>
+
+        <span class="n">data_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_do_data</span><span class="p">(</span>
+            <span class="n">nr_channels</span><span class="p">,</span> <span class="n">interleave</span>
+        <span class="p">)</span>  <span class="c1"># get the digital output data depending on the channels</span>
+
+        <span class="c1"># set up the counter for count the slices for a zstack</span>
+        <span class="n">task_ctr_loop</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter0&quot;</span><span class="p">)</span>
+        <span class="n">ctr_loop</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">ci_channels</span><span class="o">.</span><span class="n">add_ci_count_edges_chan</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr1</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Edge</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">ctr_loop</span><span class="o">.</span><span class="n">ci_count_edges_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span>
+
+        <span class="c1"># set up the counter to retrigger the ao and do channels</span>
+        <span class="n">task_ctr_retrig</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">co_channels</span><span class="o">.</span><span class="n">add_co_pulse_chan_freq</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0</span><span class="p">,</span>
+            <span class="n">idle_state</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+            <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_implicit_timing</span><span class="p">(</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">FINITE</span><span class="p">,</span>
+            <span class="n">samps_per_chan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">cfg_dig_edge_start_trig</span><span class="p">(</span>
+            <span class="n">trigger_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span><span class="p">,</span> <span class="n">trigger_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">retriggerable</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># set up ao channel</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># set up the do channel</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_timepoints</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_ao</span><span class="p">)):</span>  <span class="c1"># change view</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_ao</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of slices to acquire:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_channels</span><span class="p">):</span>
+                    <span class="c1"># regenerate do date for non-interleaved multichannel acquisition</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">interleave</span> <span class="ow">and</span> <span class="n">nr_channels</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">data_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_do_data</span><span class="p">(</span>
+                            <span class="n">nr_channels</span><span class="p">,</span> <span class="n">interleave</span><span class="p">,</span> <span class="n">current_ch</span><span class="o">=</span><span class="n">ch</span>
+                        <span class="p">)</span>
+
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_do</span><span class="p">)</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                    <span class="n">counts</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">while</span> <span class="p">(</span>
+                        <span class="n">counts</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="p">):</span>  <span class="c1"># Flash4.0 outputs 1 more pulse than asked</span>
+                        <span class="n">counts</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.005</span><span class="p">)</span>  <span class="c1"># wait time during loop</span>
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;counts: &quot;</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
+                    <span class="c1"># print(&quot;counts: &quot;, counts)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">+</span> <span class="mf">0.1</span>
+                    <span class="p">)</span>  <span class="c1"># add time to allow ao and do output for the last frame</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one stack done!&quot;</span><span class="p">)</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="c1"># task_ctr_retrig.stop()</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_get_ao_data_galvo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">scan_option</span><span class="o">=</span><span class="s2">&quot;O1&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the ndarray for an ao channel</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        view : str</span>
+<span class="sd">        scan_option : str</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        TODO: fill the correct return type and description</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nb_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NB_DUMMY_TTLS</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span>
+        <span class="c1"># AO3. not stripe reduction in this mode</span>
+        <span class="n">data_ao3</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+
+        <span class="c1"># AO4, for fixed light sheet angle</span>
+        <span class="n">data_ao4</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+
+        <span class="c1"># AO1 and AO2, for view switching and light sheet stabilization</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="o">==</span> <span class="s2">&quot;view1&quot;</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">offset_view1</span>
+            <span class="p">)</span>  <span class="c1"># convert the offset from um to v</span>
+            <span class="n">data_ao1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo1</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="n">data_ao2</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo2</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="n">data_ao6</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="s2">&quot;view2&quot;</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">offset_view2</span>
+            <span class="p">)</span>  <span class="c1"># convert the offset from um to v</span>
+            <span class="n">data_ao1</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo1</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="n">data_ao2</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo2</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="n">data_ao6</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+
+        <span class="c1"># AO0 and AO5 depends in scanning option</span>
+        <span class="k">if</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s2">&quot;O1&quot;</span><span class="p">:</span>
+            <span class="c1"># AO0, for fixed scan galvo position</span>
+            <span class="n">data_ao0</span> <span class="o">=</span> <span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="c1"># AO5, for O1  scanning</span>
+            <span class="n">min_range</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">/</span> <span class="mi">2</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span>
+            <span class="n">data_ao5</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">step</span> <span class="o">+</span> <span class="n">min_range</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_samples</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s2">&quot;Galvo&quot;</span><span class="p">:</span>
+            <span class="c1"># for fixed O1 position</span>
+            <span class="n">data_ao5</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_samples</span>
+            <span class="c1"># for scan galvo ramp</span>
+            <span class="n">min_range</span> <span class="o">=</span> <span class="n">offset</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_SCAN_GALVO</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_step</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_SCAN_GALVO</span>
+            <span class="n">data_ao0</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">*</span> <span class="n">step</span> <span class="o">+</span> <span class="n">min_range</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nb_samples</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">data_ao0</span><span class="p">,</span> <span class="n">data_ao1</span><span class="p">,</span> <span class="n">data_ao2</span><span class="p">,</span> <span class="n">data_ao3</span><span class="p">,</span> <span class="n">data_ao4</span><span class="p">,</span> <span class="n">data_ao5</span><span class="p">,</span> <span class="n">data_ao6</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_acquire_stacks_galvo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_ao</span><span class="p">,</span> <span class="n">task_do</span><span class="p">,</span> <span class="n">channels</span><span class="p">,</span> <span class="n">views</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up the workflow to acquire multiple stacks</span>
+<span class="sd">        todo, support multichanel imaging</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        task_ao</span>
+<span class="sd">        task_do</span>
+<span class="sd">        channels</span>
+<span class="sd">        views</span>
+<span class="sd">        scan_option</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_ao</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_ao_data_galvo</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">views</span>
+        <span class="p">]</span>  <span class="c1"># different for each view due to different offsets</span>
+
+        <span class="n">data_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_do_data</span><span class="p">(</span>
+            <span class="n">channels</span>
+        <span class="p">)</span>  <span class="c1"># get the digital output data depending on the channels</span>
+
+        <span class="c1"># set up the counter for loop through a zstack</span>
+        <span class="n">task_ctr_loop</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter0&quot;</span><span class="p">)</span>
+        <span class="n">ctr_loop</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">ci_channels</span><span class="o">.</span><span class="n">add_ci_count_edges_chan</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr1</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Edge</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">ctr_loop</span><span class="o">.</span><span class="n">ci_count_edges_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span>
+
+        <span class="c1"># set up the counter to retrigger the do channels</span>
+        <span class="n">task_ctr_retrig</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">co_channels</span><span class="o">.</span><span class="n">add_co_pulse_chan_freq</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0</span><span class="p">,</span>
+            <span class="n">idle_state</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+            <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_implicit_timing</span><span class="p">(</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">FINITE</span><span class="p">,</span>
+            <span class="n">samps_per_chan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">cfg_dig_edge_start_trig</span><span class="p">(</span>
+            <span class="n">trigger_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span><span class="p">,</span> <span class="n">trigger_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">retriggerable</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># set up ao channel</span>
+        <span class="n">nb_samples</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">NB_DUMMY_TTLS</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="n">nb_samples</span><span class="p">,</span>
+            <span class="n">samps_per_chan</span><span class="o">=</span><span class="n">nb_samples</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI1</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+            <span class="n">active_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">FALLING</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">cfg_dig_edge_start_trig</span><span class="p">(</span>
+            <span class="n">trigger_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span><span class="p">,</span> <span class="n">trigger_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_timepoints</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_ao</span><span class="p">)):</span>  <span class="c1"># change view</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_ao</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">i_ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span>
+                    <span class="mi">1</span>
+                <span class="p">):</span>  <span class="c1"># interleaved acquisition, todo support also sequential channel imaging</span>
+                    <span class="c1"># set up the do channel</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+                        <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+                        <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+                        <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_do</span><span class="p">)</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                    <span class="n">counts</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">while</span> <span class="p">(</span>
+                        <span class="n">counts</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="p">):</span>  <span class="c1"># Flash4.0 outputs 1 more pulse than asked</span>
+                        <span class="n">counts</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.005</span><span class="p">)</span>  <span class="c1"># wait time during loop</span>
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;counts: &quot;</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
+                    <span class="c1"># print(&quot;counts: &quot;, counts)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">+</span> <span class="mf">0.1</span>
+                    <span class="p">)</span>  <span class="c1"># add time to allow ao and do output for the last frame</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one stack done!&quot;</span><span class="p">)</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="c1"># task_ctr_retrig.stop()</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_acquire_stacks_interleave_denoising</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">task_ao</span><span class="p">,</span>
+        <span class="n">task_do</span><span class="p">,</span>
+        <span class="n">nr_channels</span><span class="p">,</span>
+        <span class="n">views</span><span class="p">,</span>
+        <span class="n">scan_option</span><span class="p">,</span>
+        <span class="n">interleave</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up the workflow to acquire multiple stacks,</span>
+<span class="sd">        for interleaved denoising purpose only</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        task_ao</span>
+<span class="sd">        task_do</span>
+<span class="sd">        nr_channels</span>
+<span class="sd">        views</span>
+<span class="sd">        scan_option</span>
+<span class="sd">        interleave</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_ao</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_ao_data</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">views</span>
+        <span class="p">]</span>  <span class="c1"># different for each view due to different offsets</span>
+
+        <span class="n">data_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_do_data</span><span class="p">(</span>
+            <span class="n">nr_channels</span><span class="p">,</span> <span class="n">interleave</span>
+        <span class="p">)</span>  <span class="c1"># get the digital output data depending on the channels</span>
+
+        <span class="c1"># set up the counter for loop through a zstack</span>
+        <span class="n">task_ctr_loop</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter0&quot;</span><span class="p">)</span>
+        <span class="n">ctr_loop</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">ci_channels</span><span class="o">.</span><span class="n">add_ci_count_edges_chan</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr1</span><span class="p">,</span> <span class="n">edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Edge</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">ctr_loop</span><span class="o">.</span><span class="n">ci_count_edges_term</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span>
+
+        <span class="c1"># set up the counter to retrigger the ao and do channels</span>
+        <span class="n">task_ctr_retrig</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;counter1&quot;</span><span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">co_channels</span><span class="o">.</span><span class="n">add_co_pulse_chan_freq</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0</span><span class="p">,</span>
+            <span class="n">idle_state</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span>
+            <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_implicit_timing</span><span class="p">(</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">FINITE</span><span class="p">,</span>
+            <span class="n">samps_per_chan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">cfg_dig_edge_start_trig</span><span class="p">(</span>
+            <span class="n">trigger_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span><span class="p">,</span> <span class="n">trigger_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">retriggerable</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="c1"># set up ao channel</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># set up the do channel</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nb_timepoints</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data_ao</span><span class="p">)):</span>  <span class="c1"># change view</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_ao</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;number of slices to acquire:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nr_channels</span><span class="p">):</span>
+                    <span class="c1"># regenerate do date for non-interleaved multichannel acquisition</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">interleave</span> <span class="ow">and</span> <span class="n">nr_channels</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">data_do</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_do_data</span><span class="p">(</span>
+                            <span class="n">nr_channels</span><span class="p">,</span> <span class="n">interleave</span><span class="p">,</span> <span class="n">current_ch</span><span class="o">=</span><span class="n">ch</span>
+                        <span class="p">)</span>
+
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_do</span><span class="p">)</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                    <span class="n">counts</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">while</span> <span class="p">(</span>
+                        <span class="n">counts</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">nb_slices</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="p">):</span>  <span class="c1"># Flash4.0 outputs 1 more pulse than asked</span>
+                        <span class="n">counts</span> <span class="o">=</span> <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.005</span><span class="p">)</span>  <span class="c1"># wait time during loop</span>
+                    <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;counts: &quot;</span><span class="p">,</span> <span class="n">counts</span><span class="p">)</span>
+                    <span class="c1"># print(&quot;counts: &quot;, counts)</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">+</span> <span class="mf">0.1</span>
+                    <span class="p">)</span>  <span class="c1"># add time to allow ao and do output for the last frame</span>
+                    <span class="n">task_do</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;one stack done!&quot;</span><span class="p">)</span>
+                <span class="n">task_ao</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+
+        <span class="c1"># task_ctr_retrig.stop()</span>
+        <span class="n">task_ctr_retrig</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_ctr_loop</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_set_initial_ao_states</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">scan_galvo</span><span class="p">,</span> <span class="n">galvo1</span><span class="p">,</span> <span class="n">galvo2</span><span class="p">,</span> <span class="n">angle_galvo</span><span class="p">,</span> <span class="n">o1</span><span class="p">,</span> <span class="n">o3</span><span class="p">,</span> <span class="n">laser_power</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select the initial states for the AO channels, by using the correct</span>
+<span class="sd">        offset of the scanning galvo and the voltages of the switching galvos</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scan_galvo</span>
+<span class="sd">        galvo1</span>
+<span class="sd">        galvo2</span>
+<span class="sd">        angle_galvo</span>
+<span class="sd">        o1</span>
+<span class="sd">        o3</span>
+<span class="sd">        laser_power</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">scan_galvo</span><span class="p">,</span> <span class="n">galvo1</span><span class="p">,</span> <span class="n">galvo2</span><span class="p">,</span> <span class="n">angle_galvo</span><span class="p">,</span> <span class="n">o1</span><span class="p">,</span> <span class="n">o3</span><span class="p">,</span> <span class="n">laser_power</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span> <span class="k">as</span> <span class="n">task</span><span class="p">:</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao0</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao1</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao2</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao4</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao5</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao6</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao7</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">auto_start</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NIDaq.select_view"><a class="viewcode-back" href="../../../../api/hardware.html#copylot.hardware.ni_daq.nidaq.NIDaq.select_view">[docs]</a>    <span class="k">def</span> <span class="nf">select_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select one view in live mode</span>
+
+<span class="sd">        TODO: why?</span>
+<span class="sd">        Note: ao3 is not included here,</span>
+<span class="sd">        it&#39;s with the select_channel function</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        view : int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_initial_ao_states</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset_view1</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o3_view1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_LASER_ANALOG</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_initial_ao_states</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset_view2</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_LASER_ANALOG</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;View not supported&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NIDaq.set_initial_states"><a class="viewcode-back" href="../../../../api/hardware.html#copylot.hardware.ni_daq.nidaq.NIDaq.set_initial_states">[docs]</a>    <span class="k">def</span> <span class="nf">set_initial_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_option</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the initial states of the AO channels during acquistion</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        scan_option : str</span>
+<span class="sd">        view : int</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_view1</span>
+            <span class="n">galvo1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo1</span>
+            <span class="n">galvo2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view1_galvo2</span>
+            <span class="n">o3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">o3_view1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span>
+        <span class="k">elif</span> <span class="n">view</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_view2</span>
+            <span class="n">galvo1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo1</span>
+            <span class="n">galvo2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">view2_galvo2</span>
+            <span class="n">o3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">o3_view2</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O3</span>
+
+        <span class="k">if</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s1">&#39;O1&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_initial_ao_states</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span><span class="n">offset</span><span class="p">),</span>
+                <span class="n">galvo1</span><span class="p">,</span>
+                <span class="n">galvo2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">,</span>
+                <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">,</span>
+                <span class="n">o3</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_LASER_ANALOG</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">scan_option</span> <span class="o">==</span> <span class="s1">&#39;Galvo&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_set_initial_ao_states</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_offset_dis_to_vol</span><span class="p">(</span><span class="n">offset</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_range</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="n">galvo1</span><span class="p">,</span>
+                <span class="n">galvo2</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">light_sheet_angle</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">o1_pifoc</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_PIFOC_O1</span><span class="p">,</span>
+                <span class="n">o3</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">laser_power_percent</span> <span class="o">/</span> <span class="mi">100</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_LASER_ANALOG</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Scanning mode not supported&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_offset_dis_to_vol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Convert the offset of each view from um to voltage</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        offset : float</span>
+<span class="sd">            unit in um</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">            unit in V</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">offset</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">CONVERT_RATIO_SCAN_GALVO</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">MAX_VOL</span>
+
+    <span class="k">def</span> <span class="nf">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up DIO channel and Gamma AO channel. Now always do</span>
+<span class="sd">        remove shadow. Set gamma AO range to 0 if no need for shadow</span>
+<span class="sd">        removal.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ch</span>
+<span class="sd">        t</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">nb_on_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="c1"># nb_off_sample = round(self.readout_time * self.sampling_rate)</span>
+        <span class="n">data_do</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_on_sample</span> <span class="o">+</span> <span class="p">[</span><span class="kc">False</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span> <span class="o">-</span> <span class="n">nb_on_sample</span><span class="p">)</span>
+
+        <span class="n">task_do</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">do_channels</span><span class="o">.</span><span class="n">add_do_chan</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span>
+
+        <span class="n">task_ao</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">(</span><span class="s2">&quot;ao0&quot;</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">ao_channels</span><span class="o">.</span><span class="n">add_ao_voltage_chan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ao3</span><span class="p">)</span>
+        <span class="c1"># for stripe reduction</span>
+        <span class="n">stripe_min</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span>
+        <span class="n">stripe_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_range</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stripe_reduction_offset</span>
+        <span class="n">nb_on_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">exposure</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">nb_off_sample</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readout_time</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">)</span>
+        <span class="n">data_ao3</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">stripe_min</span><span class="p">,</span> <span class="n">stripe_max</span><span class="p">,</span> <span class="n">nb_on_sample</span><span class="p">))</span>
+        <span class="n">data_ao3</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">stripe_min</span><span class="p">]</span> <span class="o">*</span> <span class="n">nb_off_sample</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_retriggable_task</span><span class="p">(</span><span class="n">task_do</span><span class="p">,</span> <span class="n">data_do</span><span class="p">,</span> <span class="n">task_ao</span><span class="p">,</span> <span class="n">data_ao3</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">set_dio_state</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NIDaq.select_channel"><a class="viewcode-back" href="../../../../api/hardware.html#copylot.hardware.ni_daq.nidaq.NIDaq.select_channel">[docs]</a>    <span class="k">def</span> <span class="nf">select_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ch</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Select one channel in live mode</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ch</span>
+<span class="sd">        t</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;405&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;488&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio1</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;561&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio2</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;639&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio3</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;bf&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_select_channel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_dio4</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Channel not supported!&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_set_up_retriggerable_counter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">counter</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up a retriggerable counter task</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        counter</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        nidaqmx.Task</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task_ctr</span> <span class="o">=</span> <span class="n">nidaqmx</span><span class="o">.</span><span class="n">Task</span><span class="p">()</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">co_channels</span><span class="o">.</span><span class="n">add_co_pulse_chan_freq</span><span class="p">(</span>
+            <span class="n">counter</span><span class="p">,</span> <span class="n">idle_state</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Level</span><span class="o">.</span><span class="n">LOW</span><span class="p">,</span> <span class="n">freq</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_implicit_timing</span><span class="p">(</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">FINITE</span><span class="p">,</span>
+            <span class="n">samps_per_chan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_samples</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">cfg_dig_edge_start_trig</span><span class="p">(</span>
+            <span class="n">trigger_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">PFI0</span><span class="p">,</span> <span class="n">trigger_edge</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">Slope</span><span class="o">.</span><span class="n">RISING</span>
+        <span class="p">)</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">triggers</span><span class="o">.</span><span class="n">start_trigger</span><span class="o">.</span><span class="n">retriggerable</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">task_ctr</span>
+
+    <span class="k">def</span> <span class="nf">_retriggable_task</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_do</span><span class="p">,</span> <span class="n">data_do</span><span class="p">,</span> <span class="n">task_ao</span><span class="p">,</span> <span class="n">data_ao</span><span class="p">,</span> <span class="n">t</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set up a retriggeable task using a counter</span>
+<span class="sd">        Using counter0 as default</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        task_do</span>
+<span class="sd">        data_do</span>
+<span class="sd">        task_ao</span>
+<span class="sd">        data_ao</span>
+<span class="sd">        t</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">timing</span><span class="o">.</span><span class="n">cfg_samp_clk_timing</span><span class="p">(</span>
+            <span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sampling_rate</span><span class="p">,</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0_internal_output</span><span class="p">,</span>
+            <span class="n">sample_mode</span><span class="o">=</span><span class="n">nidaqmx</span><span class="o">.</span><span class="n">constants</span><span class="o">.</span><span class="n">AcquisitionType</span><span class="o">.</span><span class="n">CONTINUOUS</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">task_ctr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_up_retriggerable_counter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ch_ctr0</span><span class="p">)</span>
+
+        <span class="n">task_do</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_do</span><span class="p">)</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data_ao</span><span class="p">)</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;type s to abort:&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">while</span> <span class="nb">input</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;s&quot;</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.05</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">task_do</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="n">task_ctr</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_do</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">task_ao</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022. Chan Zuckerberg Biohub. All rights reserved.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

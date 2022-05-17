@@ -19,3 +19,12 @@ install editable version of coPylot with help of `pip`:
     $ git clone https://github.com/royerlab/coPylot.git
     $ cd coPylot
     $ pip install -e .
+
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: API Reference
+
+   Introduction <api/introduction>
+   Hardware <api/hardware>

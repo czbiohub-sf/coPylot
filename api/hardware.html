@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hardware &mdash; coPylot  documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="coPylot API Introduction" href="introduction.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html">
+            <img src="../_static/copylot_logo.jpeg" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">API Reference</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Hardware</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#asi-stage">ASI Stage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#filterwheel">FilterWheel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nidaq">NIDaq</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#waterdispensercontrol">WaterDispenserControl</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">coPylot</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Hardware</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/hardware.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="hardware">
+<h1>Hardware<a class="headerlink" href="#hardware" title="Permalink to this headline"></a></h1>
+<p>coPylot implements device adapters on top of the vendor provided
+drivers, APIs and SDKs as well as on top of the drivers and lower
+level APIs we developed. Within these adapters, coPylot also has
+many convenience methods. To enable developers/experimentalists
+who might want to use the same functionalities here we are
+sharing our hardware API:</p>
+<dl>
+<dt>ASIStage</dt><dd><table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#copylot.hardware.asi_stage.stage.ASIStage" title="copylot.hardware.asi_stage.stage.ASIStage"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ASIStage</span></code></a>([com_port])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>FilterWheel</dt><dd><table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#copylot.hardware.filterwheel.filterwheel.FilterWheel" title="copylot.hardware.filterwheel.filterwheel.FilterWheel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FilterWheel</span></code></a>([com_port])</p></td>
+<td><p><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p></p></dd>
+</dl>
+</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+<dt>NIDaq</dt><dd><table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#copylot.hardware.ni_daq.nidaq.NIDaq" title="copylot.hardware.ni_daq.nidaq.NIDaq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NIDaq</span></code></a>(exposure, nb_timepoints, scan_step, ...)</p></td>
+<td><p>NI DAQ card adapter.</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<dl>
+<dt>WaterDispenserControl</dt><dd><table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl" title="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WaterDispenserControl</span></code></a>(com, baudrate)</p></td>
+<td><p>Controller for the micropump (Bartels XU7 controller) to dispense water to the water objectives.</p></td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<section id="asi-stage">
+<h2>ASI Stage<a class="headerlink" href="#asi-stage" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">copylot.hardware.asi_stage.stage.</span></span><span class="sig-name descname"><span class="pre">ASIStage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">com_port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>com_port</strong><span class="classifier">str</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.info">
+<span class="sig-name descname"><span class="pre">info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axis_letter</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.info" title="Permalink to this definition"></a></dt>
+<dd><p>Method to fetch various information on stage axes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>axis_letter</strong><span class="classifier">str</span></dt><dd><p>Single letter, can be ‘X’ or ‘Y’ with XY stage.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.scanr">
+<span class="sig-name descname"><span class="pre">scanr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.scanr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.scanr" title="Permalink to this definition"></a></dt>
+<dd><p>Set scan raster scan start and stop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong></dt><dd></dd>
+<dt><strong>y</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.scanv">
+<span class="sig-name descname"><span class="pre">scanv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.scanv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.scanv" title="Permalink to this definition"></a></dt>
+<dd><p>Set vertical scan.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>x</strong></dt><dd></dd>
+<dt><strong>y</strong></dt><dd></dd>
+<dt><strong>f</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.set_backlash">
+<span class="sig-name descname"><span class="pre">set_backlash</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.set_backlash"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.set_backlash" title="Permalink to this definition"></a></dt>
+<dd><p>Set backlash on the stage.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.set_default_speed">
+<span class="sig-name descname"><span class="pre">set_default_speed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.set_default_speed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.set_default_speed" title="Permalink to this definition"></a></dt>
+<dd><p>Set the default speed as the stage speed.
+Currently default values are x=10 y=10.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.set_scan_mode">
+<span class="sig-name descname"><span class="pre">set_scan_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">copylot.hardware.asi_stage.stage.ASIStageScanMode</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">ASIStageScanMode.RASTER</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.set_scan_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.set_scan_mode" title="Permalink to this definition"></a></dt>
+<dd><p>Method to set scan mode.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mode</strong><span class="classifier">ASIStageScanMode</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.set_speed">
+<span class="sig-name descname"><span class="pre">set_speed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">speed</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.set_speed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.set_speed" title="Permalink to this definition"></a></dt>
+<dd><p>Set speed of the stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>speed</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.start_scan">
+<span class="sig-name descname"><span class="pre">start_scan</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.start_scan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.start_scan" title="Permalink to this definition"></a></dt>
+<dd><p>Start the stage scan</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.asi_stage.stage.ASIStage.zero">
+<span class="sig-name descname"><span class="pre">zero</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/asi_stage/stage.html#ASIStage.zero"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.asi_stage.stage.ASIStage.zero" title="Permalink to this definition"></a></dt>
+<dd><p>Set current position to zero.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="filterwheel">
+<h2>FilterWheel<a class="headerlink" href="#filterwheel" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="copylot.hardware.filterwheel.filterwheel.FilterWheel">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">copylot.hardware.filterwheel.filterwheel.</span></span><span class="sig-name descname"><span class="pre">FilterWheel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">com_port</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/filterwheel/filterwheel.html#FilterWheel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.filterwheel.filterwheel.FilterWheel" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>com_port</strong><span class="classifier">str</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.filterwheel.filterwheel.FilterWheel.set_position">
+<span class="sig-name descname"><span class="pre">set_position</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position_index</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/filterwheel/filterwheel.html#FilterWheel.set_position"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.filterwheel.filterwheel.FilterWheel.set_position" title="Permalink to this definition"></a></dt>
+<dd><p>Set position of the filterwheel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>position_index</strong><span class="classifier">int</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="nidaq">
+<h2>NIDaq<a class="headerlink" href="#nidaq" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">copylot.hardware.ni_daq.nidaq.</span></span><span class="sig-name descname"><span class="pre">NIDaq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">exposure</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nb_timepoints</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scan_step</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scan_range</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertical_pixels</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">2048</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">galvo_offset_view1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1550</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">galvo_offset_view2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">1650</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">o3_view1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">o3_view2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view1_galvo1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">4.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view1_galvo2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">4.08</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view2_galvo1</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">4.37</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view2_galvo2</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">3.66</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripe_reduction_range</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stripe_reduction_offset</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0.58</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">o1_pifoc</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">light_sheet_angle</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">2.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">laser_power</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/ni_daq/nidaq.html#NIDaq"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq" title="Permalink to this definition"></a></dt>
+<dd><p>NI DAQ card adapter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>exposure</strong><span class="classifier">float</span></dt><dd><p>Expose time. Its unit is seconds.</p>
+</dd>
+<dt><strong>nb_timepoints</strong><span class="classifier">int</span></dt><dd><p>Number of timepoints. Number of stacks to acquire.</p>
+</dd>
+<dt><strong>scan_step</strong><span class="classifier">float</span></dt><dd><p>Scanning step size. unit: um.</p>
+</dd>
+<dt><strong>scan_range</strong><span class="classifier">float</span></dt><dd><p>Total range of stage scanning. unit: um.</p>
+</dd>
+<dt><strong>vertical_pixels</strong><span class="classifier">int</span></dt><dd><p>Number of pixels along the vertical direction, unit: pixels</p>
+</dd>
+<dt><strong>num_samples: int</strong></dt><dd><p>Number of samples of each channel (AO and DO) during each camera exposure</p>
+</dd>
+<dt><strong>galvo_offset_view1: float</strong></dt><dd><p>Offset of scanning galvo needed for view1, unit: um</p>
+</dd>
+<dt><strong>galvo_offset_view2: float</strong></dt><dd><p>Offset of scanning galvo needed for view2, unit: um</p>
+</dd>
+<dt><strong>o3_view1</strong><span class="classifier">float</span></dt><dd><p>Offset of O3(objective-3) needed for view1, focus control</p>
+</dd>
+<dt><strong>o3_view2</strong><span class="classifier">float</span></dt><dd><p>Offset of O3(objective-3) needed for view2, focus control</p>
+</dd>
+<dt><strong>view1_galvo1</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo 1 for view 1</p>
+</dd>
+<dt><strong>view1_galvo2</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo 2 for view 1</p>
+</dd>
+<dt><strong>view2_galvo1</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo 1 for view 2</p>
+</dd>
+<dt><strong>view2_galvo2</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo 2 for view 2</p>
+</dd>
+<dt><strong>stripe_reduction_range</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo gamma to reduce stripe range</p>
+</dd>
+<dt><strong>stripe_reduction_offset</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo gamma to reduce stripe offset</p>
+</dd>
+<dt><strong>o1_pifoc</strong><span class="classifier">int</span></dt><dd><p>Offset of O1(Objective-1) PIFOC in um, range [-400, 400] um.</p>
+</dd>
+<dt><strong>light_sheet_angle</strong><span class="classifier">float</span></dt><dd><p>Voltage to apply on galvo beta to adjust light sheet angle</p>
+</dd>
+<dt><strong>laser_power</strong></dt><dd><p>Percentage value in [0, 100], for laser analog control</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.acquire_stacks">
+<span class="sig-name descname"><span class="pre">acquire_stacks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scan_option</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Stage'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interleave</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/ni_daq/nidaq.html#NIDaq.acquire_stacks"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.acquire_stacks" title="Permalink to this definition"></a></dt>
+<dd><p>Acquire stackes, depending on the given channel and view.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>channels</strong><span class="classifier">List[str]</span></dt><dd><p>[‘405’], [‘488’], [‘561’], [‘639’], [‘bf’] or any combination of them</p>
+</dd>
+<dt><strong>view</strong><span class="classifier">int</span></dt><dd><p>view=1 first view only, view=2 second view only, view=3 both views</p>
+</dd>
+<dt><strong>scan_option</strong><span class="classifier">str</span></dt><dd><p>valid values are ‘Stage’, ‘O1, ‘Galvo’</p>
+</dd>
+<dt><strong>interleave</strong><span class="classifier">bool</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.nb_slices">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">nb_slices</span></span><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.nb_slices" title="Permalink to this definition"></a></dt>
+<dd><p>Number of slices</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.sampling_rate">
+<em class="property"><span class="pre">property</span> </em><span class="sig-name descname"><span class="pre">sampling_rate</span></span><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.sampling_rate" title="Permalink to this definition"></a></dt>
+<dd><p>Sampling rate</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.select_channel">
+<span class="sig-name descname"><span class="pre">select_channel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/ni_daq/nidaq.html#NIDaq.select_channel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.select_channel" title="Permalink to this definition"></a></dt>
+<dd><p>Select one channel in live mode</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>ch</strong></dt><dd></dd>
+<dt><strong>t</strong></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.select_view">
+<span class="sig-name descname"><span class="pre">select_view</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/ni_daq/nidaq.html#NIDaq.select_view"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.select_view" title="Permalink to this definition"></a></dt>
+<dd><p>Select one view in live mode</p>
+<p>TODO: why?
+Note: ao3 is not included here,
+it’s with the select_channel function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>view</strong><span class="classifier">int</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.ni_daq.nidaq.NIDaq.set_initial_states">
+<span class="sig-name descname"><span class="pre">set_initial_states</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scan_option</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/ni_daq/nidaq.html#NIDaq.set_initial_states"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.ni_daq.nidaq.NIDaq.set_initial_states" title="Permalink to this definition"></a></dt>
+<dd><p>Set the initial states of the AO channels during acquistion</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>scan_option</strong><span class="classifier">str</span></dt><dd></dd>
+<dt><strong>view</strong><span class="classifier">int</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="waterdispensercontrol">
+<h2>WaterDispenserControl<a class="headerlink" href="#waterdispensercontrol" title="Permalink to this headline"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">copylot.hardware.water_dispenser.water_dispenser_control.</span></span><span class="sig-name descname"><span class="pre">WaterDispenserControl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">com</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baudrate</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/water_dispenser/water_dispenser_control.html#WaterDispenserControl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl" title="Permalink to this definition"></a></dt>
+<dd><p>Controller for the micropump (Bartels XU7 controller) to dispense
+water to the water objectives.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>com</strong><span class="classifier">str</span></dt><dd></dd>
+<dt><strong>baudrate</strong><span class="classifier">int</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.read_pump">
+<span class="sig-name descname"><span class="pre">read_pump</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/water_dispenser/water_dispenser_control.html#WaterDispenserControl.read_pump"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.read_pump" title="Permalink to this definition"></a></dt>
+<dd><p>Read out the current status of the pump and print</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.run_for_recording">
+<span class="sig-name descname"><span class="pre">run_for_recording</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/water_dispenser/water_dispenser_control.html#WaterDispenserControl.run_for_recording"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.run_for_recording" title="Permalink to this definition"></a></dt>
+<dd><p>Run the pump for a recording session</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>interval: float</strong></dt><dd><p>its unit is minute, interval to wait to run pump again</p>
+</dd>
+<dt><strong>duration: float</strong></dt><dd><p>its unit is second, duration when pump is on</p>
+</dd>
+<dt><strong>freq: int</strong></dt><dd><p>pump control frequency</p>
+</dd>
+<dt><strong>amp</strong><span class="classifier">int</span></dt><dd><p>pump control amplitude</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.run_pump">
+<span class="sig-name descname"><span class="pre">run_pump</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">duration</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/water_dispenser/water_dispenser_control.html#WaterDispenserControl.run_pump"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.run_pump" title="Permalink to this definition"></a></dt>
+<dd><p>Start pump for the duration and then stop</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>duration</strong><span class="classifier">float</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.set_pump_speed">
+<span class="sig-name descname"><span class="pre">set_pump_speed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amp</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/copylot/hardware/water_dispenser/water_dispenser_control.html#WaterDispenserControl.set_pump_speed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#copylot.hardware.water_dispenser.water_dispenser_control.WaterDispenserControl.set_pump_speed" title="Permalink to this definition"></a></dt>
+<dd><p>Set the speed for pump by setting the frequency and amplitude.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq</strong><span class="classifier">int</span></dt><dd><p>Frequency.</p>
+</dd>
+<dt><strong>amp</strong><span class="classifier">int</span></dt><dd><p>Amplitude.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="introduction.html" class="btn btn-neutral float-left" title="coPylot API Introduction" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022. Chan Zuckerberg Biohub. All rights reserved.</p>
+  </div>
+
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
