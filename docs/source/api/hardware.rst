@@ -22,6 +22,12 @@ FilterWheel
     .. autosummary::
         FilterWheel
 
+NIDaq
+    .. currentmodule:: copylot.hardware.ni_daq.nidaq
+
+    .. autosummary::
+        NIDaq
+
 
 ASI Stage
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,6 +45,16 @@ FilterWheel
 .. currentmodule:: copylot.hardware.filterwheel.filterwheel
 
 .. autoclass:: FilterWheel
+    :members:
+    :inherited-members:
+
+
+NIDaq
+~~~~~~~~~~~~~~~~~
+
+.. currentmodule:: copylot.hardware.ni_daq.nidaq
+
+.. autoclass:: NIDaq
     :members:
     :inherited-members:
 
