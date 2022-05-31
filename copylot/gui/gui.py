@@ -90,23 +90,30 @@ class MainWindow(QMainWindow):
             ) as outfile:
                 json.dump(self.defaults, outfile)
 
+        # set common configurations for docks
+        self.dock_list = []
+
         # initialize docks
         self.live_dock = QDockWidget(self)
         self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
+        self.dock_list.append(self.live_dock)
+
         self.timelapse_dock = QDockWidget(self)
         self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
+        self.dock_list.append(self.timelapse_dock)
+
         self.water_dock = QDockWidget(self)
         self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
+        self.dock_list.append(self.water_dock)
+
         self.parameters_dock = QDockWidget(self)
         self.parameters_dock.setTitleBarWidget(QLabel("NI DAQ Parameters"))
+        self.dock_list.append(self.parameters_dock)
 
-        # set common configurations for docks
-        self.dock_list = [
-            self.live_dock,
-            self.timelapse_dock,
-            self.water_dock,
-            self.parameters_dock,
-        ]
+        self.laser_dock = QDockWidget(self)
+        self.laser_dock.setTitleBarWidget(QLabel("Laser"))
+        self.dock_list.append(self.laser_dock)
+
         for dock in self.dock_list:
             _apply_dock_config(dock)
 
@@ -133,6 +140,11 @@ class MainWindow(QMainWindow):
             )
         )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
+        self.laser_dock.setWidget(
+            DockPlaceholder(
+                self, self.laser_dock, "laser", [self]
+            )
+        )
 
         # self.parameters_widget = ParametersDockWidget(self)
         self.parameters_placeholder = DockPlaceholder(
@@ -142,6 +154,7 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
 
         # split horizontal and vertical space between docks
+        self.splitDockWidget(self.parameters_dock, self.laser_dock, Qt.Vertical)
         self.splitDockWidget(self.parameters_dock, self.live_dock, Qt.Horizontal)
         self.splitDockWidget(self.live_dock, self.timelapse_dock, Qt.Vertical)
         self.splitDockWidget(self.timelapse_dock, self.water_dock, Qt.Vertical)
