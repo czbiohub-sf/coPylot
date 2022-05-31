@@ -1,8 +1,9 @@
+from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QWidget, QHBoxLayout, QFrame
 
 
 class LineBreak(QWidget):
-    def __init__(self, alignment, *args, **kwargs):
+    def __init__(self, alignment=Qt.AlignTop, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.alignment = alignment
