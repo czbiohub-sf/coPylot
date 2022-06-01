@@ -22,8 +22,12 @@ class LaserDockWidget(QWidget):
         parameter_label = QLabel("Laser Power:", self)
         parameter_editbox = QLineEdit(str(0.01), self)
 
-        self.parameters_layout.addWidget(parameter_label, row_index, 0, alignment=Qt.AlignTop)
-        self.parameters_layout.addWidget(parameter_editbox, row_index, 1, alignment=Qt.AlignTop)
+        self.parameters_layout.addWidget(
+            parameter_label, row_index, 0, alignment=Qt.AlignTop
+        )
+        self.parameters_layout.addWidget(
+            parameter_editbox, row_index, 1, alignment=Qt.AlignTop
+        )
 
         self.main_layout.addLayout(self.parameters_layout)
 
