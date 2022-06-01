@@ -141,9 +141,7 @@ class MainWindow(QMainWindow):
         )
         # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
         self.laser_dock.setWidget(
-            DockPlaceholder(
-                self, self.laser_dock, "laser", [self]
-            )
+            DockPlaceholder(self, self.laser_dock, "laser", [self])
         )
 
         # self.parameters_widget = ParametersDockWidget(self)
