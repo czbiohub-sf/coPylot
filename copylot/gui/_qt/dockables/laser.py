@@ -29,6 +29,8 @@ class LaserDockWidget(QWidget):
         parameter_label = QLabel("Laser Power:", self)
         parameter_editbox = QLineEdit(str(0.01), self)
         parameter_slider = QSlider(Qt.Horizontal)
+        parameter_slider.setRange(0, 100)
+        parameter_slider.valueChanged.connect(lambda: parameter_editbox.setText(str(parameter_slider.value() / 100)))
 
         self.parameters_layout.addWidget(
             parameter_label, row_index, 0, alignment=Qt.AlignTop
