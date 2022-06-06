@@ -1,5 +1,3 @@
-
-
 class Galvo:
     speed: float = 0.5
 

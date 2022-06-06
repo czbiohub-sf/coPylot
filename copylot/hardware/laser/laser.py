@@ -1,5 +1,3 @@
-
-
 class Laser:
     def __init__(self, wavelength: int = 488, power: int = 0.15):
         self._wavelength = wavelength
