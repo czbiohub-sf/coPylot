@@ -1,9 +1,12 @@
 from time import sleep
 
+from copylot.hardware.galvo.galvo import Galvo
+from copylot.hardware.laser.laser import Laser
+
 
 def align_scanning_galvo():
     laser = Laser()
-    scanning_galvo = Galvo()
+    scanning_galvo = Galvo("scanning")
     gamma_galvo = Galvo("gamma")
     beta_galvo = Galvo("beta")
 

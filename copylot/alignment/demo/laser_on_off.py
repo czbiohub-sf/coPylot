@@ -1,5 +1,7 @@
 from time import sleep
 
+from copylot.hardware.laser.laser import Laser
+
 
 def demo_laser_on_off():
     laser = Laser()

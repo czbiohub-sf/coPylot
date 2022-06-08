@@ -1,5 +1,7 @@
 from time import sleep
 
+from copylot.hardware.galvo.galvo import Galvo
+
 
 def demo_move_galvo():
     galvo = Galvo()
