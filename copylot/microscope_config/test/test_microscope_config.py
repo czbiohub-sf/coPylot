@@ -8,4 +8,4 @@ def test_read_config():
     scope_config = MicroscopeConfig.read_config(config_path)
 
     assert scope_config.name == "daxi"
-    assert scope_config.nb_devices == 4
+    assert scope_config.nb_devices == 12

@@ -185,7 +185,7 @@ class NIDaq:
 
         Returns
         -------
-        TODO: right the return type and description
+        TODO: write the return type and description
 
         """
         # AO3. for stripe reduction
@@ -206,14 +206,14 @@ class NIDaq:
 
         # AO1, AO2 and AO6, for view switching and light sheet stabilization
         if view == "view1":
-            offset = self._offset_dis_to_vol(
+            offset = self._offset_distance_to_voltage(
                 self.offset_view1
             )  # convert the offset from um to v
             data_ao1 = [self.view1_galvo1] * self.num_samples
             data_ao2 = [self.view1_galvo2] * self.num_samples
             data_ao6 = [self.o3_view1 / self.CONVERT_RATIO_PIFOC_O3] * self.num_samples
         elif view == "view2":
-            offset = self._offset_dis_to_vol(
+            offset = self._offset_distance_to_voltage(
                 self.offset_view2
             )  # convert the offset from um to v
             data_ao1 = [self.view2_galvo1] * self.num_samples
@@ -250,12 +250,12 @@ class NIDaq:
             data_ao7,
         ]
 
-    def _get_do_data(self, nr_channels, interleave=False, current_ch=0):
+    def _get_do_data(self, nb_channels, interleave=False, current_ch=0):
         """Method to get digital output data.
 
         Parameters
         ----------
-        nr_channels
+        nb_channels
         interleave
         current_ch
 
@@ -268,19 +268,19 @@ class NIDaq:
         data_on = [True] * nb_on_sample + [False] * (self.num_samples - nb_on_sample)
         data_off = [False] * self.num_samples
 
-        if nr_channels == 1:
+        if nb_channels == 1:
             return data_on
         else:
             data = []
             # only generate data once if interleaved channel acquisition
             if interleave:
-                for i in range(nr_channels):
+                for i in range(nb_channels):
                     data.append(
-                        data_off * i + data_on + data_off * (nr_channels - i - 1)
+                        data_off * i + data_on + data_off * (nb_channels - i - 1)
                     )
             # generate data for each channel for sequential channel acquisition
             else:
-                for ch in range(nr_channels):
+                for ch in range(nb_channels):
                     if ch == current_ch:
                         data.append(data_on)
                     else:
@@ -361,7 +361,7 @@ class NIDaq:
         if scan_option == 'Stage':
             fn_acquire = self._acquire_stacks
         elif scan_option == 'O1' or 'Galvo':
-            # set the inital states of the AO devices before acquisition
+            # set the initial states of the AO devices before acquisition
             self.set_initial_states(scan_option, view)
             fn_acquire = self._acquire_stacks_galvo
         # elif scan_option == 'Interleave_denoising':
@@ -527,14 +527,14 @@ class NIDaq:
 
         # AO1 and AO2, for view switching and light sheet stabilization
         if view == "view1":
-            offset = self._offset_dis_to_vol(
+            offset = self._offset_distance_to_voltage(
                 self.offset_view1
             )  # convert the offset from um to v
             data_ao1 = [self.view1_galvo1] * nb_samples
             data_ao2 = [self.view1_galvo2] * nb_samples
             data_ao6 = [self.o3_view2 / self.CONVERT_RATIO_PIFOC_O3] * nb_samples
         elif view == "view2":
-            offset = self._offset_dis_to_vol(
+            offset = self._offset_distance_to_voltage(
                 self.offset_view2
             )  # convert the offset from um to v
             data_ao1 = [self.view2_galvo1] * nb_samples
@@ -563,7 +563,7 @@ class NIDaq:
 
     def _acquire_stacks_galvo(self, task_ao, task_do, channels, views, scan_option):
         """Set up the workflow to acquire multiple stacks
-        todo, support multichanel imaging
+        todo, support multichannel imaging
 
         Parameters
         ----------
@@ -803,7 +803,7 @@ class NIDaq:
         """
         if view == 1:
             self._set_initial_ao_states(
-                self._offset_dis_to_vol(self.offset_view1),
+                self._offset_distance_to_voltage(self.offset_view1),
                 self.view1_galvo1,
                 self.view1_galvo2,
                 self.light_sheet_angle,
@@ -813,7 +813,7 @@ class NIDaq:
             )
         elif view == 2:
             self._set_initial_ao_states(
-                self._offset_dis_to_vol(self.offset_view2),
+                self._offset_distance_to_voltage(self.offset_view2),
                 self.view2_galvo1,
                 self.view2_galvo2,
                 self.light_sheet_angle,
@@ -846,7 +846,7 @@ class NIDaq:
 
         if scan_option == 'O1':
             self._set_initial_ao_states(
-                self._offset_dis_to_vol(offset),
+                self._offset_distance_to_voltage(offset),
                 galvo1,
                 galvo2,
                 self.light_sheet_angle,
@@ -856,7 +856,7 @@ class NIDaq:
             )
         elif scan_option == 'Galvo':
             self._set_initial_ao_states(
-                self._offset_dis_to_vol(offset - self.scan_range / 2),
+                self._offset_distance_to_voltage(offset - self.scan_range / 2),
                 galvo1,
                 galvo2,
                 self.light_sheet_angle,
@@ -867,7 +867,7 @@ class NIDaq:
         else:
             raise ValueError("Scanning mode not supported")
 
-    def _offset_dis_to_vol(self, offset: float) -> float:
+    def _offset_distance_to_voltage(self, offset: float) -> float:
         """Convert the offset of each view from um to voltage
 
         Parameters
@@ -962,7 +962,7 @@ class NIDaq:
         task_ctr.triggers.start_trigger.retriggerable = True
         return task_ctr
 
-    def _retriggable_task(self, task_do, data_do, task_ao, data_ao, t=None):
+    def _retriggable_task(self, task_do, data_do, task_ao, data_ao, timeout=None):
         """Set up a retriggeable task using a counter
         Using counter0 as default
 
@@ -972,7 +972,7 @@ class NIDaq:
         data_do
         task_ao
         data_ao
-        t
+        timeout
 
         """
         task_do.timing.cfg_samp_clk_timing(
@@ -994,11 +994,11 @@ class NIDaq:
         task_ao.start()
         task_ctr.start()
         print("type s to abort:")
-        if t is None:
+        if timeout is None:
             while input() != "s":
                 time.sleep(0.05)
         else:
-            time.sleep(2)
+            time.sleep(timeout)
 
         task_do.stop()
         task_ao.stop()
