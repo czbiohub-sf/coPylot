@@ -34,3 +34,9 @@ conda create -n coPylot python=3.9
 conda activate coPylot
 pip install -e .
 ```
+
+## Contributing
+
+All contributions are welcome here! Please take a look at our 
+[contributing guideline](CONTRIBUTING.md) first.
+
