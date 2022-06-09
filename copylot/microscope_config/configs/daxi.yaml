@@ -40,3 +40,43 @@ hardware:
       TRIGGERDELAY: 0
       TRIGGERSOURCE: "EXTERNAL"
       TRIGGERACTIVE: "SYNCREADOUT"
+  - galvo:
+      show_gui: false
+      name: "gamma"
+      channel: "ch_ao3"
+  - galvo:
+      show_gui: false
+      name: "beta"
+      channel: "ch_ao4"
+  - galvo:
+      show_gui: false
+      name: "view_switching1"
+      channel: "ch_ao1"
+  - galvo:
+      show_gui: false
+      name: "view_switching2"
+      channel: "ch_ao2"
+  - laser:
+        show_gui: false
+        name: "blue-405"
+        channel: "ch_dio0"
+  - laser:
+      show_gui: false
+      name: "cyan-488"
+      channel: "ch_dio1"
+  - laser:
+      show_gui: false
+      name: "yellow-green-561"
+      channel: "ch_dio2"
+  - laser:
+      show_gui: false
+      name: "red-639"
+      channel: "ch_dio3"
+  - piezo_stage:
+      show_gui: false
+      name: "O1-PIFOC"
+      channel: "ch_ao5"
+  - pieze_stage:
+      show_gui: false
+      name: "03-PIFOC"
+      channel: "ch_ao6"
