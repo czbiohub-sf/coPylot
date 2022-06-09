@@ -35,8 +35,12 @@ conda activate coPylot
 pip install -e .
 ```
 
+## Documentation
+
+coPylot documentation can be found [here](https://royerlab.github.io/coPylot/).
+
+
 ## Contributing
 
 All contributions are welcome here! Please take a look at our 
 [contributing guideline](CONTRIBUTING.md) first.
-
