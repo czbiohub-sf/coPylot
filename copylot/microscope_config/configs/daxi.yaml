@@ -72,3 +72,11 @@ hardware:
       show_gui: false
       name: "red-639"
       channel: "ch_dio3"
+  - piezo_stage:
+      show_gui: false
+      name: "O1-PIFOC"
+      channel: "ch_ao5"
+  - pieze_stage:
+      show_gui: false
+      name: "03-PIFOC"
+      channel: "ch_ao6"
