@@ -1,3 +1,5 @@
+# CONTRIBUTING GUIDELINES
+
 ## Help us to help you!
 
 Thank you for taking the time to contribute!
