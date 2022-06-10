@@ -78,6 +78,9 @@ conda activate copylot
 # Install coPylot
 pip install -e .
 
+# Install developmental dependencies
+pip install -r requirements/development.txt
+
 # Before making a PR make sure tests are passing
 # To run tests
 python -m pytest . --disable-pytest-warnings
