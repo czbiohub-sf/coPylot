@@ -4,7 +4,7 @@ from pyvcam.camera import Camera
 
 class PrimeBSICamera:
     def __init__(self):
-        pass
+        pvc.init_pvcam()
 
     @staticmethod
     def available_cameras():
@@ -12,3 +12,6 @@ class PrimeBSICamera:
         print(f"Available cameras: {cameras}")
 
         return cameras
+
+    def __del__(self):
+        pvc.uninit_pvcam()
