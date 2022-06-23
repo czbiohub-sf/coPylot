@@ -55,6 +55,28 @@ class PrimeBSICamera:
         """
         self.cam.binning = (x_bin, y_bin)
 
+    def reset_rois(self):
+        """Restores ROI to the default."""
+        self.cam.reset_rois()
+
+    def set_roi(self, s1: int, p1: int, width: int, height: int):
+        """
+        Adds a new ROI with given parameters to the list of ROIs.
+
+        Parameters
+        ----------
+        s1 : int
+            Serial coordinate of the first corner
+        p1 : int
+            Parallel coordinate of the first corner
+        width : int
+            Width of ROI in number of pixels
+        height : int
+            Height of ROI in number of pixels
+
+        """
+        self.cam.set_roi(s1, p1, width, height)
+
     def live_run(self, exposure: int = 20):
         """
         Live mode run method.
