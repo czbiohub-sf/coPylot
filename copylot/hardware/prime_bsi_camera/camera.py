@@ -8,6 +8,16 @@ class PrimeBSICamera:
             scan_mode,
             binning: tuple,
     ):
+        """
+
+        Parameters
+        ----------
+        scan_mode
+        binning : tuple
+            (x_bin, y_bin). If you want to set square
+            binning, you should pass equal values for
+            x_bin and y_bin.
+        """
         pvc.init_pvcam()
 
         self.cam.prog_scan_mode = scan_mode
@@ -39,21 +49,6 @@ class PrimeBSICamera:
     @gain.setter
     def gain(self, gain):
         self.cam.gain = gain
-
-    @binning.setter
-    def binning(self, x_bin, y_bin):
-        """
-        Binning property setter. If you want to set
-        square binning, you should pass equal values
-        for x_bin and y_bin.
-
-        Parameters
-        ----------
-        x_bin
-        y_bin
-
-        """
-        self.cam.binning = (x_bin, y_bin)
 
     def reset_rois(self):
         """Restores ROI to the default."""
