@@ -50,6 +50,14 @@ class PrimeBSICamera:
     def gain(self, gain):
         self.cam.gain = gain
 
+    @property
+    def exposure_time(self):
+        return self.cam.exp_time
+
+    @exposure_time.setter
+    def exposure_time(self, exposure_time):
+        self.cam.exp_time = exposure_time
+
     def reset_rois(self):
         """Restores ROI to the default."""
         self.cam.reset_rois()
