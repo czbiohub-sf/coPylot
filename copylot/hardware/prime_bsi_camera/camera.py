@@ -25,6 +25,14 @@ class PrimeBSICamera:
 
         return scan_modes
 
+    @property
+    def scan_mode(self):
+        return self.cam.prog_scan_mode
+
+    @scan_mode.setter
+    def scan_mode(self, scan_mode):
+        self.cam.prog_scan_mode = scan_mode
+
     def live_run(self, exposure: int = 20):
         """
         Live mode run method.
