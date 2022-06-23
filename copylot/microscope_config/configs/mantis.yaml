@@ -1,0 +1,4 @@
+name: mantis
+hardware:
+  - ni_daq:
+      show_gui: true
