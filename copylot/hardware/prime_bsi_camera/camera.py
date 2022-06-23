@@ -33,6 +33,25 @@ class PrimeBSICamera:
     def scan_mode(self, scan_mode):
         self.cam.prog_scan_mode = scan_mode
 
+    @property
+    def binning(self):
+        return self.cam.binning
+
+    @binning.setter
+    def binning(self, x_bin, y_bin):
+        """
+        Binning property setter. If you want to set
+        square binning, you should pass equal values
+        for x_bin and y_bin.
+
+        Parameters
+        ----------
+        x_bin
+        y_bin
+
+        """
+        self.cam.binning = (x_bin, y_bin)
+
     def live_run(self, exposure: int = 20):
         """
         Live mode run method.
