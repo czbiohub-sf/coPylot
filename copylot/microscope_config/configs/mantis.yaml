@@ -2,3 +2,11 @@ name: mantis
 hardware:
   - ni_daq:
       show_gui: true
+  - prime_bsi_camera:
+      TRIGGER_MODE: "NORMAL"
+      TRIGGERPOLARITY: "POSITIVE"
+      TRIGGER_CONNECTOR: "BNC"
+      TRIGGERTIMES: 1
+      TRIGGERDELAY: 0
+      TRIGGERSOURCE: "EXTERNAL"
+      TRIGGERACTIVE: "SYNCREADOUT"

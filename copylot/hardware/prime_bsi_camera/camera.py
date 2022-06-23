@@ -16,6 +16,15 @@ class PrimeBSICamera:
 
         return cameras
 
+    @staticmethod
+    def available_scan_modes():
+        cam = next(Camera.detect_camera())
+        scan_modes = cam.__prog_scan_modes
+
+        print(f"Available scan modes: {scan_modes}")
+
+        return scan_modes
+
     def live_run(self, exposure: int = 20):
         """
         Live mode run method.
