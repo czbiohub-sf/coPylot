@@ -3,8 +3,15 @@ from pyvcam.camera import Camera
 
 
 class PrimeBSICamera:
-    def __init__(self):
+    def __init__(
+            self,
+            scan_mode,
+            binning: tuple,
+    ):
         pvc.init_pvcam()
+
+        self.cam.prog_scan_mode = scan_mode
+        self.cam.binning = binning
 
     def __del__(self):
         pvc.uninit_pvcam()
@@ -26,16 +33,12 @@ class PrimeBSICamera:
         return scan_modes
 
     @property
-    def scan_mode(self):
-        return self.cam.prog_scan_mode
+    def gain(self):
+        return self.cam.gain
 
-    @scan_mode.setter
-    def scan_mode(self, scan_mode):
-        self.cam.prog_scan_mode = scan_mode
-
-    @property
-    def binning(self):
-        return self.cam.binning
+    @gain.setter
+    def gain(self, gain):
+        self.cam.gain = gain
 
     @binning.setter
     def binning(self, x_bin, y_bin):
