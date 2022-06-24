@@ -6,7 +6,9 @@ class PrimeBSICamera:
     def __init__(
             self,
             scan_mode,
+            scan_dir,
             binning: tuple,
+            enable_metadata: bool = True,
     ):
         """
 
@@ -21,7 +23,10 @@ class PrimeBSICamera:
         pvc.init_pvcam()
 
         self.cam.prog_scan_mode = scan_mode
+        self.cam.prog_scan_dir = scan_dir
         self.cam.binning = binning
+
+        self.cam.set_param(constants.PARAM_METADATA_ENABLED, enable_metadata)
 
     def __del__(self):
         pvc.uninit_pvcam()
