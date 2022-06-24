@@ -1,14 +1,14 @@
-from pyvcam import pvc
+from pyvcam import pvc, constants
 from pyvcam.camera import Camera
 
 
 class PrimeBSICamera:
     def __init__(
-            self,
-            scan_mode,
-            scan_dir,
-            binning: tuple,
-            enable_metadata: bool = True,
+        self,
+        scan_mode,
+        scan_dir,
+        binning: tuple,
+        enable_metadata: bool = True,
     ):
         """
 

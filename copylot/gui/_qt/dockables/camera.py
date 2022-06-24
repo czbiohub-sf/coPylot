@@ -2,14 +2,10 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QWidget,
     QHBoxLayout,
-    QPushButton,
     QGridLayout,
     QLabel,
     QLineEdit,
-    QSlider,
 )
-
-from copylot.gui._qt.custom_widgets.line_break import QVLineBreakWidget
 
 
 class CameraDockWidget(QWidget):
