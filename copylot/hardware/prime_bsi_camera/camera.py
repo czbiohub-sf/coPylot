@@ -15,10 +15,14 @@ class PrimeBSICamera:
         Parameters
         ----------
         scan_mode
+        scan_dir
         binning : tuple
             (x_bin, y_bin). If you want to set square
             binning, you should pass equal values for
             x_bin and y_bin.
+        enable_metadata : bool
+            Toggles camera metadata on and off. By default
+            it is True.
         """
         pvc.init_pvcam()
 
