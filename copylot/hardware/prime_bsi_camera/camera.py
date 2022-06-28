@@ -72,7 +72,7 @@ class PrimeBSICamera:
         return self.cam.speed_table_index
 
     @readout_speed.setter
-    def readout_speed(self, new_speed):
+    def readout_speed(self, new_speed):  # TODO: learn what values might be accepted
         self.cam.speed_table_index = new_speed
 
     def reset_rois(self):
