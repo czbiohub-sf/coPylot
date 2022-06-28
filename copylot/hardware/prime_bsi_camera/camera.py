@@ -67,6 +67,14 @@ class PrimeBSICamera:
     def exposure_time(self, exposure_time):
         self.cam.exp_time = exposure_time
 
+    @property
+    def readout_speed(self):
+        return self.cam.speed_table_index
+
+    @readout_speed.setter
+    def readout_speed(self, new_speed):
+        self.cam.speed_table_index = new_speed
+
     def reset_rois(self):
         """Restores ROI to the default."""
         self.cam.reset_rois()
