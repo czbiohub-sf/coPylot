@@ -8,6 +8,8 @@ class PrimeBSICamera:
         scan_mode,
         scan_dir,
         binning: tuple,
+        trigger_mode,
+        exposure_out,
         enable_metadata: bool = True,
     ):
         """
@@ -29,6 +31,8 @@ class PrimeBSICamera:
         self.cam.prog_scan_mode = scan_mode
         self.cam.prog_scan_dir = scan_dir
         self.cam.binning = binning
+        self.cam.exp_mode = trigger_mode
+        self.cam.exp_out_mode = exposure_out
 
         self.cam.set_param(constants.PARAM_METADATA_ENABLED, enable_metadata)
 
