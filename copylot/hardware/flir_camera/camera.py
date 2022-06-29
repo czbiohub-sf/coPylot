@@ -1,0 +1,4 @@
+
+
+class FlirCamera:
+    pass
