@@ -26,18 +26,14 @@ class PrimeBSICamera:
         """
         pvc.init_pvcam()
 
-        if camera_name:
-            try:
+        try:
+            if camera_name:
                 self.cam = Camera.select_camera(camera_name)
-            except:
-                pvc.uninit_pvcam()
-                raise
-        else:
-            try:
+            else:
                 self.cam = next(Camera.detect_camera())
-            except:
-                pvc.uninit_pvcam()
-                raise
+        except:
+            pvc.uninit_pvcam()
+            raise
 
         self.cam.open()
 
