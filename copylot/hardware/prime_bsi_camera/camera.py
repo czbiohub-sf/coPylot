@@ -5,63 +5,87 @@ from pyvcam.camera import Camera
 class PrimeBSICamera:
     def __init__(
         self,
-        scan_mode,
-        scan_dir,
-        binning: tuple,
-        trigger_mode,
-        exposure_out,
+        camera_name: str = None,
+        # TODO: create properties for these
+        # scan_mode: str = None,
+        # scan_dir: str = None,
+        # binning: tuple = (1, 1),
+        # trigger_mode: str = None,
+        # exposure_out: str = None,
         enable_metadata: bool = True,
     ):
         """
 
         Parameters
         ----------
-        scan_mode
-        scan_dir
-        binning : tuple
-            (x_bin, y_bin). If you want to set square
-            binning, you should pass equal values for
-            x_bin and y_bin.
+        camera_name : str
+            Camera name, available through available_cameras().
+            If not provided, the next available camera will be initialized.
         enable_metadata : bool
-            Toggles camera metadata on and off. By default
-            it is True.
+            Toggles camera metadata on and off. By default, it is True.
         """
         pvc.init_pvcam()
 
-        self.cam.prog_scan_mode = scan_mode
-        self.cam.prog_scan_dir = scan_dir
-        self.cam.binning = binning
-        self.cam.exp_mode = trigger_mode
-        self.cam.exp_out_mode = exposure_out
+        if camera_name:
+            try:
+                self.cam = Camera.select_camera(camera_name)
+            except:
+                pvc.uninit_pvcam()
+                raise
+        else:
+            try:
+                self.cam = next(Camera.detect_camera())
+            except:
+                pvc.uninit_pvcam()
+                raise
 
-        self.cam.set_param(constants.PARAM_METADATA_ENABLED, enable_metadata)
+        self.cam.open()
+
+        # Prime BSI Express camera has only one port called 'CMOS' at index 0
+        self.cam.readout_port = 0
+
+        # Hard-coding these values since they won't change
+        # Values can be parsed from self.cam.port_speed_gain_table['CMOS']
+        self._speed_gain_table = {'200 MHz': {'speed_index': 0,
+                                              'Full well': {'gain_index': 1, 'bit_depth': 11},
+                                              'Balanced': {'gain_index': 2, 'bit_depth': 11},
+                                              'Sensitivity': {'gain_index': 3, 'bit_depth': 11}
+                                              },
+                                  '100 MHz': {'speed_index': 1,
+                                              'HRD': {'gain_index': 1, 'bit_depth': 16},
+                                              'CMS': {'gain_index': 1, 'bit_depth': 12}
+                                              }
+                                  }
+
+        self.serial_number = self.cam.serial_no
+        self.sensor_size = self.cam.sensor_size
+        self.chip_name = self.cam.chip_name
+        self.cam.meta_data_enabled = enable_metadata
 
     def __del__(self):
+        self.cam.finish()
+        self.cam.close()
         pvc.uninit_pvcam()
 
     @staticmethod
     def available_cameras():
+        pvc.init_pvcam()
         cameras = Camera.get_available_camera_names()
-        print(f"Available cameras: {cameras}")
 
+        pvc.uninit_pvcam()
         return cameras
 
-    @staticmethod
-    def available_scan_modes():
-        cam = next(Camera.detect_camera())
-        scan_modes = cam.__prog_scan_modes
-
-        print(f"Available scan modes: {scan_modes}")
-
-        return scan_modes
-
     @property
-    def gain(self):
-        return self.cam.gain
+    def speed_gain_table(self):
+        return self._speed_gain_table
 
-    @gain.setter
-    def gain(self, gain):
-        self.cam.gain = gain
+    # Will implement later
+    # def available_scan_modes(self):
+    #     scan_modes = self.cam.__prog_scan_modes
+    #
+    #     print(f"Available scan modes: {scan_modes}")
+    #
+    #     return scan_modes
 
     @property
     def exposure_time(self):
@@ -73,11 +97,51 @@ class PrimeBSICamera:
 
     @property
     def readout_speed(self):
-        return self.cam.speed_table_index
+        readout_speed_name = None
+
+        readout_speed_index = self.cam.speed_table_index
+        for key, value in self.speed_gain_table.items():
+            if value['speed_index'] == readout_speed_index:
+                readout_speed_name = key
+
+        return readout_speed_name
 
     @readout_speed.setter
-    def readout_speed(self, new_speed):  # TODO: learn what values might be accepted
-        self.cam.speed_table_index = new_speed
+    def readout_speed(self, new_speed):
+        success = False
+
+        for key, value in self.speed_gain_table.items():
+            if key == new_speed:
+                success = True
+                self.cam.speed_table_index = value['speed_index']
+
+        if not success:
+            raise ValueError('Invalid readout speed. '
+                             'Please check speed_gain_table for valid settings.')
+
+    @property
+    def gain(self):
+        gain_name = None
+
+        for key, value in self.speed_gain_table[self.readout_speed].items():
+            if isinstance(value, dict):
+                if value['gain_index'] == self.cam.gain:
+                    gain_name = key
+
+        return gain_name
+
+    @gain.setter
+    def gain(self, gain):
+        success = False
+
+        for key, value in self.speed_gain_table[self.readout_speed].items():
+            if key == gain:
+                success = True
+                self.cam.gain = value['gain_index']
+
+        if not success:
+            raise ValueError('Invalid gain. '
+                             'Please check speed_gain_table for valid settings.')
 
     def reset_rois(self):
         """Restores ROI to the default."""
