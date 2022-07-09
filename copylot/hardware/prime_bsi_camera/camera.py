@@ -52,8 +52,8 @@ class PrimeBSICamera:
                                               'Sensitivity': {'gain_index': 3, 'bit_depth': 11}
                                               },
                                   '100 MHz': {'speed_index': 1,
-                                              'HRD': {'gain_index': 1, 'bit_depth': 16},
-                                              'CMS': {'gain_index': 1, 'bit_depth': 12}
+                                              'HDR': {'gain_index': 1, 'bit_depth': 16},
+                                              'CMS': {'gain_index': 2, 'bit_depth': 12}
                                               }
                                   }
 
@@ -142,6 +142,10 @@ class PrimeBSICamera:
         if not success:
             raise ValueError('Invalid gain. '
                              'Please check speed_gain_table for valid settings.')
+
+    @property
+    def bit_depth(self):
+        return self.speed_gain_table[self.readout_speed][self.gain]['bit_depth']
 
     def reset_rois(self):
         """Restores ROI to the default."""
