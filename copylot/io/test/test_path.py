@@ -1,7 +1,7 @@
 from os import access, W_OK
 from os.path import exists
 
-from copylot.util.path import get_temp_folder, get_home_folder
+from copylot.util import get_temp_folder, get_home_folder
 
 
 def test_home_folder():
