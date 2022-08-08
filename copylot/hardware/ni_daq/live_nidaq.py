@@ -32,7 +32,7 @@ class LiveNIDaq:
         for channel in self.active_ao_channels:
             with nidaqmx.Task() as task:
                 task.ao_channels.add_ao_voltage_chan(channel)
-                task.write([0.], auto_start=True)
+                task.write([0.0], auto_start=True)
 
     def set_constant_ao_voltage(self, channel: str, voltage: float):
         """
@@ -49,4 +49,6 @@ class LiveNIDaq:
                 task.ao_channels.add_ao_voltage_chan(channel)
                 task.write([voltage], auto_start=True)
         else:
-            raise ValueError("Constant voltage can not be set to an inactive analog channel.")
+            raise ValueError(
+                "Constant voltage can not be set to an inactive analog channel."
+            )

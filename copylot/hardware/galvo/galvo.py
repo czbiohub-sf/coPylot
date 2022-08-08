@@ -7,11 +7,11 @@ class Galvo:
     def __init__(self, name: str):
         self.name = name
         self.daq = LiveNIDaq()
-        self.channel =
+        # self.channel =
 
     @staticmethod
     def _pos2voltage(pos: float):
-        """ TODO: implement this properly.
+        """TODO: implement this properly.
 
         Parameters
         ----------
