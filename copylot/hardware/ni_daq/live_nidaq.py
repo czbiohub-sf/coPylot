@@ -5,6 +5,9 @@ class LiveNIDaq:
     def __init__(self):
         self._active_analog_channels = []
 
+    def __del__(self):
+        self.zero()
+
     @property
     def active_analog_channels(self):
         """
