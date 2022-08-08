@@ -8,8 +8,8 @@ Support for controling other microscopes planned to be added in future.
 It can be started up by running `copylot/gui/gui.py`.
 
 
-Installation
-============
+Getting started with pip
+==========================
 
 We currently have no release on pypi, so you can follow the steps below to
 install editable version of coPylot with help of `pip`:
@@ -19,6 +19,15 @@ install editable version of coPylot with help of `pip`:
     $ git clone https://github.com/royerlab/coPylot.git
     $ cd coPylot
     $ pip install -e .
+
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+   :caption: Getting Started
+
+   Install <getting_started/install.rst>
+   Hardware Drivers <getting_started/hardware_drivers.rst>
 
 
 .. toctree::
