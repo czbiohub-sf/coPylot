@@ -24,7 +24,7 @@ class LiveNIDaq:
     def active_do_channels(self):
         return self._active_do_channels
 
-    @active_do_channels
+    @active_do_channels.setter
     def active_do_channels(self, channel):
         self._active_do_channels.append(channel)
 
