@@ -9,23 +9,23 @@ class LiveNIDaq:
         self.zero()
 
     @property
-    def active_analog_channels(self):
+    def active_ao_channels(self):
         """
         List of active analog channels
         """
         return self._active_analog_channels
 
-    @active_analog_channels.setter
-    def active_analog_channels(self, channel):
+    @active_ao_channels.setter
+    def active_ao_channels(self, channel):
         self._active_analog_channels.append(channel)
 
     def zero(self):
-        for channel in self.active_analog_channels:
+        for channel in self.active_ao_channels:
             with nidaqmx.Task() as task:
                 task.ao_channels.add_ao_voltage_chan(channel)
                 task.write([0.], auto_start=True)
 
-    def set_constant_analog_voltage(self, channel: str, voltage: float):
+    def set_constant_ao_voltage(self, channel: str, voltage: float):
         """
         Sets a given voltage to the given channel.
 
@@ -35,7 +35,7 @@ class LiveNIDaq:
         voltage : float
 
         """
-        if channel in self.active_analog_channels:
+        if channel in self.active_ao_channels:
             with nidaqmx.Task() as task:
                 task.ao_channels.add_ao_voltage_chan(channel)
                 task.write([voltage], auto_start=True)

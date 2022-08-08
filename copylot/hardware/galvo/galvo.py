@@ -36,4 +36,4 @@ class Galvo:
         raise NotImplementedError
 
     def set_position(self, pos: float):
-        self.daq.set_constant_voltage(self.channel, self._pos2voltage(pos))
+        self.daq.set_constant_ao_voltage(self.channel, self._pos2voltage(pos))
