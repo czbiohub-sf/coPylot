@@ -15,8 +15,12 @@ class Viewer:
 
         interpolation = 'nearest'
 
-        self.image = scene.visuals.Image(img_data, interpolation=interpolation,
-                                    parent=self.view.scene, method='subdivide')
+        self.image = scene.visuals.Image(
+            img_data,
+            interpolation=interpolation,
+            parent=self.view.scene,
+            method='subdivide'
+        )
 
         # Set 2D camera (the camera will scale to the contents in the scene)
         self.view.camera = scene.PanZoomCamera(aspect=1)
