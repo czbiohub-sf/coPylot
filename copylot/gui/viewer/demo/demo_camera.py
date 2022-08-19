@@ -1,3 +1,4 @@
+# flake8: noqa
 from skimage import data
 
 from copylot.gui.viewer.viewer import Viewer
