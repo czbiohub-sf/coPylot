@@ -1,7 +1,12 @@
+
+
 class Laser:
-    def __init__(self, wavelength: int = 488, power: int = 0.15):
+    def __init__(self, wavelength: str = "561", power: int = 0.01):
         self._wavelength = wavelength
         self._power = power
+
+    def __del__(self):
+        self.turn_off()
 
     @property
     def wavelength(self):
@@ -18,3 +23,9 @@ class Laser:
     @power.setter
     def power(self, power: int):
         self._power = power
+
+    def turn_on(self):
+        pass
+
+    def turn_off(self):
+        pass
