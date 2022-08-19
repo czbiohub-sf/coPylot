@@ -19,7 +19,7 @@ class Viewer:
             img_data,
             interpolation=interpolation,
             parent=self.view.scene,
-            method='subdivide'
+            method='subdivide',
         )
 
         # Set 2D camera (the camera will scale to the contents in the scene)
