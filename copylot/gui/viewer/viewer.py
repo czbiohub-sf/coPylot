@@ -1,4 +1,3 @@
-import numpy
 from vispy import scene
 from vispy import app
 
