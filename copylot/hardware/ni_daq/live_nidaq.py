@@ -37,7 +37,7 @@ class LiveNIDaq:
     def set_constant_ao_voltage(self, channel: str, voltage: float):
         """
         Sets a given voltage to the given channel.
-
+g
         Parameters
         ----------
         channel : str
