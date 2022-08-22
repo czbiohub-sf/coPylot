@@ -32,5 +32,5 @@ class Viewer:
     def run(self):
         app.run()
 
-    def update(self, data: numpy.ArrayLike):
+    def update(self, data):
         pass

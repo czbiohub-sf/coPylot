@@ -9,6 +9,8 @@ def main():
 
     viewer = Viewer(img_data=camera)
 
+    viewer.run()
+
 
 if __name__ == '__main__':
     main()
