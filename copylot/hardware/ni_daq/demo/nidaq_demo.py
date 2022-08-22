@@ -1,4 +1,4 @@
-from copylot.hardware.ni_daq.nidaq import NIDaq
+from copylot.hardware.ni_daq.legacy_daxi_nidaq import NIDaq
 
 
 if __name__ == "__main__":

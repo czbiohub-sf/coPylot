@@ -3,7 +3,7 @@ from qtpy.QtCore import Qt, Signal, Slot
 import time
 
 from copylot.gui._qt.job_runners.worker import Worker
-from copylot.hardware.ni_daq.nidaq import NIDaq
+from copylot.hardware.ni_daq.legacy_daxi_nidaq import NIDaq
 
 
 class LiveControlDockWidget(QWidget):
