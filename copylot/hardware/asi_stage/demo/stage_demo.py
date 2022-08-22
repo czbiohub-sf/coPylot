@@ -26,7 +26,7 @@ def set_scan_speed_demo():
     stage = ASIStage()
     stage.zero()
 
-    stage.set_speed(3)
+    stage.set_speed_x(3)
 
     stage.start_scan()
 

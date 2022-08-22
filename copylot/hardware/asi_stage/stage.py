@@ -72,7 +72,7 @@ class ASIStage:
         """
         return self.serial_connection.readline().decode(encoding="ascii")
 
-    def set_speed(self, speed):
+    def set_speed_x(self, speed):
         """Set speed of the stage.
 
         Parameters
@@ -85,7 +85,20 @@ class ASIStage:
         self._send_message(message)
         print(self._read_response())
 
-    def set_default_speed(self):
+    def set_speed_y(self, speed):
+        """Set speed of the stage.
+
+        Parameters
+        ----------
+        speed
+
+        """
+        message = f"SPEED y={speed}"
+        print("set speed to scan: " + message)
+        self._send_message(message)
+        print(self._read_response())
+
+    def set_default_speed_xy(self):
         """Set the default speed as the stage speed.
         Currently default values are x=10 y=10.
         """
