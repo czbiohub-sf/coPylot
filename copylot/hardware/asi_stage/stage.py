@@ -53,24 +53,30 @@ class ASIStage:
         self.serial_connection.close()
 
     def _send_message(self, message: str):
-        """Send message over serial connection.
+        """Send message over serial connection."""
+        self.serial_connection.write(bytes(f"{message}\r", encoding="ascii"))
+
+    def _read_response(self) -> str:
+        """Receive and read the response from serial communication."""
+        return self.serial_connection.readline().decode(encoding="ascii")
+
+    def execute_message(self, message: str):
+        """
+        Sends a message and reads and prints and returns the response.
 
         Parameters
         ----------
         message : str
-
-        """
-        self.serial_connection.write(bytes(f"{message}\r", encoding="ascii"))
-
-    def _read_response(self) -> str:
-        """Receive and read the response from serial communication.
 
         Returns
         -------
         str
 
         """
-        return self.serial_connection.readline().decode(encoding="ascii")
+        self._send_message(message)
+        response = self._read_response()
+        print(response)
+        return response
 
     def set_speed_x(self, speed):
         """Set speed of the stage.
@@ -82,8 +88,7 @@ class ASIStage:
         """
         message = f"SPEED x={speed}"
         print("set speed to scan: " + message)
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def set_speed_y(self, speed):
         """Set speed of the stage.
@@ -95,8 +100,7 @@ class ASIStage:
         """
         message = f"SPEED y={speed}"
         print("set speed to scan: " + message)
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def set_default_speed_xy(self):
         """Set the default speed as the stage speed.
@@ -104,15 +108,13 @@ class ASIStage:
         """
         message = "SPEED x=10 y=10"
         print("set speed to scan: " + message)
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def set_backlash(self):
         """Set backlash on the stage."""
         message = "BACKLASH x=0.04 y=0.0"
         print("set backlash: " + message)
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
         """Method to set scan mode.
@@ -123,20 +125,17 @@ class ASIStage:
 
         """
         message = f"SCAN f={int(mode)}"
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def zero(self):
         """Set current position to zero."""
         message = "ZERO\r"
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def start_scan(self):
         """Start the stage scan"""
         message = "SCAN\r"
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def scanr(self, x=0, y=0):
         """Set scan raster scan start and stop.
@@ -148,8 +147,7 @@ class ASIStage:
 
         """
         message = f"SCANR x={x} y={y}"
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def scanv(self, x=0, y=0, f=1.0):
         """Set vertical scan.
@@ -165,8 +163,7 @@ class ASIStage:
 
         """
         message = f"SCANV x={x} y={y} f={f}"
-        self._send_message(message)
-        print(self._read_response())
+        self.execute_message(message)
 
     def info(self, axis_letter):
         """Method to fetch various information on stage axes.
