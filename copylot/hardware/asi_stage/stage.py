@@ -78,7 +78,7 @@ class ASIStage:
         print(response)
         return response
 
-    def set_speed(self, speed):
+    def set_speed_x(self, speed):
         """Set speed of the stage.
 
         Parameters
@@ -90,9 +90,6 @@ class ASIStage:
         print("set speed to scan: " + message)
         self.execute_message(message)
 
-<<<<<<< Updated upstream
-    def set_default_speed(self):
-=======
     def set_speed_y(self, speed):
         """Set speed of the stage.
 
@@ -106,7 +103,6 @@ class ASIStage:
         self.execute_message(message)
 
     def set_default_speed_xy(self):
->>>>>>> Stashed changes
         """Set the default speed as the stage speed.
         Currently default values are x=10 y=10.
         """
