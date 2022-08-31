@@ -3,30 +3,26 @@ import nidaqmx
 
 class LiveNIDaq:
     def __init__(self):
-        self._active_ao_channels = []
-        self._active_do_channels = []
+        self._active_ao_channels = set()
+        self._active_do_channels = set()
 
     def __del__(self):
         self.zero()
 
     @property
     def active_ao_channels(self):
-        """
-        List of active analog channels
-        """
+        """List of active analog channels"""
         return self._active_ao_channels
 
-    @active_ao_channels.setter
-    def active_ao_channels(self, channel):
-        self._active_ao_channels.append(channel)
+    def add_active_ao_channel(self, channel):
+        self._active_ao_channels.add(channel)
 
     @property
     def active_do_channels(self):
         return self._active_do_channels
 
-    @active_do_channels.setter
-    def active_do_channels(self, channel):
-        self._active_do_channels.append(channel)
+    def add_active_do_channel(self, channel):
+        self._active_do_channels.add(channel)
 
     def zero(self):
         for channel in self.active_ao_channels:
