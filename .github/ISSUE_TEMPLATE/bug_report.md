@@ -1,9 +1,7 @@
 ---
 name: Bug report
 about: Create a report to help us improve
-title: ''
 labels: bug
-assignees: ''
 
 ---
 
@@ -23,9 +21,9 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**System (please complete the following information):**
  - OS: [e.g. OSX]
- - Version [e.g. 22]
+ - Version of coPylot [e.g. 22]
 
 **Additional context**
 Add any other context about the problem here.
