@@ -1,3 +1,12 @@
+---
+name: "Feature Request"
+about: Submit a proposal/feature request
+title: ''
+labels: feature
+assignees: ''
+
+---
+
 ## FEATURE:
 
 **Is your feature request related to a problem? Please describe.**
