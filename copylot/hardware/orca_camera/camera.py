@@ -16,8 +16,11 @@ class OrcaCamera:
     """
 
     def __init__(self, camera_index: int = 0):
-
+        self._should_stop = False
         self._camera_index = camera_index
+
+    def stop(self):
+        self._should_stop = True
 
     def run(self, nb_frame: int = 100000):
         """
@@ -41,10 +44,14 @@ class OrcaCamera:
 
                         for _ in range(nb_frame):
                             if dcam.wait_capevent_frameready(timeout_milisec):
-                                data = (  # noqa: F841
-                                    dcam.buf_getlastframedata()
-                                )  # Data is here
-                                print(data.shape, type(data))
+                                if not self._should_stop:
+                                    data = (  # noqa: F841
+                                        dcam.buf_getlastframedata()
+                                    )  # Data is here
+                                    print(data.shape, type(data))
+                                else:
+                                    self._should_stop = False
+                                    break
                             else:
                                 dcamerr = dcam.lasterr()
                                 if dcamerr.is_timeout():

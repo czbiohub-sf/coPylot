@@ -33,10 +33,12 @@ class LiveNIDaq:
     def set_constant_ao_voltage(self, channel: str, voltage: float):
         """
         Sets a given voltage to the given channel.
+
         Parameters
         ----------
         channel : str
         voltage : float
+
         """
         if channel in self.active_ao_channels:
             with nidaqmx.Task() as task:
