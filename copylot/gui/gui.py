@@ -114,6 +114,10 @@ class MainWindow(QMainWindow):
         self.laser_dock.setTitleBarWidget(QLabel("Laser"))
         self.dock_list.append(self.laser_dock)
 
+        self.camera_dock = QDockWidget(self)
+        self.camera_dock.setTitleBarWidget(QLabel("Camera"))
+        self.dock_list.append(self.camera_dock)
+
         for dock in self.dock_list:
             _apply_dock_config(dock)
 
@@ -144,6 +148,10 @@ class MainWindow(QMainWindow):
             DockPlaceholder(self, self.laser_dock, "laser", [self])
         )
 
+        self.camera_dock.setWidget(
+            DockPlaceholder(self, self.camera_dock, "camera", [self])
+        )
+
         # self.parameters_widget = ParametersDockWidget(self)
         self.parameters_placeholder = DockPlaceholder(
             self, self.parameters_dock, "parameters", [self]
@@ -156,6 +164,7 @@ class MainWindow(QMainWindow):
         self.splitDockWidget(self.live_dock, self.timelapse_dock, Qt.Vertical)
         self.splitDockWidget(self.timelapse_dock, self.water_dock, Qt.Vertical)
         self.splitDockWidget(self.water_dock, self.laser_dock, Qt.Vertical)
+        self.splitDockWidget(self.laser_dock, self.camera_dock, Qt.Vertical)
 
         # create status bar that is updated from live and timelapse control classes
         self.status_bar = QStatusBar()
