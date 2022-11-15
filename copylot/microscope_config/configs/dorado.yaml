@@ -2,10 +2,18 @@ name: dorado
 hardware:
   - ni_daq:
       show_gui: true
+      ch_ao0: "cDAQ1AO/ao0"  # unused
+      ch_ao1: "cDAQ1AO/ao1"  # D0, piezo for detection_arm_0
+      ch_ao2: "cDAQ1AO/ao2"  # D1, piezo for detection_arm_1
+      ch_ao3: "cDAQ1AO/ao3"  # I0 and I1, piezo for both illumination arms
+      ch_ao4: "cDAQ1AO2/ao0"  # galvo 0Z?
+      ch_ao5: "cDAQ1AO2/ao1"  # galvo 1Z?
+      ch_ao6: "cDAQ1AO2/ao2"  # galvo Y?
+      ch_ao7: "cDAQ1AO2/ao3"  # Laser-analog
   - filterwheel:
       show_gui: false
       com_port: "COM8"
-  - coherent_laser:
+  - vortran_laser:
       show_gui: true
   - orca_camera:
       TRIGGER_MODE: "NORMAL"
