@@ -2,7 +2,7 @@ import sys
 from setuptools import setup
 
 
-if sys.version_info < (3, 9):
+if sys.version_info < (3, 8):
     sys.stderr.write(
         f'You are using Python '
         + "{'.'.join(str(v) for v in sys.version_info[:3])}.\n\n"

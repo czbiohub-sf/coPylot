@@ -52,6 +52,7 @@ class OrcaCamera:
     def __init__(self, camera_index: int = 0):
 
         self._camera_index = camera_index
+        self.dcam = None
 
     def run(self, nb_frame: int = 100000):
         """
@@ -112,7 +113,7 @@ class OrcaCamera:
 
         Dcamapi.uninit()
 
-    def live_capturing(self):
+    def live_capturing_and_show(self):
         if Dcamapi.init():
             dcam = Dcam(self._camera_index)
             if dcam.dev_open():
@@ -146,3 +147,30 @@ class OrcaCamera:
                 dcam.dev_close()
 
         Dcamapi.uninit()
+
+    def live_capturing_return_images_get_ready(self, nb_buffer_frames=3, timeout_milisec=100):
+        if Dcamapi.init():
+            self.dcam = Dcam(self._camera_index)
+            if self.dcam.dev_open():
+                self.dcam.buf_alloc(nb_buffer_frames)
+                if self.dcam.cap_start():
+                    self.timeout_milisec = timeout_milisec
+                    self.dcam_status='started'
+
+    def live_capturing_return_images_capture_image(self):
+        if self.dcam_status=='started':
+            if self.dcam.wait_capevent_frameready(self.timeout_milisec) is not False:
+                print('capture the image')
+                self.data = self.dcam.buf_getlastframedata()
+            else:
+                dcamerr = self.dcam.lasterr()
+                if dcamerr.is_timeout():
+                    print('===: timeout')
+                else:
+                    print('Dcam.wait_event() fails with error{}'.format(dcamerr))
+        return self.data
+
+    def live_capturing_return_images_capture_end(self):
+        self.dcam.cap_stop()
+        self.dcam.buf_release()
+
