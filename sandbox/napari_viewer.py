@@ -1,6 +1,7 @@
 import napari
 import time
 
+from copylot.hardware.orca_camera.camera import OrcaCamera
 from napari._qt.qthreading import thread_worker
 from cv2.cv2 import VideoCapture
 from napari.layers import Points
@@ -65,9 +66,12 @@ camera = VideoCapture(camera_index)
 # https://napari.org/guides/stable/threading.html
 @thread_worker
 def loop_run():
+    camera = OrcaCamera()
+    camera.live_capturing_return_images_get_ready()
+
     while True: # endless loop
         # image = acquire_image(camera)
-        image = np.random.randn(512,512)
+        image = camera.live_capturing_return_images_capture_image()
         yield process_image(image)
         time.sleep(0.5)
 
