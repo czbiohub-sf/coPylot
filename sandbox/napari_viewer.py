@@ -72,8 +72,9 @@ def loop_run():
     while True: # endless loop
         # image = acquire_image(camera)
         image = camera.live_capturing_return_images_capture_image()
-        yield process_image(image)
-        time.sleep(0.5)
+        # well what if we have a cube
+        yield {'image': np.random.rand(100,100,100)}
+        time.sleep(0.1)
 
 # Start the loop
 worker = loop_run()
