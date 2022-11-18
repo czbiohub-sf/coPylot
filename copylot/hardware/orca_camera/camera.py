@@ -114,6 +114,17 @@ class OrcaCamera:
         Dcamapi.uninit()
 
     def live_capturing_and_show(self):
+        """
+        this function uses the orca camera for live capturing function, and display it in a cv2 window.
+
+        I'm now implementing some methods in a way that doesn't change anything in __init__() and run() that was already
+        there when I started.
+        Will re-organize these after discussion with AhmetCan.
+        -- Xiyu, 2022-11-16
+
+        highly possible we will delete this method after the discussion.
+        :return:
+        """
         if Dcamapi.init():
             dcam = Dcam(self._camera_index)
             if dcam.dev_open():
@@ -149,6 +160,17 @@ class OrcaCamera:
         Dcamapi.uninit()
 
     def live_capturing_return_images_get_ready(self, nb_buffer_frames=3, timeout_milisec=100):
+        """
+        this function only initialize the Dcamapi, allocate buffer, let capturing start for live capturing of images
+        using the orca camera. I'm calling it get_ready.
+
+        I'm now implementing some methods in a way that doesn't change anything in __init__() and run() that was already
+        there when I started.
+        Will re-organize these after discussion with AhmetCan.
+        -- Xiyu, 2022-11-16
+        :return:
+        """
+
         if Dcamapi.init():
             self.dcam = Dcam(self._camera_index)
             if self.dcam.dev_open():
@@ -158,6 +180,18 @@ class OrcaCamera:
                     self.dcam_status='started'
 
     def live_capturing_return_images_capture_image(self):
+        """
+        this function captures an image and return the captured image as an ndarray.
+
+        I'm now implementing some methods in a way that doesn't change anything in __init__() and run() that was already
+        there when I started.
+        Will re-organize these after discussion with AhmetCan.
+        -- Xiyu, 2022-11-16
+
+        highly possible we will delete this method after the discussion.
+        :return:
+        """
+
         if self.dcam_status=='started':
             if self.dcam.wait_capevent_frameready(self.timeout_milisec) is not False:
                 print('capture the image')
@@ -171,6 +205,42 @@ class OrcaCamera:
         return self.data
 
     def live_capturing_return_images_capture_end(self):
+        """
+        this function closes up the camera, and the buffer, and uninit the api.
+
+        I'm now implementing some methods in a way that doesn't change anything in __init__() and run() that was already
+        there when I started.
+        Will re-organize these after discussion with AhmetCan.
+        -- Xiyu, 2022-11-16
+
+        highly possible we will delete this method after the discussion.
+       :return:
+        """
+
         self.dcam.cap_stop()
         self.dcam.buf_release()
+        Dcamapi.uninit()
+
+    def set_configurations(self):
+        """
+        This will set the configuraitons for the hamamatsu camera, but without actually configure it in the hardware.
+        this only stores the configuration into the object itself.
+
+        I'm implementing this with similar "pattern" as I used in DaXi-controller for now.
+
+        :return:
+        """
+        pass
+
+    def get_ready(self):
+        pass
+
+    def start(self):
+        pass
+
+    def capture(self):
+        pass
+
+    def close(self):
+        pass
 
