@@ -53,6 +53,11 @@ class OrcaCamera:
 
         self._camera_index = camera_index
         self.dcam = None
+        self.exposure_time_ms = None
+        self.frame_number = None
+        self.trigger_mode = None
+        self.output_trigger = None
+        self.devices = None
 
     def run(self, nb_frame: int = 100000):
         """
@@ -221,26 +226,72 @@ class OrcaCamera:
         self.dcam.buf_release()
         Dcamapi.uninit()
 
-    def set_configurations(self):
+    def set_configurations(self, camera_configs):
         """
         This will set the configuraitons for the hamamatsu camera, but without actually configure it in the hardware.
         this only stores the configuration into the object itself.
 
-        I'm implementing this with similar "pattern" as I used in DaXi-controller for now.
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
+        :return:
+        """
+        self.exposure_time_ms = camera_configs['exposure time (ms)']
+        self.frame_number = camera_configs['frame number']
+        self.trigger_mode = camera_configs['trigger mode']
+        self.output_trigger = camera_configs['output trigger']
+
+    def get_ready(self, camera_id=0):
+        """
+        This will checkout the camera with the specified camera_id.
+        With the Hamamtsu API, this would have to include the following steps:
+        1. initiate the dcamapi.
+
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
+        :return:
+        """
+        # 1. initiate the Dcamapi
+        Dcamapi.init()
+
+        # 2. create the camera device with the camera index
+        self.devices = {'camera '+str(camera_id): Dcam(camera_id)}
+
+        # 3. open the camera device
+        self.devices['camera '+str(camera_id)].dev_open()
+
+        # set the configurations for the camera
+        # self.devices['camera ' + str(camera_id)].prop_setgetvalue()
+
+
+
+
+    def start(self):
+        """
+        This will
+
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
 
         :return:
         """
         pass
 
-    def get_ready(self):
-        pass
-
-    def start(self):
-        pass
-
     def capture(self):
+        """
+        This will capture an image, and return the image as an ndarray
+
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
+        :return:
+        """
         pass
 
     def close(self):
+        """
+        This will close the camera device, and un-initi the Dcamapi.
+
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
+        :return:
+        """
         pass
 
