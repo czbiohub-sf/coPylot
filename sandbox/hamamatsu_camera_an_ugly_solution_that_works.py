@@ -48,7 +48,7 @@ dcam.buf_alloc(3)
 
 # -- try to set exposure time # todo - need to verify if this is working. and think about the order.
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.EXPOSURETIME,
-                          fValue=0.2)  # The unit here seems to be in seconds.
+                          fValue=1)  # The unit here seems to be in seconds.
 # -- set external trigger
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERSOURCE,
                           fValue=2)  # fValue = 2 sets the trigger source to be External Trigger.
