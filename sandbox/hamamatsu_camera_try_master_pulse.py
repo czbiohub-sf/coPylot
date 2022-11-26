@@ -30,6 +30,14 @@ def dcam_get_properties_name_id_dict(iDevice=0):
     Dcamapi.uninit()
     return name_id_dict
 
+def get_first_pixel_sequences():
+    first_pixels=[]
+    for i0 in  np.arange(1000):
+        a=dcam.buf_getframedata(i0)
+        if a is not False:
+            first_pixels.append(a[0][0])
+    ps = np.asarray(first_pixels)
+    return ps
 
 # initiate Dcamapi:
 Dcamapi.init()
@@ -45,12 +53,11 @@ dcam.dev_open()
 dcam.is_opened()
 
 
-# allocate buffer
-dcam.buf_alloc(30)
 
 # -- try to set exposure time # todo - need to verify if this is working. and think about the order.
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.EXPOSURETIME,
                           fValue=0.1)  # The unit here seems to be in seconds.
+print('exposure time: '+str(v)+' seconds.')
 # -- set external trigger
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERSOURCE,
                           fValue=4)  # fValue = 4 sets the trigger source to be 'MASTER PULSE'
@@ -62,7 +69,7 @@ v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERPOLARITY,
                           fValue=1)  # fValue = 2 sets the trigger polarity to be 'POSITIVE', 1 to be negative
 
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERTIMES,
-                          fValue=30)  # fValue = 1 sets the trigger times to be 10... find out what it means.
+                          fValue=1)  # fValue = 1 sets the trigger times to be 10... find out what it means.
 
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_KIND,
                           fValue=4)  # fValue = 4 sets the output trigger kind to be TRIGGER READY
@@ -75,15 +82,24 @@ v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_BASESENSOR,
 
 # -- choose master pulse burst mode
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_MODE,
-                          fValue=3)  # fValue = 3 is burst mode.
+                          fValue=2)  # fValue = 3 is burst mode, 1 is continuous mode. 2 is start mode.
 
 # -- set burst mode burst times:
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_BURSTTIMES,
                           fValue=30)
 
+# -- set burst mode burst times:
+v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_INTERVAL,
+                          fValue=0.01)
+
+print(v)
+
 # -- set master pulse trigger to be external trigger:
 v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_TRIGGERSOURCE,
                           fValue=1)  # this sets the trigger source to be external.
+
+# allocate buffer
+dcam.buf_alloc(200)
 
 # -- acquire
 
@@ -150,3 +166,4 @@ dcam.dev_close()
 
 # un init the Dcamapi
 Dcamapi.uninit()
+
