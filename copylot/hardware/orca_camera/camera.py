@@ -2,6 +2,7 @@ from copylot.hardware.orca_camera.dcam import Dcamapi, Dcam
 
 import cv2
 import numpy
+from copylot.hardware.orca_camera.dcamapi4 import DCAM_IDPROP
 
 
 def dcamtest_show_framedata(data, windowtitle, iShown):
@@ -50,7 +51,6 @@ class OrcaCamera:
     """
 
     def __init__(self, camera_index: int = 0):
-
         self.trigger_source = None
         self.trigger_polarity = None
         self._camera_index = camera_index
@@ -58,9 +58,9 @@ class OrcaCamera:
         self.exposure_time_ms = None
         self.frame_number = None
         self.trigger_mode = None
-        self.output_trigger = None
         self.devices = None
         self.trigger_times = None
+        self.output_trigger_kind = None
         self.output_trigger_polarity = None
         self.master_pulse_mode = None
         self.burst_times = None
@@ -248,7 +248,7 @@ class OrcaCamera:
         self.trigger_mode = camera_configs['trigger mode']
         self.trigger_source = camera_configs['trigger source']
         self.trigger_polarity = camera_configs['trigger polarity']
-        self.output_trigger = camera_configs['output trigger']
+        self.output_trigger_kind = camera_configs['output trigger kind']
         self.trigger_times = camera_configs['trigger times']
         self.output_trigger_polarity = camera_configs['output trigger polarity']
         self.master_pulse_mode = camera_configs['master pulse mode']
@@ -259,7 +259,7 @@ class OrcaCamera:
 
         # make sure all the cameras are open before setting it's configurations.
         for camera_id in camera_ids:
-            assert self.devices['camera '+str(camera_id)].is_open()
+            assert self.devices['camera '+str(camera_id)].is_opened()
 
         # takeout the Dcam object references.
         if len(camera_ids) != 1:
@@ -271,13 +271,13 @@ class OrcaCamera:
         # set exposure time
         v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.EXPOSURETIME,
                                   fValue=self.exposure_time_ms / 1000)  # The unit here seems to be in seconds.
-        assert v == self.exposure_time_ms / 1000 # make sure the exposure time is set correctly.
+        assert abs(v - self.exposure_time_ms / 1000) < 0.00001  # make sure the exposure time is set correctly.
 
         # set trigger source
         if self.trigger_source == 'MASTER PULSE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERSOURCE,
                                       fValue=4)  # fValue = 4 sets the trigger source to be 'MASTER PULSE'
-            assert v == 4  # make sure it is successful.
+            assert abs(v - 4) < 0.00001  # make sure it is successful.
         else:
             raise ValueError('camera trigger mode was set to ' + str(self.trigger_mode)+'; '
                              'Only \'MASTER PULSE\' is supported'
@@ -287,7 +287,7 @@ class OrcaCamera:
         if self.trigger_mode == 'NORMAL':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGER_MODE,
                                       fValue=1)  # fValue = 1 sets the trigger mode to be 'NORMAL'.
-            assert v == 1
+            assert abs(v - 1) < 0.00001
         else:
             raise ValueError('camera trigger mode set to '+str(self.trigger_mode) + '; '
                              'only \'NORMAL\' is suppoprted.')
@@ -296,35 +296,39 @@ class OrcaCamera:
         if self.trigger_polarity == 'POSITIVE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERPOLARITY,
                                       fValue=2)  # fValue = 2 sets the trigger polarity to be 'POSITIVE', 1 to be negative
-            assert v == 2
+            assert abs(v - 2) < 0.00001
         elif self.trigger_polarity == 'NEGATIVE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERPOLARITY,
                                       fValue=2)  # fValue = 1 sets the trigger polarity to be 'POSITIVE', 1 to be negative
-            assert v == 1
+            assert abs(v - 1) < 0.00001
         else:
             raise ValueError('camera trigger polarity is set to '+str(self.trigger_polarity)+'; '
                              'only \'POSITIVE\' and \'NEGATIVE\' are supported.')
 
-        # set trigger times # todo
+        # set trigger times
         v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.TRIGGERTIMES,
                                   fValue=self.trigger_times)  # fValue = 1 sets the trigger times to be 10... find out what it means.
-        assert v == self.trigger_times
-
+        assert abs(v - self.trigger_times) < 0.00001
 
         # set output trigger kind
-        v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_KIND,
-                                  fValue=4)  # fValue = 4 sets the output trigger kind to be TRIGGER READY
-        assert v == 4
+        if self.output_trigger_kind == 'TRIGGER READY':
+            v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_KIND,
+                                      fValue=4)  # fValue = 4 sets the output trigger kind to be TRIGGER READY
+            assert abs(v - 4) < 0.00001
+        else:
+            raise ValueError('output trigger kind is set to '+str(self.output_trigger_kind)+'; '
+                             'only \'TRIGGER READY\' is supported')
 
         # set output trigger polairty
         if self.output_trigger_polarity == 'POSITIVE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_POLARITY,
                                       fValue=2)  # fValue = 2 sets the trigger polarity to be 'POSITIVE'
-            assert v == 2
+            assert abs(v - 2) < 0.00001
+
         elif self.output_trigger_polarity == 'NEGATIVE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_POLARITY,
                                   fValue=1)  # fValue = 2 sets the trigger polarity to be 'POSITIVE'
-            assert v == 1
+            assert abs(v - 1) < 0.00001
         else:
             raise ValueError('output trigger polairty is set to '+str(self.output_trigger_polarity)+';'
                              'only \'POSITIVE\' and \'NEGATIVE\' are supported.')
@@ -332,26 +336,26 @@ class OrcaCamera:
         # set output trigger base sensor
         v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.OUTPUTTRIGGER_BASESENSOR,
                                   fValue=1)  # fValue = 1 sets the output trigger sensor to be 'VIEW 1'.
-        assert v == 1
+        assert abs(v - 1) < 0.00001
 
         # set master pulse mode
         if self.master_pulse_mode == 'CONTINUOUS':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_MODE,
                                       fValue=1)  # fValue = 3 is burst mode, 1 is continuous mode. 2 is start mode.
-            assert v == 1
+            assert abs(v - 1) < 0.00001
         elif self.master_pulse_mode == 'START':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_MODE,
                                       fValue=2)  # fValue = 3 is burst mode, 1 is continuous mode. 2 is start mode.
-            assert v == 2
+            assert abs(v - 2) < 0.00001
         elif self.master_pulse_mode == 'BURST':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_MODE,
                                       fValue=3)  # fValue = 3 is burst mode, 1 is continuous mode. 2 is start mode.
-            assert v == 3
+            assert abs(v - 3) < 0.00001
             # set master pulse burst times
 
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_BURSTTIMES,
                                       fValue=self.burst_times)
-            assert v == self.burst_times
+            assert abs(v - self.burst_times) < 0.00001
         else:
             raise ValueError('master pulse mode is set to '+str(self.master_pulse_mode)+';'
                              'only \'CONTINUOUS\', \'START\' and \'BURST\' are supported.')
@@ -359,17 +363,17 @@ class OrcaCamera:
         # set master pulse interval
         v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_INTERVAL,
                                   fValue=self.master_pulse_interval)
-        assert v == self.master_pulse_interval
+        assert abs(v - self.master_pulse_interval) < 0.00001
 
         # -- set master pulse trigger to be external trigger:
         if self.master_pulse_trigger == 'EXTERNAL':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_TRIGGERSOURCE,
                                       fValue=1)  # this sets the trigger source to be external.
-            assert v == 1
+            assert abs(v - 1) < 0.00001
         elif self.master_pulse_trigger == 'SOFTWARE':
             v = dcam.prop_setgetvalue(idprop=DCAM_IDPROP.MASTERPULSE_TRIGGERSOURCE,
                                       fValue=2)  # 2 sets the trigger source to be software trigger.
-            assert v == 2
+            assert abs(v - 2) < 0.00001
         else:
             raise ValueError('master pulse trigger is set to '+str(self.master_pulse_trigger)+';'
                              'only \'CONTINUOUS\', \'EXTERNAL\' and \'SOFTWARE\' are supported.')
@@ -397,9 +401,12 @@ class OrcaCamera:
             # 3. open the camera device
             self.devices['camera '+str(camera_id)].dev_open()
 
+            # 4. make sure the camera is opened
+            assert self.devices['camera '+str(camera_id)].is_opened()
+
     def start(self, camera_ids=[0]):
         """
-        This will
+        This will start the cameres
 
         I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
 
@@ -407,8 +414,6 @@ class OrcaCamera:
         """
         for camera_id in camera_ids:
             self.devices['camera '+str(camera_id)].cap_start()
-
-
 
     def capture(self):
         """
@@ -423,6 +428,8 @@ class OrcaCamera:
     def stop(self, camera_ids=[0]):
         """
         this will stop the capturing of the cameras
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
         :param camera_ids:
         :return:
         """
@@ -432,6 +439,8 @@ class OrcaCamera:
     def release_buffer(self, camera_ids=[0]):
         """
         this will release the buffers for all the cameras
+        I'm implementing this with similar "pattern" as I used in Daxi-controller for now - Xiyu.
+
         :param camera_ids:
         :return:
         """
