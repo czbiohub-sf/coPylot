@@ -2,7 +2,7 @@ import time
 import serial
 
 
-class FilterWheel:
+class ArduinoControlledFilterWheel:
     """FilterWheel
 
     Parameters
