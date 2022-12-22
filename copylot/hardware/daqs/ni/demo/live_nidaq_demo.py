@@ -1,6 +1,6 @@
 import time
 
-from copylot.hardware.ni_daq.live_nidaq import LiveNIDaq
+from copylot.hardware.daqs.ni.live_nidaq import LiveNIDaq
 
 
 def constant_voltage_single_channel_demo():

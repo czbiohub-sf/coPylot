@@ -1,4 +1,4 @@
-from copylot.hardware.asi_stage.stage import ASIStage, ASIStageScanMode
+from copylot.hardware.stages.asi_stage.stage import ASIStage, ASIStageScanMode
 
 
 def zero_home_demo():

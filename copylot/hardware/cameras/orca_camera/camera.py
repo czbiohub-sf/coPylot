@@ -1,4 +1,4 @@
-from copylot.hardware.orca_camera.dcam import Dcamapi, Dcam
+from copylot.hardware.cameras.orca_camera.dcam import Dcamapi, Dcam
 
 
 class OrcaCameraException(Exception):

@@ -13,7 +13,7 @@ import serial
 import time
 
 
-class WaterDispenserControl:
+class BartelsUX7:
     """
     Controller for the micropump (Bartels XU7 controller) to dispense
     water to the water objectives.
