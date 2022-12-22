@@ -1,4 +1,6 @@
-from copylot.hardware.filters.arduino_controlled_filterwheel.filterwheel import ArduinoControlledFilterwheel
+from copylot.hardware.filters.arduino_controlled_filterwheel.filterwheel import (
+    ArduinoControlledFilterwheel,
+)
 
 
 if __name__ == '__main__':
