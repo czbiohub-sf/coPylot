@@ -1,4 +1,4 @@
-from copylot.hardware.stages.asi_stage.stage import ASIStage
+from copylot.hardware.stages.asi.stage import ASIStage
 
 
 def info_demo():

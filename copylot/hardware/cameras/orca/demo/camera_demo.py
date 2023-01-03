@@ -1,4 +1,4 @@
-from copylot.hardware.cameras.orca_camera.camera import OrcaCamera
+from copylot.hardware.cameras.orca.camera import OrcaCamera
 
 if __name__ == '__main__':
     camera = OrcaCamera()
