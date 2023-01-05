@@ -1,11 +1,12 @@
-from copylot.hardware.orca_camera.dcam import Dcamapi, Dcam
+from copylot.hardware.cameras.abstract_camera import AbstractCamera
+from copylot.hardware.cameras.orca.dcam import Dcamapi, Dcam
 
 
 class OrcaCameraException(Exception):
     pass
 
 
-class OrcaCamera:
+class OrcaCamera(AbstractCamera):
     """
     Hamamatsu Orca Flash 4 Camera adapter.
 
