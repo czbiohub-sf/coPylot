@@ -256,6 +256,8 @@ class OrcaCamera:
         self.master_pulse_interval = camera_configs['master pulse interval']
         self.master_pulse_trigger = camera_configs['master pulse trigger']
         self.buffer_size_frame_number = camera_configs['buffer size (frame number)']
+        self.xdim = 2048 # todo - implement sub-frame acquisition in the future. camera_configs['xdim']
+        self.ydim = 2048 # todo - implement sub-frame acquisition in the future. camera_configs['ydim']
 
         # make sure all the cameras are open before setting it's configurations.
         for camera_id in camera_ids:
