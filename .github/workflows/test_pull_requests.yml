@@ -9,7 +9,7 @@ jobs:
   style:
     name: Style Check
     runs-on: ubuntu-latest
-    if: github.repository == 'royerlab/coPylot'
+    if: github.repository == 'czbiohub/coPylot'
 
     strategy:
       matrix:
@@ -33,7 +33,7 @@ jobs:
   lint:
       name: Lint Check
       runs-on: ubuntu-latest
-      if: github.repository == 'royerlab/coPylot'
+      if: github.repository == 'czbiohub/coPylot'
 
       strategy:
         matrix:
@@ -57,7 +57,7 @@ jobs:
     needs: [ style, lint ]
     name: Tests
     runs-on: ubuntu-latest
-    if: github.repository == 'royerlab/coPylot'
+    if: github.repository == 'czbiohub/coPylot'
 
     strategy:
       matrix:
