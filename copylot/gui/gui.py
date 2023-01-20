@@ -99,7 +99,7 @@ class MainWindow(QMainWindow):
             ("timelapse_control", [self, self.threadpool]),
             ("water_dispenser", [self, self.threadpool]),
             ("laser", [self]),
-            ("parameters", [self])
+            ("parameters", [self]),
         ]
 
         for name, args in self.dock_widgets_to_initialize:
@@ -113,16 +113,16 @@ class MainWindow(QMainWindow):
         # initialize widgets and assign to their dock
         for idx, (name, args) in enumerate(self.dock_widgets_to_initialize):
             self.dock_list[idx].setWidget(
-                DockPlaceholder(
-                    self, self.dock_list[idx], name, args
-                )
+                DockPlaceholder(self, self.dock_list[idx], name, args)
             )
 
         for idx, dock in enumerate(self.dock_list):
             if idx == 0:
                 self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_list[idx])
             else:
-                self.splitDockWidget(self.dock_list[idx-1], self.dock_list[idx], Qt.Vertical)
+                self.splitDockWidget(
+                    self.dock_list[idx - 1], self.dock_list[idx], Qt.Vertical
+                )
 
         # create status bar that is updated from live and timelapse control classes
         self.status_bar = QStatusBar()
