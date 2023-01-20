@@ -21,7 +21,7 @@ have `pip`.
 #### Clone coPylot Repository
 
 ```
-git clone https://github.com/royerlab/coPylot.git
+git clone https://github.com/czbiohub/coPylot.git
 ```
 
 #### Create Conda Environment and Install coPylot 
@@ -37,7 +37,7 @@ pip install -e .
 
 ## Documentation
 
-coPylot documentation can be found [here](https://royerlab.github.io/coPylot/).
+coPylot documentation can be found [here](https://czbiohub.github.io/coPylot/).
 
 
 ## Contributing

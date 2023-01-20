@@ -94,68 +94,35 @@ class MainWindow(QMainWindow):
         self.dock_list = []
 
         # initialize docks
-        self.live_dock = QDockWidget(self)
-        self.live_dock.setTitleBarWidget(QLabel("Live Mode"))
-        self.dock_list.append(self.live_dock)
+        self.dock_widgets_to_initialize = [
+            ("live_control", [self, self.threadpool]),
+            ("timelapse_control", [self, self.threadpool]),
+            ("water_dispenser", [self, self.threadpool]),
+            ("laser", [self]),
+            ("parameters", [self]),
+        ]
 
-        self.timelapse_dock = QDockWidget(self)
-        self.timelapse_dock.setTitleBarWidget(QLabel("Timelapse Mode"))
-        self.dock_list.append(self.timelapse_dock)
-
-        self.water_dock = QDockWidget(self)
-        self.water_dock.setTitleBarWidget(QLabel("Water Dispenser"))
-        self.dock_list.append(self.water_dock)
-
-        self.parameters_dock = QDockWidget(self)
-        self.parameters_dock.setTitleBarWidget(QLabel("NI DAQ Parameters"))
-        self.dock_list.append(self.parameters_dock)
-
-        self.laser_dock = QDockWidget(self)
-        self.laser_dock.setTitleBarWidget(QLabel("Laser"))
-        self.dock_list.append(self.laser_dock)
+        for name, args in self.dock_widgets_to_initialize:
+            dock_widget = QDockWidget(self)
+            dock_widget.setTitleBarWidget(QLabel(name))
+            self.dock_list.append(dock_widget)
 
         for dock in self.dock_list:
             _apply_dock_config(dock)
 
         # initialize widgets and assign to their dock
-        self.live_dock.setWidget(
-            DockPlaceholder(
-                self, self.live_dock, "live_control", [self, self.threadpool]
+        for idx, (name, args) in enumerate(self.dock_widgets_to_initialize):
+            self.dock_list[idx].setWidget(
+                DockPlaceholder(self, self.dock_list[idx], name, args)
             )
-        )
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.live_dock)
-        #
-        # self.timelapse_widget = TimelapseControl(self, self.threadpool)
-        self.timelapse_dock.setWidget(
-            DockPlaceholder(
-                self, self.timelapse_dock, "timelapse_control", [self, self.threadpool]
-            )
-        )
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.timelapse_dock)
 
-        # self.water_widget = WaterDispenser(self, self.threadpool)
-        self.water_dock.setWidget(
-            DockPlaceholder(
-                self, self.water_dock, "water_dispenser", [self, self.threadpool]
-            )
-        )
-        # self.addDockWidget(Qt.RightDockWidgetArea, self.water_dock)
-        self.laser_dock.setWidget(
-            DockPlaceholder(self, self.laser_dock, "laser", [self])
-        )
-
-        # self.parameters_widget = ParametersDockWidget(self)
-        self.parameters_placeholder = DockPlaceholder(
-            self, self.parameters_dock, "parameters", [self]
-        )
-        self.parameters_dock.setWidget(self.parameters_placeholder)
-        self.addDockWidget(Qt.LeftDockWidgetArea, self.parameters_dock)
-
-        # split horizontal and vertical space between docks
-        self.splitDockWidget(self.parameters_dock, self.live_dock, Qt.Horizontal)
-        self.splitDockWidget(self.live_dock, self.timelapse_dock, Qt.Vertical)
-        self.splitDockWidget(self.timelapse_dock, self.water_dock, Qt.Vertical)
-        self.splitDockWidget(self.water_dock, self.laser_dock, Qt.Vertical)
+        for idx, dock in enumerate(self.dock_list):
+            if idx == 0:
+                self.addDockWidget(Qt.LeftDockWidgetArea, self.dock_list[idx])
+            else:
+                self.splitDockWidget(
+                    self.dock_list[idx - 1], self.dock_list[idx], Qt.Vertical
+                )
 
         # create status bar that is updated from live and timelapse control classes
         self.status_bar = QStatusBar()
