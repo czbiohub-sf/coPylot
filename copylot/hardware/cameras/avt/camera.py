@@ -1,21 +1,19 @@
 from enum import Enum
 
-# TODO - where should vendor specific SDK imports live?
-# See https://github.com/alliedvision/VimbaPython for more details on downloading Vimba (unfortunately not on PyPi)
-from vimba import *
-
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
+from copylot.hardware.cameras.avt.vimba import Vimba
 
 
 class BinningMode(Enum):
     AVERAGE = "Average"
     SUM = "Sum"
 
+
 class AVTCameraException(Exception):
     pass
 
 
-class AVTCamera:
+class AVTCamera(AbstractCamera):
     def __init__(self):
         # Internal variables used to keep track of the number of
         # > total images
