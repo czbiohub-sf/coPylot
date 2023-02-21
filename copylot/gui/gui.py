@@ -63,7 +63,9 @@ class MainWindow(QMainWindow):
             ) as json_file:
                 self.defaults = json.load(json_file)
 
-        except FileNotFoundError:  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
+        except (
+            FileNotFoundError
+        ):  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
             if not os.path.isdir(os.path.join(str(Path.home()), ".coPylot")):
                 os.mkdir(os.path.join(str(Path.home()), ".coPylot"))
 
