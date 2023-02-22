@@ -47,6 +47,26 @@ class AVTCamera(AbstractCamera):
             )
             raise e
 
+    @property
+    def exposure_bounds(self):
+        try:
+            exposure_bounds = []
+            with Vimba.get_instance() as vimba:
+                for cam in vimba.get_all_cameras():
+                    with cam:
+                        exposure_bounds.append(
+                            (
+                                cam.ExposureAutoMin.get() / 1000,
+                                cam.ExposureAutoMax.get() / 1000
+                            )
+                        )
+            return exposure_bounds
+        except Exception as e:
+            self.logger.error(
+                f"Could not get exposure using ExposureAutoMin / ExposureAutoMax: {e}"
+            )
+            raise e
+
     def acquire_single_frame(self):
         with Vimba.get_instance() as vimba:
             cams = vimba.get_all_cameras()
