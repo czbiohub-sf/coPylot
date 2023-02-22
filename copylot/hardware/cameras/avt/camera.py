@@ -1,3 +1,4 @@
+import sys
 from enum import Enum
 
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
@@ -14,7 +15,8 @@ class AVTCameraException(Exception):
 
 
 class AVTCamera(AbstractCamera):
-    def __init__(self):
+    def __init__(self, nb_camera = 1):
+        self.nb_camera = nb_camera
         # Internal variables used to keep track of the number of
         # > total images
         # > incomplete frames
@@ -26,13 +28,7 @@ class AVTCamera(AbstractCamera):
         self.full_count = 0
 
         self._isActivated = False
-        self.vimba = Vimba.get_instance().__enter__()
-        self.queue: queue.Queue[Tuple[np.ndarray, float]] = queue.Queue(maxsize=1)
-        self.connect()
-
-    def __del__(self):
-        """Cleanup - however best not to rely on __del__."""
-        self.deactivateCamera()
+        # self.queue: queue.Queue[Tuple[np.ndarray, float]] = queue.Queue(maxsize=1)
 
     @property
     def temperature(self) -> float:
@@ -51,12 +47,18 @@ class AVTCamera(AbstractCamera):
             )
             raise e
 
-    def connect(self):
-        """Get and connect to the camera using an explicit __enter__ (circumvent the context manager)
-        and set default camera settings.
-        """
-        self.camera = self._get_camera()
-        self.camera.__enter__()
-        self._camera_setup()
-        self._isActivated = True
+    def acquire_single_frame(self):
+        with Vimba.get_instance() as vimba:
+            cams = vimba.get_all_cameras()
+            with cams[0] as cam:
+                # Aquire single frame synchronously
+                frame = cam.get_frame()
+
+        return frame
+
+    # def start_acquisition(self):
+    #     with Vimba.get_instance() as vimba:
+    #         cams = vimba.get_all_cameras()
+    #         if self.nb_camera == 1:
+    #             with cams[0] as cam:
 
