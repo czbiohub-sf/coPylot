@@ -46,7 +46,7 @@ class AVTCamera(AbstractCamera):
         try:
             return self.camera.DeviceTemperature.get()
         except Exception as e:
-            self.logger.error(
+            print(
                 f"Could not get the device temperature using DeviceTemperature: {e}"
             )
             raise e
@@ -66,7 +66,7 @@ class AVTCamera(AbstractCamera):
                         )
             return exposure_bounds
         except Exception as e:
-            self.logger.error(
+            print(
                 f"Could not get exposure using ExposureAutoMin / ExposureAutoMax: {e}"
             )
             raise e
@@ -102,7 +102,7 @@ class AVTCamera(AbstractCamera):
         with Vimba.get_instance() as vimba:
             cams = vimba.get_all_cameras()
             with cams[0] as cam:
-                # Aquire single frame synchronously
+                # Acquire single frame synchronously
                 frame = cam.get_frame()
 
         return frame
