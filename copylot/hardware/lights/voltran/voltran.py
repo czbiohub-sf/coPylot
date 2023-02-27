@@ -1,15 +1,21 @@
 from copylot.hardware.lights.abstract_light import AbstractLight
 
 import serial
+from serial import SerialException
 from serial.tools import list_ports
 import time
-import syst
+import sys
 import logging
 
 # from typing import TypeVar, Callable, Union, Any
-logger = logging.basicConfig(
-    level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s'
-)
+# Setting up the Logger
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 # Refer to manual for command details
 GLOBAL_CMD = ['ECHO', 'PROMPT']
@@ -47,16 +53,19 @@ def get_lasers():
     com_ports = list_ports.comports()
     lasers = []
     try:
-        for port in comp_ports:
-            laser = VoltranLaser(port=port.device)
-            if laser != None:
-                lasers.append((port, laser.devID))
-        if len(lasers) > 0:
-            for port, SN in lasers:
-                logging.info("fCOM{port}:{SN}")
-            return port, lasers
-        else:
-            raise RuntimeError("No lasers found...")
+        for port in com_ports:
+            try:
+                laser = VoltranLaser(port=port.device)
+                if laser.devID != None:
+                    lasers.append((port, laser.devID))
+                    logging.info("fCOM{laser.port}:{laser.devID}")
+                else:
+                    raise Exception
+            except:
+                pass
+        if len(lasers) < 1:
+            raise Exception
+        return lasers
     except:
         raise RuntimeError("No lasers found...")
 
@@ -67,50 +76,67 @@ class VoltranLaser(AbstractLight):
         self.port = port
         self.baudrate = baudrate
         self.address = None
-        self.connect()
         self.max_power = None
+        self.connect()
 
     def connect(self):
         try:
-            ports = list_ports.comports()
-            if self.port == None:
-                raise RuntimeError("COM port not selected")
-            for port in ports:
-                devSN = self.write_cmd("?LI")
-                if self.devID == devSN:
-                    self.port = port
+            if self.port != None:
+                try:
                     self.address = serial.Serial(
                         port=self.port,
-                        baudrate=self.baud,
+                        baudrate=self.baudrate,
                         bytesize=serial.EIGHTBITS,
                         parity=serial.PARITY_NONE,
                         stopbits=serial.STOPBITS_ONE,
-                        timeout=2,
+                        timeout=1,
                     )
-                    logging.info(f"Connected COM{self.port}: Laser: {self.devID} ")
+                    # TODO: probably this command can be anything that generates a response?
+                    devSN = self.write_cmd("?LI")
+                    if len(devSN) > 1:
+                        self.devID = devSN
+                except:
+                    logging.debug(f"No Laser found in COM {self.port}")
+            elif self.devID != None:
+                ports = list_ports.comports()
+                for port in ports:
+                    try:
+                        self.port = port
+                        self.address = serial.Serial(
+                            port=self.port,
+                            baudrate=self.baudrate,
+                            bytesize=serial.EIGHTBITS,
+                            parity=serial.PARITY_NONE,
+                            stopbits=serial.STOPBITS_ONE,
+                            timeout=1,
+                        )
+                        devSN = self.write_cmd("?LI")
+                        if devSN == self.devID:
+                            logging.info(
+                                f"Connected COM{self.port}: Laser: {self.devID} "
+                            )
+                        else:
+                            self.disconnect()
+                            raise Exception
+                    except:
+                        logging.debug(f"No laser found in COM{self.port}")
         except:
             raise RuntimeError("No laser found...")
 
     def disconnect(self):
         self.address.close()
+        self.address = None
 
     def is_connected(self):
         return self.address.is_open()
 
-    def _get_serial_num(self):
-        try:
-            self.devID = self.write_cmd('?')
-        except:
-            self.disconnect()
-            raise RuntimeError("This is not a laser")
-
     def write_cmd(self, msg):
         # All commands transmitted must terminate with a carriage return “\r” or 0x0D to be processed.
-        msg += '/r'
         try:
             if msg in VOLTRAN_CMDS:
-                self.address.write(msg.encode())
-                logging.debug(
+                msg += '/r'
+                self.address.write(msg.encode('utf-8'))
+                logger.debug(
                     f"Write to laser <{self.devID}> -> cmd:<{msg.encode('utf-8')}>"
                 )
             else:
@@ -128,7 +154,7 @@ class VoltranLaser(AbstractLight):
             if len(msg_received) > 1:
                 if msg_received[-2] == '/n':
                     msg_received = msg_received[2:]
-                    logging.debug(
+                    logger.debug(
                         "Read from laser<{self.devID}> -> msg:<{msg_received}>"
                     )
                     return msg_received
@@ -139,35 +165,49 @@ class VoltranLaser(AbstractLight):
         except:
             raise RuntimeError("Error: No response from laser")
 
-    def get_power(self):
-        return self.write_cmd('?LP')
+    def set_laser_control_mode(self, mode):
+        return self.write_cmd(f'C {mode}')
 
+    def set_emission_delay(self, mode):
+        return self.write_cmd(f'DELAY {mode}')
+
+    def set_external_power_control(self, control ):
+        return self.write_cmd(f'EPC {control}')
+        
     def set_power(self, power):
         if self.max_power is None:
             self.max_power = self.max_power()
         if power > self.max_power:
             power = self.max_power
-            logging.info(f'Maximum power is: {self.max_power}')
-        logging.info(f'Setting power: {power}')
+            logger.info(f'Maximum power is: {self.max_power}')
+        logger.info(f'Setting power: {power}')
         return self.write_cmd(f'LP {power}')
 
     def set_pulse_power(self, power):
-        logging.info(f'Setting Power:{power}')
+        logger.info(f'Setting Power:{power}')
         return self.write_cms(f'PP {power}')
 
-    def pulse_mode(self, mode=0):
-        return self.write_cmd('PUL')
+    def set_pulse_mode(self, mode=0):
+        return self.write_cmd(f'PUL {mode}')
 
     def max_power(self):
         return int(self.write_cmd('?MAXP'))
 
     def turn_on(self):
-        logging.info('Turning laser: ON')
+        logger.info('Turning laser: ON')
         return self.write_cmd('LE 1')
 
     def turn_off(self):
-        logging.info('Turning laser: OFF')
+        logger.info('Turning laser: OFF')
         return self.write_cmd('LE 0')
+    
+    def set_control_mode(self, mode):
+        return self.write_cmd(f'C {mode}')
+
+    #TODO: implement table 9.3.4 from  PDF
+    def get_power(self):
+        return self.write_cmd('?LP')
+
 
     def __enter__(self):
         return self
