@@ -1,6 +1,8 @@
 from enum import Enum
 
 
+VTI_HARDWARE_AOTF_USB = 5
+
 class AOTF_MODES(Enum):
     VTI_AOTF_MANUAL = 0
     VTI_AOTF_SOFTWARE = 1
@@ -17,8 +19,18 @@ class AOTF:
 
     def __init__(
             self,
+            dll_path=None,
             channel_names: tuple = (),
     ):
+        dll = ctypes.WinDLL(dll_path)
+        dll.vti_Initialise.argtypes = (c_int,  POINTER(ctypes.c_ulong))
+        dll.vti_Initialise.restype = ctypes.c_ulong
+
+
+        self.device = ctypes.c_ulong()
+        response = dll.vti_Initialise(VTI_HARDWARE_AOTF_USB, byref(device))
+        print(self.parse_error_message(hex(response)))
+
         self.shutter_on = False
         self.channel_names = channel_names
         self.channel_power_status = {
@@ -27,6 +39,25 @@ class AOTF:
 
     def __del__(self):
         raise NotImplementedError()
+
+    def parse_error_message(self, message):
+        return {
+            "0x1": "VTI_SUCCESS",
+            "0x8000001": "VTI_ERR_NOT_INITIALISED",
+            "0x8000002": "VTI_ERR_DEVICE_NOT_FOUND",
+            "0x8000003": "VTI_ERR_PORT_NOT_OPEN",
+            "0x8000004": "VTI_ERR_SENDING_DATA",
+            "0x8000005": "VTI_ERR_P1_INVALID",
+            "0x8000006": "VTI_ERR_P2_INVALID",
+            "0x8000007": "VTI_ERR_P3_INVALID",
+            "0x8000008": "VTI_ERR_MOTOR_HOME_FAILED",
+            "0x8000009": "VTI_ERR_NOT_SUPPORTED",
+            "0x800000A": "VTI_ERR_PORT_NOT_SET",
+            "0x800000B": "VTI_ERR_ALREADY_INITIALISED",
+            "0x800000C": "VTI_ERR_TIMEOUT_OCCURED",
+            "0x800000D": "VTI_ERR_INCORRECT_MODE",
+            "0x800000E": "VTI_ERR_P4_INVALID",
+        }[message]
 
     def set_intensity(self, channel_name: str, intensity: int):
         if channel_name not in self.channel_names:
@@ -46,6 +77,10 @@ class AOTF:
         else:
             raise ValueError(f"No channel exist with given {channel_name}...")
 
-    def toggle_shutter(self):
+    def set_shutter(self, open_shutter: bool = False):
         # Make a call to vti_SetShutter()
-        raise NotImplementedError()
+        dll.vti_SetShutter.argtypes = (ctypes.c_ulong,  c_bool)
+        dll.vti_SetShutter.restype = ctypes.c_ulong
+
+        response = dll.vti_SetShutter(self.device, open_shutter)
+        print(self.parse_error_message(hex(response)))
