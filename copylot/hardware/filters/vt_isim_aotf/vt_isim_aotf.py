@@ -1,7 +1,9 @@
+from ctypes import WinDLL, c_int, c_ulong, POINTER, byref, c_bool
 from enum import Enum
 
 
 VTI_HARDWARE_AOTF_USB = 5
+
 
 class AOTF_MODES(Enum):
     VTI_AOTF_MANUAL = 0
@@ -18,17 +20,16 @@ class AOTF:
     """
 
     def __init__(
-            self,
-            dll_path=None,
-            channel_names: tuple = (),
+        self,
+        dll_path=None,
+        channel_names: tuple = (),
     ):
-        dll = ctypes.WinDLL(dll_path)
-        dll.vti_Initialise.argtypes = (c_int,  POINTER(ctypes.c_ulong))
-        dll.vti_Initialise.restype = ctypes.c_ulong
+        self.dll = WinDLL(dll_path)
+        self.dll.vti_Initialise.argtypes = (c_int, POINTER(c_ulong))
+        self.dll.vti_Initialise.restype = c_ulong
 
-
-        self.device = ctypes.c_ulong()
-        response = dll.vti_Initialise(VTI_HARDWARE_AOTF_USB, byref(device))
+        self.device = c_ulong()
+        response = self.dll.vti_Initialise(VTI_HARDWARE_AOTF_USB, byref(self.device))
         print(self.parse_error_message(hex(response)))
 
         self.shutter_on = False
@@ -40,7 +41,8 @@ class AOTF:
     def __del__(self):
         raise NotImplementedError()
 
-    def parse_error_message(self, message):
+    @staticmethod
+    def parse_error_message(message):
         return {
             "0x1": "VTI_SUCCESS",
             "0x8000001": "VTI_ERR_NOT_INITIALISED",
@@ -64,7 +66,9 @@ class AOTF:
             raise ValueError(f"Channel: {channel_name} is not a valid option...")
 
         if intensity < 0 or intensity > 100:
-            raise ValueError(f"Intensity has to be between [0,100], {intensity} is invalid...")
+            raise ValueError(
+                f"Intensity has to be between [0,100], {intensity} is invalid..."
+            )
 
         # Make a call to vti_SetIntensity()
         raise NotImplementedError()
@@ -79,8 +83,8 @@ class AOTF:
 
     def set_shutter(self, open_shutter: bool = False):
         # Make a call to vti_SetShutter()
-        dll.vti_SetShutter.argtypes = (ctypes.c_ulong,  c_bool)
-        dll.vti_SetShutter.restype = ctypes.c_ulong
+        self.dll.vti_SetShutter.argtypes = (c_ulong, c_bool)
+        self.dll.vti_SetShutter.restype = c_ulong
 
-        response = dll.vti_SetShutter(self.device, open_shutter)
+        response = self.dll.vti_SetShutter(self.device, open_shutter)
         print(self.parse_error_message(hex(response)))

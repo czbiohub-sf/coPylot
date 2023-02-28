@@ -1,3 +1,4 @@
+# flake8: noqa
 import ctypes
 from ctypes import *
 
@@ -28,15 +29,14 @@ dll = ctypes.WinDLL("C:\Program Files\Micro-Manager-2.0\VisiSDK.dll")
 
 print(dll)
 
-dll.vti_Initialise.argtypes = (c_int,  POINTER(ctypes.c_ulong))
+dll.vti_Initialise.argtypes = (c_int, POINTER(ctypes.c_ulong))
 dll.vti_Initialise.restype = ctypes.c_ulong
 
 response = dll.vti_Initialise(VTI_HARDWARE_AOTF_USB, byref(device))
 print(errors[hex(response)])
 
 
-
-dll.vti_SetShutter.argtypes = (ctypes.c_ulong,  c_bool)
+dll.vti_SetShutter.argtypes = (ctypes.c_ulong, c_bool)
 dll.vti_SetShutter.restype = ctypes.c_ulong
 
 response = dll.vti_SetShutter(device, True)

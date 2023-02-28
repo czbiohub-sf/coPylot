@@ -2,11 +2,7 @@ import time
 import serial
 
 
-<<<<<<< HEAD:copylot/hardware/filters/arduino_controlled_filterwheel/arduino_controlled_filterwheel.py
-class ArduinoControlledFilterWheel:
-=======
 class ArduinoControlledFilterwheel:
->>>>>>> upstream/main:copylot/hardware/filters/arduino_controlled_filterwheel/filterwheel.py
     """FilterWheel
 
     Parameters
