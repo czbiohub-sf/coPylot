@@ -50,6 +50,16 @@ numpydoc_show_class_members = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
+html_sidebars = {
+    '**': [
+        'versions.html',
+    ],
+}
+
+# for now, only target the main branch (and ignore tags)
+smv_branch_whitelist = 'main'
+# smv_tag_whitelist = r'^v\d+\.\d+\.\d+$'
+
 # The suffix of source filenames.
 source_suffix = ".rst"
 

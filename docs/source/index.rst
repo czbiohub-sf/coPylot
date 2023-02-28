@@ -16,7 +16,7 @@ install editable version of coPylot with help of `pip`:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/royerlab/coPylot.git
+    $ git clone https://github.com/czbiohub/coPylot.git
     $ cd coPylot
     $ pip install -e .
 

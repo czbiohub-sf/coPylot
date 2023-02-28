@@ -8,7 +8,7 @@ coPylot with the help of following commands:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/royerlab/coPylot.git
+    $ git clone https://github.com/czbiohub/coPylot.git
     $ cd coPylot
     $ pip install -e .
 
