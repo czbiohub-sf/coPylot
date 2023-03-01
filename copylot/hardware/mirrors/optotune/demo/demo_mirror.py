@@ -13,7 +13,7 @@ def demo_mirror():
     del mirror
 
 
-def demo_xy_scan():
+def demo_x_scan():
     mirror = OptoMirror()
 
     for x in numpy.linspace(-0.2, 0.2, 200):
@@ -40,6 +40,6 @@ def demo_spiral_scan():
 
 
 if __name__ == '__main__':
-    demo_mirror()
-    demo_xy_scan()
-    demo_spiral_scan()
+    # demo_mirror()
+    demo_x_scan()
+    # demo_spiral_scan()

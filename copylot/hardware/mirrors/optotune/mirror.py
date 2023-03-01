@@ -17,6 +17,8 @@ class OptoMirror:
         print("mirror connected")
 
     def __del__(self):
+        self.position_x = 0
+        self.position_y = 0
         self.mirror.disconnect()
         print("mirror disconnected")
 
