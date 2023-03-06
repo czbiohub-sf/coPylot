@@ -1,7 +1,7 @@
 """
 @author:edyoshikun
 
-Voltran Stradus Laser python wrapper using RS-232 -> COM device. 
+vortran Stradus Laser python wrapper using RS-232 -> COM device. 
 
 For more details regarding operation, refer to the manuals in https://www.vortranlaser.com/
 """
@@ -21,7 +21,7 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-class VoltranLaser(AbstractLaser):
+class VortranLaser(AbstractLaser):
     # TODO: this probably is better if it's a dictionary and make
     GLOBAL_CMD = ['ECHO', 'PROMPT']
     GLOBAL_QUERY = ['?BPT', '?H', '?IL', '?SFV', '?SPV']
@@ -55,7 +55,7 @@ class VoltranLaser(AbstractLaser):
 
     def __init__(self, device_id=None, port=None, baudrate=19200, timeout=1):
         """
-        Wrapper for voltran stradus lasers.
+        Wrapper for vortran stradus lasers.
         establishes a connection through COM port
 
         Default paramters taken from documentation
@@ -203,7 +203,7 @@ class VoltranLaser(AbstractLaser):
         Parameters
         ----------
         cmd : 'str'
-            Voltran Stadus command
+            vortran Stadus command
         value : (int,float,str)
             value to be set with command
 
@@ -212,7 +212,7 @@ class VoltranLaser(AbstractLaser):
         a list with the parsed response from the device to the given command
         """
         try:
-            if cmd in VoltranLaser.VOLTRAN_CMDS:
+            if cmd in VortranLaser.VOLTRAN_CMDS:
                 if value != None:
                     cmd_LF = cmd + ' ' + str(value) + '\r'
                 else:
@@ -522,7 +522,7 @@ class VoltranLaser(AbstractLaser):
         try:
             for port in com_ports:
                 try:
-                    laser = VoltranLaser(port=port.device)
+                    laser = VortranLaser(port=port.device)
                     if laser.serial_number != None:
                         lasers.append((laser.port, laser.serial_number))
                         logger.info(f"Found: {laser.port}:{laser.device_id}")
