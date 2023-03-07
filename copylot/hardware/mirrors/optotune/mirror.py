@@ -4,7 +4,7 @@ from copylot.hardware.mirrors.optotune import optoMDC
 class OptoMirror:
     def __init__(self, com_port: str = None):
         self.mirror = optoMDC.connect(
-            com_port if com_port is not None else "COM3"
+            com_port if com_port is not None else optoMDC.tools.list_comports.get_mre2_port()
         )
 
         self.channel_x = self.mirror.Mirror.Channel_0
