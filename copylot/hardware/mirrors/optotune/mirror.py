@@ -24,14 +24,23 @@ class OptoMirror:
 
     @property
     def positions(self):
+        """
+        Returns
+        -------
+        float:Returning value is the current normalized angular value of the mirror
+        value = theta/tan(50degree)
+        50 degree is the maximum optical deflection angle for each direction.
+        """
         return self.position_x, self.position_y
 
     @property
     def position_x(self):
         """
-
         Returns
         -------
+        float:Returning value is the current normalized angular value of the mirror
+        value = theta/tan(50degree)
+        50 degree is the maximum optical deflection angle for each direction.
 
         """
         return self.channel_x.StaticInput.GetXY()[0]
@@ -39,20 +48,41 @@ class OptoMirror:
     @position_x.setter
     def position_x(self, value):
         """
-
         Parameters
         ----------
-        value
-
+        value(float): The normalized angular value, value = theta/tan(50degree)
+        50 degree is the maximum optical deflection angle for each direction.
+        Here x has a range limits of [-1,1] , The combination of value for x-axis and y-axis should be less than 1
+        (ex. x^2+y^1<1)
+        when |x|<0.7 and |y| <0.7 any combination works. otherwise, one will be reduced to value to
+        nearest edge of the unit circle
         """
         self.channel_x.StaticInput.SetXY(value)
         print(f"position_x set to: {value}")
 
     @property
     def position_y(self):
+        """
+        Returns
+        -------
+        float:Returning value is the current normalized angular value of the mirror
+        value = theta/tan(50degree)
+        50 degree is the maximum optical deflection angle for each direction.
+        """
         return self.channel_y.StaticInput.GetXY()[0]
 
     @position_y.setter
     def position_y(self, value):
+        """
+        Parameters
+        ----------
+        value(float): The normalized angular value, value = theta/tan(50degree)
+        50 degree is the maximum optical deflection angle for each direction.
+        Here x has a range limits of [-1,1] , The combination of value for x-axis and y-axis should be less than 1
+        (ex. x^2+y^1<1)
+        when |x|<0.7 and |y| <0.7 any combination works. otherwise, one will be reduced to value to
+        nearest edge of the unit circle
+
+        """
         self.channel_y.StaticInput.SetXY(value)
         print(f"position_y set to: {value}")
