@@ -18,7 +18,9 @@ class OptoMirror:
 
         """
         self.mirror = optoMDC.connect(
-            com_port if com_port is not None else optoMDC.tools.list_comports.get_mre2_port()
+            com_port
+            if com_port is not None
+            else optoMDC.tools.list_comports.get_mre2_port()
         )
 
         self.channel_x = self.mirror.Mirror.Channel_0
