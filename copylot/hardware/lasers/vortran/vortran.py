@@ -58,9 +58,7 @@ class VortranLaser(AbstractLaser):
     ]
     VOLTRAN_CMDS = GLOBAL_CMD + GLOBAL_QUERY + LASER_CMD + LASER_QUERY
 
-    def __init__(
-        self, serial_number=None, port=None, baudrate=19200, timeout=1
-    ):
+    def __init__(self, serial_number=None, port=None, baudrate=19200, timeout=1):
         """
         Wrapper for vortran stradus lasers.
         establishes a connection through COM port
@@ -541,9 +539,7 @@ class VortranLaser(AbstractLaser):
                     laser = VortranLaser(port=port.device)
                     if laser.serial_number is not None:
                         lasers.append((laser.port, laser.serial_number))
-                        logger.info(
-                            f"Found: {laser.port}:{laser.serial_number}"
-                        )
+                        logger.info(f"Found: {laser.port}:{laser.serial_number}")
                         laser.disconnect()
                     else:
                         raise Exception
