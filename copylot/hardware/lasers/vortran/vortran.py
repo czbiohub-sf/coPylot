@@ -3,7 +3,9 @@
 
 vortran Stradus Laser python wrapper using RS-232 -> COM device.
 
-For more details regarding operation, refer to the manuals in https://www.vortranlaser.com/
+For more details regarding operation,
+refer to the manuals in https://www.vortranlaser.com/
+
 """
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
 import serial
@@ -310,6 +312,7 @@ class VortranLaser(AbstractLaser):
         Laser Drive Control Mode
         Sets Power or Current Control
         (1 = Current Control)
+        (0 = Power Control)
 
         """
         self._ctrl_mode = self._write_cmd('C', str(mode))[0]
@@ -320,7 +323,7 @@ class VortranLaser(AbstractLaser):
         Laser Drive Control Mode
         Gets Power or Current Control
         (1 = Current Control)
-
+        (0 = Power Control)
         """
         self._ctrl_mode = self._write_cmd('?C')[0]
 
@@ -328,7 +331,7 @@ class VortranLaser(AbstractLaser):
     def emission_delay(self):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         return self._delay
 
@@ -336,7 +339,7 @@ class VortranLaser(AbstractLaser):
     def set_emission_delay(self, mode):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         self._delay = self._write_cmd('DELAY', str(mode))[0]
 
@@ -344,7 +347,7 @@ class VortranLaser(AbstractLaser):
     def emission_delay(self):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         self._delay = self.write_control('?DELAY')[0]
 
@@ -360,7 +363,7 @@ class VortranLaser(AbstractLaser):
     def external_power_control(self):
         """
         Enables External Power Control
-        (1= External Control)
+        (1= External Control, 0 = Off)
         """
         self._ext_power_ctrl = self._write_cmd('?EPC')[0]
 
@@ -368,7 +371,7 @@ class VortranLaser(AbstractLaser):
     def set_external_power_control(self, control):
         """
         Enables External Power Control
-        (1= External Control)
+        (1= External Control, 0 = Off)
         """
         self._ext_power_ctrl = self._write_cmd('EPC', str(control))[0]
 
@@ -397,7 +400,7 @@ class VortranLaser(AbstractLaser):
     def toggle_emission(self):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         return self._toogle_emission
 
@@ -405,7 +408,7 @@ class VortranLaser(AbstractLaser):
     def toggle_emission(self, value):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         self._toggle_emission = self._write_cmd('LE', value)[0]
 
@@ -413,7 +416,7 @@ class VortranLaser(AbstractLaser):
     def toggle_emission(self):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = OffFFF)
         """
         self._toggle_emission = self._write_cmd('?LE')[0]
 
@@ -423,7 +426,7 @@ class VortranLaser(AbstractLaser):
         """
         logger.info('Turning laser: ON')
         self.toggle_emission = 1
-        return self._toggle_emission
+        return self._toggle_emissionF
 
     def turn_off(self):
         """
