@@ -1,5 +1,4 @@
 [tool.black]
-target-version = ['py36', 'py37']
 skip-string-normalization = true
 exclude = '''(copylot/hardware/mirrors/optotune/optoMDC)'''
 
