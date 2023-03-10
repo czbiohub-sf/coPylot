@@ -63,7 +63,9 @@ class MainWindow(QMainWindow):
             ) as json_file:
                 self.defaults = json.load(json_file)
 
-        except FileNotFoundError:  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
+        except (
+            FileNotFoundError
+        ):  # construct initial defaults.txt fileself.defaults = [3, 6, 25, 100]
             if not os.path.isdir(os.path.join(str(Path.home()), ".coPylot")):
                 os.mkdir(os.path.join(str(Path.home()), ".coPylot"))
 
@@ -100,6 +102,7 @@ class MainWindow(QMainWindow):
             ("water_dispenser", [self, self.threadpool]),
             ("laser", [self]),
             ("parameters", [self]),
+            ("photom_control", [self, self.threadpool]),
         ]
 
         for name, args in self.dock_widgets_to_initialize:
