@@ -125,8 +125,12 @@ class VortranLaser(AbstractLaser):
                     timeout=self.timeout,
                 )
                 self._identify_laser()
-            elif self._in_serial_num is not None:
-                ports = list_ports.comports()
+            else:
+                if self._in_serial_num is not None:
+                    ports = list_ports.comports()
+                else:
+                    ports = VortranLaser.get_lasers()
+
                 for port in ports:
                     self.port = port
                     self.address = serial.Serial(
@@ -145,27 +149,6 @@ class VortranLaser(AbstractLaser):
                     else:
                         self.disconnect()
                         raise Exception
-            else:
-                list_lasers = VortranLaser.get_lasers()
-                for i in len(list_lasers):
-                    port = list_lasers[i][0]
-                    self.port = port
-                    self.address = serial.Serial(
-                        port=self.port,
-                        baudrate=self.baudrate,
-                        bytesize=serial.EIGHTBITS,
-                        parity=serial.PARITY_NONE,
-                        stopbits=serial.STOPBITS_ONE,
-                        timeout=self.timeout,
-                    )
-                    self._identify_laser()
-                    if self._in_serial_num == self.serial_number:
-                        logger.info(
-                            f"Connected {self.port}: Laser: {self.serial_number}"
-                        )
-                    else:
-                        self.disconnect()
-                        raise Exception()
         except RuntimeError:
             logger.debug(f"No laser found in {self.port}")
 
