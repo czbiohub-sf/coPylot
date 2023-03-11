@@ -116,7 +116,19 @@ class VortranLaser(AbstractLaser):
         """
         try:
             if self.port is not None:
-                try:
+                self.address = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    bytesize=serial.EIGHTBITS,
+                    parity=serial.PARITY_NONE,
+                    stopbits=serial.STOPBITS_ONE,
+                    timeout=self.timeout,
+                )
+                self._identify_laser()
+            elif self._in_serial_num is not None:
+                ports = list_ports.comports()
+                for port in ports:
+                    self.port = port
                     self.address = serial.Serial(
                         port=self.port,
                         baudrate=self.baudrate,
@@ -125,84 +137,52 @@ class VortranLaser(AbstractLaser):
                         stopbits=serial.STOPBITS_ONE,
                         timeout=self.timeout,
                     )
-                    # self._echo_off()
                     self._identify_laser()
-                except RuntimeError:
-                    logger.debug(f"No Laser found in {self.port}")
-            elif self._in_serial_num is not None:
-                ports = list_ports.comports()
-                for port in ports:
-                    try:
-                        self.port = port
-                        self.address = serial.Serial(
-                            port=self.port,
-                            baudrate=self.baudrate,
-                            bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE,
-                            stopbits=serial.STOPBITS_ONE,
-                            timeout=self.timeout,
+                    if self._in_serial_num == self.serial_number:
+                        logger.info(
+                            f"Connected {self.port}: Laser: {self.serial_number}"
                         )
-                        self._identify_laser()
-                        if self._in_serial_num == self.serial_number:
-                            logger.info(
-                                f"Connected {self.port}: \
-                                Laser: {self.serial_number}"
-                            )
-                        else:
-                            self.disconnect()
-                            raise Exception
-                    except RuntimeError:
-                        logger.debug(f"No laser found in {self.port}")
+                    else:
+                        self.disconnect()
+                        raise Exception
             else:
                 list_lasers = VortranLaser.get_lasers()
                 for i in len(list_lasers):
                     port = list_lasers[i][0]
-                    try:
-                        self.port = port
-                        self.address = serial.Serial(
-                            port=self.port,
-                            baudrate=self.baudrate,
-                            bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE,
-                            stopbits=serial.STOPBITS_ONE,
-                            timeout=self.timeout,
+                    self.port = port
+                    self.address = serial.Serial(
+                        port=self.port,
+                        baudrate=self.baudrate,
+                        bytesize=serial.EIGHTBITS,
+                        parity=serial.PARITY_NONE,
+                        stopbits=serial.STOPBITS_ONE,
+                        timeout=self.timeout,
+                    )
+                    self._identify_laser()
+                    if self._in_serial_num == self.serial_number:
+                        logger.info(
+                            f"Connected {self.port}: Laser: {self.serial_number}"
                         )
-                        self._identify_laser()
-                        if self._in_serial_num == self.serial_number:
-                            logger.info(
-                                f"Connected {self.port}: \
-                                Laser: {self.serial_number}"
-                            )
-                        else:
-                            self.disconnect()
-                            raise Exception
-                    except RuntimeError:
-                        logger.debug(f"No laser found in {self.port}")
+                    else:
+                        self.disconnect()
+                        raise Exception()
         except RuntimeError:
-            logger.info(f"No laser found in {self.port}")
+            logger.debug(f"No laser found in {self.port}")
 
     def disconnect(self):
-        """
-        Disconnects the device
-        """
+        """Disconnects the device"""
         self.address.close()
         self.address = None
 
     @property
     def is_connected(self):
-        """
-        Check if device is connected to COM Port and return True/False
-
-        """
+        """Check if device is connected to COM Port and return True/False"""
         logger.debug(f'{self.port} is open')
         return self._is_connected
 
     @is_connected.getter
     def is_connected(self):
-        """
-        Check if device is connected to COM Port and return True/False
-
-        """
+        """Check if device is connected to COM Port and return True/False"""
         self._is_connected = self.address.is_open
 
     def _write_cmd(self, cmd, value=None):
