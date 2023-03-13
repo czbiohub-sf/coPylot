@@ -1,69 +1,11 @@
-from qtpy.QtWidgets import (
-    QWidget,
-    QApplication,
-    QComboBox,
-    QPushButton,
-    QVBoxLayout,
-    QLabel,
-    QGroupBox,
-    QGridLayout,
-    QSlider,
+from PyQt5.QtWidgets import (
     QTabWidget,
 )
-from qtpy.QtCore import Qt, Signal, Slot
-import time
+from widgets.calibration_position import LaserPositionCalibration
+from widgets.multi_pattern import MultiPatternControl
+# from widgets.simple_laser import SimpleLaser
+from widgets.pattern_control import PatternControl
 
-from copylot.gui._qt.job_runners.worker import Worker
-
-# from widgets.utils.affinetransform import AffineTransform
-
-
-class PhotomControlDockWidget(QWidget):
-    # TODO: Need to define the threads needed
-    # thread_launching = Signal()
-
-    def __init__(self, parent, threadpool):
-        super(QWidget, self).__init__(parent)
-
-        self.parent = parent
-        self.threadpool = threadpool
-        self.state_tracker = False
-        self.tabmanager = TabManager(self)
-        # Set the main Layout
-        self.main_layout = QGridLayout()
-
-        # Photom overlay window
-        self.window1 = None
-        # Buttons
-        self.sl_opacity = QSlider(Qt.Horizontal)
-        self.sl_opacity.setRange(0, 100)
-        # self.sl_opacity.setValue(int(self.window1.opacity * 100))
-        self.opacity_indicator = QLabel(f'Opacity {0.0 * 100} %')
-
-        # Set the Widget Layout
-        self.layout = QGridLayout()
-        self.layout.setAlignment(Qt.AlignTop)
-        self.layout.addWidget(self.sl_opacity, 0, 0)
-        self.layout.addWidget(self.opacity_indicator, 0, 1)
-
-        # Tab Manager
-        self.layout.addWidget(self.tabmanager, 3, 0, 1, 3)
-        # def handle_photom_launch(self):
-        #     self.state_tracker = not self.state_tracker
-        #     if self.state_tracker:
-        #         self.setStyleSheet("background-color: red;")
-        #     else:
-        #         scshot_box = QGroupBox('Screen shot')
-        #         scshot_box.setStyleSheet('font-size: 14pt')
-        #         scshot_box.layout = QGridLayout()
-        #         scshot_box.layout.addWidget(self.le_scshot, 0, 0)
-        #         scshot_box.layout.addWidget(self.pb_scshot, 0, 1)
-        #         scshot_box.setLayout(scshot_box.layout)
-        self.setLayout(self.layout)
-
-        @property
-        def parameters(self):
-            raise NotImplementedError("parameters not yet implemented")
 
 class TabManager(QTabWidget):
     """
@@ -77,10 +19,12 @@ class TabManager(QTabWidget):
 
         # Add contents for each tab
         self.laser_cali = LaserPositionCalibration(self)
+        # self.simple_laser = SimpleLaser(self)
         self.pattern_ctrl = PatternControl(self)
         self.multi_pattern = MultiPatternControl(self)
 
         # Add tabs
+        # self.addTab(self.simple_laser, 'Simple Laser')
         self.addTab(self.laser_cali, 'Calibration')
         self.addTab(self.pattern_ctrl, 'Single Scan')
         self.addTab(self.multi_pattern, 'Multi Scans')
