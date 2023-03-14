@@ -11,3 +11,9 @@ requires = [
 
 [tool.setuptools_scm]
 write_to = "copylot/_version.py"
+
+[tool.pylint]
+# disable all conventions, refactors, warnings (C, R, W) and the following rules:
+# - E1136: 'unsubscriptable-object' (anecdotal false positives for numpy objects)
+disable = ["C", "R", "W", "unsubscriptable-object"]
+ignore-paths = '''(copylot/hardware/mirrors/optotune/optoMDC/*)'''

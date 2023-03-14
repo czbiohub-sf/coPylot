@@ -48,10 +48,13 @@ jobs:
         - name: Install dependencies
           run: |
             python -m pip install --upgrade pip
-            pip install flake8==4.0.1
+            pip install -r requirements/development.txt
         - name: Check code with Flake8
           run: |
-            flake8 --ignore E501,E203,E731,E741,W503 copylot
+            flake8 copylot
+        - name: Check code with pylint
+          run: |
+            pylint coyplot
 
   test-linux:
     needs: [ style, lint ]

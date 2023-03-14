@@ -75,20 +75,16 @@ conda create -n copylot python=3.9
 # Activate the environment
 conda activate copylot
 
-# Install coPylot
-pip install -e .
-
-# Install developmental dependencies
-pip install -r requirements/development.txt
+# Install coPylot and dev dependencies
+make setup-develop
 
 # Before making a PR make sure tests are passing
 # To run tests
-python -m pytest . --disable-pytest-warnings
+make test
 
-# Before making a PR also check if your branch
-# passes style guidelines
-black --check -S -t py39 .
-flake8 --ignore E501,E203,E731,E741,W503 copylot
+# Before making a PR also check if your branch passes style guidelines and linting
+make check-format
+make lint
 ```
 
 ##### For PyCharm users:
