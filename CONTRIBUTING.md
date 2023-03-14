@@ -78,13 +78,20 @@ conda activate copylot
 # Install coPylot and dev dependencies
 make setup-develop
 
-# Before making a PR make sure tests are passing
-# To run tests
+# Optionally install the pre-commit hooks (which currently just run `black`)
+pre-commit install
+
+# Before making a PR, make sure tests are passing
 make test
 
-# Before making a PR also check if your branch passes style guidelines and linting
+# Before making a PR, check that your branch passes linting 
+# and adheres to black's style guidelines
 make check-format
 make lint
+
+# if pre-commit hooks are not installed and your branch does not meet black's style,
+# run `black` manually to format your branch
+make format
 ```
 
 ##### For PyCharm users:
