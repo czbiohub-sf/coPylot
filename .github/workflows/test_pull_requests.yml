@@ -54,7 +54,7 @@ jobs:
             flake8 copylot
         - name: Check code with pylint
           run: |
-            pylint coyplot
+            pylint copylot
 
   test-linux:
     needs: [ style, lint ]
