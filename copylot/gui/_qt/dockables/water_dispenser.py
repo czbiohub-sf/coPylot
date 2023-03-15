@@ -14,13 +14,14 @@ from qtpy.QtWidgets import (
 )
 from qtpy.QtCore import Qt, Signal, Slot, QRunnable
 
-from copylot.hardware.pumps.water_dispenser import (
-    WaterDispenserControl,
-)
+
 from copylot.gui._qt.job_runners.worker import WorkerSignals
 
 
 # provide list of available serial ports
+from copylot.hardware.pumps.bartels_ux7.bartels_ux7 import BartelsUX7
+
+
 def serial_ports():
     if sys.platform.startswith("win"):
         ports = ["COM%s" % (i + 1) for i in range(256)]
@@ -154,7 +155,7 @@ class WaterWorker(QRunnable):
         super().__init__()
         self.parent = parent
         self.parameters = parameters
-        self.water_control = WaterDispenserControl(*serial_parameters)
+        self.water_control = BartelsUX7(*serial_parameters)
         self.signals = WorkerSignals()
 
     @Slot()
