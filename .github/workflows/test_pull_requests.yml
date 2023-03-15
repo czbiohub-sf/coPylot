@@ -50,12 +50,9 @@ jobs:
             python -m pip install --upgrade pip
             pip install -r requirements/development.txt
             pip install -e .
-        - name: Check code with Flake8
+        - name: Check code with Flake8 and pylint
           run: |
-            flake8 copylot
-        - name: Check code with pylint
-          run: |
-            pylint copylot
+            make lint
 
   test-linux:
     needs: [ style, lint ]
