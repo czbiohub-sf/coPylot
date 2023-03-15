@@ -26,9 +26,9 @@ def demo_x_scan():
 def demo_spiral_scan():
     mirror = OptoMirror()
 
-    theta = numpy.linspace(0, 20 * numpy.pi, 500)
+    thetas = numpy.linspace(0, 20 * numpy.pi, 500)
     positions = []
-    for theta in theta:
+    for theta in thetas:
         r = theta * 0.005
         positions.append((r * numpy.cos(theta), r * numpy.sin(theta)))
 
