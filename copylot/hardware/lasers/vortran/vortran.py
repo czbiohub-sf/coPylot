@@ -305,7 +305,7 @@ class VortranLaser(AbstractLaser):
         Toggle 5 Second Laser Emission Delay On and Off
         (1 = On, 0 = Off)
         """
-        self._delay = self.write_control('?DELAY')[0]
+        self._delay = self._write_cmd('?DELAY')[0]
 
     @property
     def external_power_control(self):
@@ -358,7 +358,7 @@ class VortranLaser(AbstractLaser):
         Toggles Laser Emission On and Off
         (1 = On, 0 = Off)
         """
-        return self._toogle_emission
+        return self._toggle_emission
 
     @toggle_emission.setter
     def toggle_emission(self, value):
@@ -382,7 +382,7 @@ class VortranLaser(AbstractLaser):
         """
         logger.info('Turning laser: ON')
         self.toggle_emission = 1
-        return self._toggle_emissionF
+        return self._toggle_emission
 
     def turn_off(self):
         """
