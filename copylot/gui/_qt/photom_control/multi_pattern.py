@@ -4,11 +4,11 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QVBoxLayout,
 )
-from widgets.helper_functions.indiv_scan_unit import IndividualScanSetting
-from widgets.helper_functions.scanlist_unit import ScanTable
-from widgets.helper_functions.messagebox import MessageBox
-from widgets.helper_functions.laser_selection_box import LaserSelectionBox
-from widgets.helper_functions.startstopbox import StartStop
+from copylot.gui._qt.photom_control.helper_functions.indiv_scan_unit import IndividualScanSetting
+from copylot.gui._qt.photom_control.helper_functions.scanlist_unit import ScanTable
+from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
+from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import LaserSelectionBox
+from copylot.gui._qt.photom_control.helper_functions.startstopbox import StartStop
 
 
 class MultiPatternControl(QWidget):

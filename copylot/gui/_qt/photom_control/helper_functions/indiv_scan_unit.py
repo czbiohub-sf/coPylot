@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
     QApplication,
 )
 
-from widgets.scan_algrthm.scan_algorithm import ScanAlgorithm
+from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
 
 
 class IndividualScanSetting(QGroupBox):

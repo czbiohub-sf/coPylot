@@ -1,8 +1,7 @@
 from collections.abc import Iterable
-from widgets.utils.show_error import show_dac_error
+from copylot.gui._qt.photom_control.utils.show_error import show_dac_error
 try:
     from mcculw import ul
-    from props.ao import AnalogOutputProps
     demo_mode = False
 except ValueError:
     demo_mode = True

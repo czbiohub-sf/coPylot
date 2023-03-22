@@ -16,10 +16,10 @@ from PyQt5.QtWidgets import (
     QShortcut,
 )
 
-from dac_controller.scan import DACscan
-from dac_controller.scan_points import ScanPoints
-from widgets.helper_functions.messagebox import MessageBox
-from widgets.helper_functions.laser_selection_box import LaserSelectionBox
+# from dac_controller.scan import DACscan
+# from dac_controller.scan_points import ScanPoints
+from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
+from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import LaserSelectionBox
 
 
 class LaserPositionCalibration(QWidget):
@@ -114,7 +114,7 @@ class LaserPositionCalibration(QWidget):
         self.ref_rect_coord = []
         self.ctrl_rect_coord = []
         self.scan_path = []
-        self.dac_controller = ScanPoints(self.parent.parent, sampling_rate=4 if self.parent.parent.demo_mode else 100)
+        # self.dac_controller = ScanPoints(self.parent.parent, sampling_rate=4 if self.parent.parent.demo_mode else 100)
         # self.dac_controller = None if self.parent.parent.demo_mode else DACscan([[0, 0, 0, 0], [0]], self.parent.parent, sampling_rate=2)
 
     def size2cord(self, size):
@@ -193,7 +193,7 @@ class LaserPositionCalibration(QWidget):
         self.window1.drawTetragon(self.ref_rect_coord)
         self.parent.parent.transform_list[self.parent.parent.current_laser].affmatrix = None
         self.parent.update_calibration_status()
-        self.dac_controller.start_scan(self.ctrl_rect_coord)
+        # self.dac_controller.start_scan(self.ctrl_rect_coord)
         # self.dac_controller.trans_obj = self.parent.parent.transform_list[self.parent.parent.current_laser]
         # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
         # self.dac_controller.start_scan()
@@ -202,9 +202,9 @@ class LaserPositionCalibration(QWidget):
         if self.window1.iscalib:
             self.ref_rect_coord, self.ctrl_rect_coord = self.collect_cord()
             self.parent.parent.transform_list[self.parent.parent.current_laser].getAffineMatrix(*self.collect_cord())
-            self.dac_controller.trans_obj = self.parent.parent.transform_list[self.parent.parent.current_laser]
+            # self.dac_controller.trans_obj = self.parent.parent.transform_list[self.parent.parent.current_laser]
             self.msgbox.update_msg('Calibration has been applied.')
-            self.dac_controller.apply_matrix = True
+            # self.dac_controller.apply_matrix = True
             # self.dac_controller.data_list
             # self.dac_controller.stop_scan()
             # self.dac_controller.start_scan(self.collect_cord()[1])
@@ -212,7 +212,7 @@ class LaserPositionCalibration(QWidget):
             # self.dac_controller.start_scan()
 
     def revert_calib(self):
-        self.dac_controller.apply_matrix = False
+        # self.dac_controller.apply_matrix = False
         self.msgbox.update_msg('Calibration is not applied.')
 
     def stop_scan(self):
@@ -222,7 +222,7 @@ class LaserPositionCalibration(QWidget):
         self.window1.iscalib = False
         self.window1.clearMarkerlist()
         self.parent.update_calibration_status()
-        self.dac_controller.stop_scan()
+        # self.dac_controller.stop_scan()
         # save affine matrix
         savepath = self.check_savepath()
         try:

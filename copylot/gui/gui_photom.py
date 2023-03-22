@@ -71,16 +71,7 @@ class MainWindow(QMainWindow):
 
             self.defaults = {
                 "parameters": {},
-                "live": {"view": 0, "laser": 0},
                 "timelapse": {"view": 0, "laser": 0},
-                "water": {
-                    "interval": 3,
-                    "duration": 6,
-                    "freq": 25,
-                    "amp": 100,
-                    "serial port": 0,
-                    "baudrate": 0,
-                },
             }
             for i in range(0, len(self.init_defaults)):
                 obj = self.init_defaults[i]

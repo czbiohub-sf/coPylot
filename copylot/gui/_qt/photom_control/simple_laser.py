@@ -12,8 +12,8 @@ from PyQt5.QtWidgets import (
 )
 
 
-from widgets.utils.labeledslider import LabeledSlider
-from widgets.utils.update_dac import signal_to_dac, signal_to_galvo
+from copylot.gui._qt.photom_control.utils.labeledslider import LabeledSlider
+from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac, signal_to_galvo
 
 """
 This script creates the content for the laser control tab.

@@ -1,10 +1,10 @@
 from PyQt5.QtWidgets import (
     QTabWidget,
 )
-from widgets.calibration_position import LaserPositionCalibration
-from widgets.multi_pattern import MultiPatternControl
+from copylot.gui._qt.photom_control.calibration_position import LaserPositionCalibration
+# from copylot.gui._qt.photom_control.multi_pattern import MultiPatternControl
 # from widgets.simple_laser import SimpleLaser
-from widgets.pattern_control import PatternControl
+# from copylot.gui._qt.photom_control.pattern_control import PatternControl
 
 
 class TabManager(QTabWidget):
@@ -20,14 +20,14 @@ class TabManager(QTabWidget):
         # Add contents for each tab
         self.laser_cali = LaserPositionCalibration(self)
         # self.simple_laser = SimpleLaser(self)
-        self.pattern_ctrl = PatternControl(self)
-        self.multi_pattern = MultiPatternControl(self)
+        # self.pattern_ctrl = PatternControl(self)
+        # self.multi_pattern = MultiPatternControl(self)
 
         # Add tabs
         # self.addTab(self.simple_laser, 'Simple Laser')
         self.addTab(self.laser_cali, 'Calibration')
-        self.addTab(self.pattern_ctrl, 'Single Scan')
-        self.addTab(self.multi_pattern, 'Multi Scans')
+        # self.addTab(self.pattern_ctrl, 'Single Scan')
+        # self.addTab(self.multi_pattern, 'Multi Scans')
 
     def update_current_laser(self, laser_idx):
         """
