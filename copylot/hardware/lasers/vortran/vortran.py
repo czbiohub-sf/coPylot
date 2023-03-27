@@ -83,7 +83,7 @@ class VortranLaser(AbstractLaser):
 
         # Laser Specs
         self.serial_number: str = None
-        self.part_num: int = None
+        self.part_number: int = None
         self.wavelength: int = None
         self.laser_shape: str = None
         self._in_serial_num = serial_number
@@ -416,7 +416,7 @@ class VortranLaser(AbstractLaser):
         Requires pulse_mode() to be OFF
         """
         if self._max_power is None:
-            self.maximum_power
+            pass
         if power > self._max_power:
             power = self._max_power
             logger.info(f'Maximum power is: {self._max_power}')
@@ -489,20 +489,20 @@ class VortranLaser(AbstractLaser):
     def get_lasers():
         com_ports = list_ports.comports()
         lasers = []
-        try:
-            for port in com_ports:
-                try:
-                    laser = VortranLaser(port=port.device)
-                    if laser.serial_number is not None:
-                        lasers.append((laser.port, laser.serial_number))
-                        logger.info(f"Found: {laser.port}:{laser.serial_number}")
-                        laser.disconnect()
-                    else:
-                        raise Exception
-                except RuntimeWarning:
-                    logger.debug(f'No laser found in {port}')
-            if len(lasers) < 1:
-                raise Exception
-            return lasers
-        except RuntimeError:
+        for port in com_ports:
+            try:
+                laser = VortranLaser(port=port.device)
+                if laser.serial_number is not None:
+                    lasers.append((laser.port, laser.serial_number))
+                    logger.info(f"Found: {laser.port}:{laser.serial_number}")
+                    laser.disconnect()
+                else:
+                    raise Exception
+            except (RuntimeWarning, RuntimeError):
+                logger.debug(f'No laser found in {port}')
+
+        if len(lasers) == 0:
             logger.info("No lasers found...")
+            raise Exception
+
+        return lasers
