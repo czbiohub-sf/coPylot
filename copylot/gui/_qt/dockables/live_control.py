@@ -52,12 +52,10 @@ class LiveControlDockWidget(QWidget):
 
     def timelapse_worker_method(self):
         view = self.combobox_view
-        channel = self.combobox_channel
         parameters = self.parent.parameters_widget.parameters
 
         daq_card = NIDaq(self, **parameters)
         daq_card.select_view(view)
-        daq_card.select_channel_remove_stripes(channel)
 
     def launch_nidaq(self):
         if self.state_tracker:

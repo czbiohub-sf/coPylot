@@ -3,7 +3,9 @@
 
 vortran Stradus Laser python wrapper using RS-232 -> COM device.
 
-For more details regarding operation, refer to the manuals in https://www.vortranlaser.com/
+For more details regarding operation,
+refer to the manuals in https://www.vortranlaser.com/
+
 """
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
 import serial
@@ -81,7 +83,7 @@ class VortranLaser(AbstractLaser):
 
         # Laser Specs
         self.serial_number: str = None
-        self.part_num: int = None
+        self.part_number: int = None
         self.wavelength: int = None
         self.laser_shape: str = None
         self._in_serial_num = serial_number
@@ -113,94 +115,50 @@ class VortranLaser(AbstractLaser):
 
         """
         try:
-            if self.port is not None:
-                try:
-                    self.address = serial.Serial(
-                        port=self.port,
-                        baudrate=self.baudrate,
-                        bytesize=serial.EIGHTBITS,
-                        parity=serial.PARITY_NONE,
-                        stopbits=serial.STOPBITS_ONE,
-                        timeout=self.timeout,
-                    )
-                    # self._echo_off()
-                    self._identify_laser()
-                except RuntimeError:
-                    logger.debug(f"No Laser found in {self.port}")
-            elif self._in_serial_num is not None:
-                ports = list_ports.comports()
-                for port in ports:
-                    try:
-                        self.port = port
-                        self.address = serial.Serial(
-                            port=self.port,
-                            baudrate=self.baudrate,
-                            bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE,
-                            stopbits=serial.STOPBITS_ONE,
-                            timeout=self.timeout,
-                        )
-                        self._identify_laser()
-                        if self._in_serial_num == self.serial_number:
-                            logger.info(
-                                f"Connected {self.port}: \
-                                Laser: {self.serial_number}"
-                            )
-                        else:
-                            self.disconnect()
-                            raise Exception
-                    except RuntimeError:
-                        logger.debug(f"No laser found in {self.port}")
+            if self.port is None:
+                ports = (
+                    list_ports.comports()
+                    if self._in_serial_num is not None
+                    else VortranLaser.get_lasers()
+                )
             else:
-                list_lasers = VortranLaser.get_lasers()
-                for i in len(list_lasers):
-                    port = list_lasers[i][0]
-                    try:
-                        self.port = port
-                        self.address = serial.Serial(
-                            port=self.port,
-                            baudrate=self.baudrate,
-                            bytesize=serial.EIGHTBITS,
-                            parity=serial.PARITY_NONE,
-                            stopbits=serial.STOPBITS_ONE,
-                            timeout=self.timeout,
-                        )
-                        self._identify_laser()
-                        if self._in_serial_num == self.serial_number:
-                            logger.info(
-                                f"Connected {self.port}: \
-                                Laser: {self.serial_number}"
-                            )
-                        else:
-                            self.disconnect()
-                            raise Exception
-                    except RuntimeError:
-                        logger.debug(f"No laser found in {self.port}")
+                ports = [self.port]
+
+            for port in ports:
+                self.port = port
+                self.address = serial.Serial(
+                    port=self.port,
+                    baudrate=self.baudrate,
+                    bytesize=serial.EIGHTBITS,
+                    parity=serial.PARITY_NONE,
+                    stopbits=serial.STOPBITS_ONE,
+                    timeout=self.timeout,
+                )
+
+                if self._in_serial_num == self.serial_number:
+                    logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
+                else:
+                    self.disconnect()
+                    raise Exception
+
+            self._identify_laser()
         except RuntimeError:
-            logger.info(f"No laser found in {self.port}")
+            logger.debug(f"No laser found in {self.port}")
 
     def disconnect(self):
-        """
-        Disconnects the device
-        """
+        """Disconnects the device"""
         self.address.close()
         self.address = None
 
     @property
     def is_connected(self):
-        """
-        Check if device is connected to COM Port and return True/False
-
-        """
+        """Check if device is connected to COM Port and return True/False"""
         logger.debug(f'{self.port} is open')
         return self._is_connected
 
     @is_connected.getter
     def is_connected(self):
-        """
-        Check if device is connected to COM Port and return True/False
-
-        """
+        """Check if device is connected to COM Port and return True/False"""
         self._is_connected = self.address.is_open
 
     def _write_cmd(self, cmd, value=None):
@@ -310,6 +268,7 @@ class VortranLaser(AbstractLaser):
         Laser Drive Control Mode
         Sets Power or Current Control
         (1 = Current Control)
+        (0 = Power Control)
 
         """
         self._ctrl_mode = self._write_cmd('C', str(mode))[0]
@@ -320,7 +279,7 @@ class VortranLaser(AbstractLaser):
         Laser Drive Control Mode
         Gets Power or Current Control
         (1 = Current Control)
-
+        (0 = Power Control)
         """
         self._ctrl_mode = self._write_cmd('?C')[0]
 
@@ -328,7 +287,7 @@ class VortranLaser(AbstractLaser):
     def emission_delay(self):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         return self._delay
 
@@ -336,7 +295,7 @@ class VortranLaser(AbstractLaser):
     def set_emission_delay(self, mode):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         self._delay = self._write_cmd('DELAY', str(mode))[0]
 
@@ -344,9 +303,9 @@ class VortranLaser(AbstractLaser):
     def emission_delay(self):
         """
         Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
-        self._delay = self.write_control('?DELAY')[0]
+        self._delay = self._write_cmd('?DELAY')[0]
 
     @property
     def external_power_control(self):
@@ -360,7 +319,7 @@ class VortranLaser(AbstractLaser):
     def external_power_control(self):
         """
         Enables External Power Control
-        (1= External Control)
+        (1= External Control, 0 = Off)
         """
         self._ext_power_ctrl = self._write_cmd('?EPC')[0]
 
@@ -368,7 +327,7 @@ class VortranLaser(AbstractLaser):
     def set_external_power_control(self, control):
         """
         Enables External Power Control
-        (1= External Control)
+        (1= External Control, 0 = Off)
         """
         self._ext_power_ctrl = self._write_cmd('EPC', str(control))[0]
 
@@ -397,15 +356,15 @@ class VortranLaser(AbstractLaser):
     def toggle_emission(self):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
-        return self._toogle_emission
+        return self._toggle_emission
 
     @toggle_emission.setter
     def toggle_emission(self, value):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = Off)
         """
         self._toggle_emission = self._write_cmd('LE', value)[0]
 
@@ -413,7 +372,7 @@ class VortranLaser(AbstractLaser):
     def toggle_emission(self):
         """
         Toggles Laser Emission On and Off
-        (1 = On)
+        (1 = On, 0 = OffFFF)
         """
         self._toggle_emission = self._write_cmd('?LE')[0]
 
@@ -457,7 +416,7 @@ class VortranLaser(AbstractLaser):
         Requires pulse_mode() to be OFF
         """
         if self._max_power is None:
-            self.maximum_power
+            pass
         if power > self._max_power:
             power = self._max_power
             logger.info(f'Maximum power is: {self._max_power}')
@@ -530,20 +489,20 @@ class VortranLaser(AbstractLaser):
     def get_lasers():
         com_ports = list_ports.comports()
         lasers = []
-        try:
-            for port in com_ports:
-                try:
-                    laser = VortranLaser(port=port.device)
-                    if laser.serial_number is not None:
-                        lasers.append((laser.port, laser.serial_number))
-                        logger.info(f"Found: {laser.port}:{laser.serial_number}")
-                        laser.disconnect()
-                    else:
-                        raise Exception
-                except RuntimeWarning:
-                    logger.debug(f'No laser found in {port}')
-            if len(lasers) < 1:
-                raise Exception
-            return lasers
-        except RuntimeError:
+        for port in com_ports:
+            try:
+                laser = VortranLaser(port=port.device)
+                if laser.serial_number is not None:
+                    lasers.append((laser.port, laser.serial_number))
+                    logger.info(f"Found: {laser.port}:{laser.serial_number}")
+                    laser.disconnect()
+                else:
+                    raise Exception
+            except (RuntimeWarning, RuntimeError):
+                logger.debug(f'No laser found in {port}')
+
+        if len(lasers) == 0:
             logger.info("No lasers found...")
+            raise Exception
+
+        return lasers
