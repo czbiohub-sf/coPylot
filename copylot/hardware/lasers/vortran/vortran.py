@@ -96,7 +96,7 @@ class VortranLaser(AbstractLaser):
         self._pulse_power = None
         self._pulse_mode = None
         self._max_power = None
-        self._is_connected = None
+        self._is_connected = False
 
         self.connect()
 
@@ -112,18 +112,20 @@ class VortranLaser(AbstractLaser):
         - beam shape
 
         """
-        try:
-            if self.port is None:
-                ports = (
-                    list_ports.comports()
-                    if self._in_serial_num is not None
-                    else VortranLaser.get_lasers()
-                )
-            else:
-                ports = [self.port]
+        if self.port is None:
+            ports = (
+                list_ports.comports()
+                if self._in_serial_num is not None
+                else [laser[0] for laser in VortranLaser.get_lasers()]
+            )
+        else:
+            ports = [self.port]
 
-            for port in ports:
-                self.port = port
+        # try to connect to each candidate port
+        laser_found = False
+        for port in ports:
+            self.port = port
+            try:
                 self.address = serial.Serial(
                     port=self.port,
                     baudrate=self.baudrate,
@@ -132,27 +134,42 @@ class VortranLaser(AbstractLaser):
                     stopbits=serial.STOPBITS_ONE,
                     timeout=self.timeout,
                 )
+                self._identify_laser()
+            except RuntimeError:
+                logger.debug(
+                    f"A runtime error occurred while attempting to connect to port {self.port}"
+                )
+                self.disconnect()
+                continue
 
-                if self._in_serial_num == self.serial_number:
-                    logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
-                else:
-                    self.disconnect()
-                    raise Exception
+            # if we were able to connect to the port,
+            # then we accept the connection *unless* the user specified a serial number,
+            # in which case we first check that the laser matches it
+            if self._in_serial_num is None or self._in_serial_num == self.serial_number:
+                logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
+                laser_found = True
+                break
+            else:
+                self.disconnect()
 
-            self._identify_laser()
-        except RuntimeError:
-            logger.debug(f"No laser found in {self.port}")
+        if not laser_found:
+            if self._in_serial_num is not None:
+                message = f'No laser found for serial number {self.serial_number}'
+            else:
+                message = f'No laser found on ports {ports}'
+            logger.warning(message)
 
     def disconnect(self):
         """Disconnects the device"""
-        self.address.close()
+        if self.is_connected:
+            self.address.close()
         self.address = None
 
     @property
     def is_connected(self):
         """Check if device is connected to COM Port and return True/False"""
         logger.debug(f'{self.port} is open')
-        self._is_connected = self.address.is_open
+        self._is_connected = self.address is not None and self.address.is_open
         return self._is_connected
 
     def _write_cmd(self, cmd, value=None):
@@ -179,16 +196,16 @@ class VortranLaser(AbstractLaser):
                     cmd_LF = cmd + '=' + str(value) + '\r'
                 else:
                     cmd_LF = cmd + '\r'
-                self.address.write(cmd_LF.encode('utf-8'))
                 logger.debug(
-                    f"Write to laser <{self.serial_number}> -> cmd:<{cmd.encode('utf-8')}>"
+                    f"Write to laser <{self.serial_number}> -> cmd:<{cmd_LF.encode('utf-8')}>"
                 )
+                self.address.write(cmd_LF.encode('utf-8'))
                 msg_out = self._read_cmd(cmd)
                 return msg_out
             else:
-                raise ValueError("Command not found")
+                raise ValueError(f"Command '{cmd}' not found")
         except Exception as e:
-            raise RuntimeError("Error: sending command") from e
+            raise RuntimeError(f"Error sending command: {str(e)}")
 
     def _read_cmd(self, cmd):
         """
@@ -217,7 +234,7 @@ class VortranLaser(AbstractLaser):
                             values = msg[len(cmd) + 1 : -2].split(', ')
                             logger.debug(f"msg_out > {msg}")
                             break
-            logger.debug(f"Read: {values}")
+            logger.debug(f"Parsed values: {values}")
             if values is None:
                 values = ['0']
                 # TODO: maybe raise warning?
@@ -423,7 +440,7 @@ class VortranLaser(AbstractLaser):
                     logger.info(f"Found: {laser.port}:{laser.serial_number}")
                     laser.disconnect()
                 else:
-                    raise Exception
+                    continue
             except (RuntimeWarning, RuntimeError):
                 logger.debug(f'No laser found in {port}')
 
