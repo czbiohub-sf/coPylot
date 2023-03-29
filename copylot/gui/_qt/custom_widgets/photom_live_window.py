@@ -1,4 +1,4 @@
-from PyQt5.QtGui import QPainter, QPen, QImage, QColor, QPainterPath, QBrush
+from PyQt5.QtGui import QPainter, QPen, QImage, QColor, QPainterPath, QBrush, QFont
 from PyQt5.QtWidgets import (
     QMainWindow,
     QGraphicsScene,
@@ -13,17 +13,21 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt, QEvent, QPoint, QRect, QPointF
 from PyQt5 import QtGui
-from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac
+
+# from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac
 
 """
 This script creates a LiveViewWindow to control laser spot when overlaid with camera display.
 """
+
 
 class LiveViewWindow(QMainWindow):
     def __init__(self, parent):
         super().__init__()
         # Inherit arguments from ControlPanel
         self.parent = parent
+        self.demo_mode = parent.demo_mode
+        self.mirror = self.parent.mirror_0
         # Create a LiveViewwindow
         self.setMouseTracking(True)
         self.opacity = 0.7
@@ -33,7 +37,9 @@ class LiveViewWindow(QMainWindow):
         self.setGeometry(*self.parent.liveViewGeo)
         self.setWindowTitle('Mouse Tracker')
         self.show()
-        print(f'liveView actual {self.frameGeometry().x(), self.frameGeometry().y(), self.width(), self.height()}')
+        print(
+            f'liveView actual {self.frameGeometry().x(), self.frameGeometry().y(), self.width(), self.height()}'
+        )
 
         # Correct geometry with top and side bars
         self.topbar_size = self.frameGeometry().height() - self.parent.liveViewGeo[3]
@@ -43,26 +49,35 @@ class LiveViewWindow(QMainWindow):
         self.offset_x = self.canvas_width / 2
         self.offset_y = self.canvas_height / 2
 
-        # Create a scene
+        # Create a scene to manage and display 2D graphic items
         self.scene = QGraphicsScene(self)
         self.scene.setSceneRect(0, 0, self.canvas_width, self.canvas_height)
 
-        # Create a view
+        # Create a view to display the scene
         self.view = QGraphicsView(self.scene)
         self.view.setMouseTracking(True)
         self.view.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.view.viewport().installEventFilter(self)
-        self.marker = QGraphicsSimpleTextItem('X')
+        # Add the markers font and color
+        self.marker = QGraphicsSimpleTextItem('+')
+        marker_font = QFont()
+        marker_font.setPointSize(20)
+        marker_font.setBold(True)
+        self.marker.setFont(marker_font)
+        brush = QBrush(QColor('red'))
+        self.marker.setBrush(brush)
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.moveMarker(self.canvas_width / 2, self.canvas_height / 2, self.marker)
         self.scene.addItem(self.marker)
         self.view.setScene(self.scene)
+        # ===========================================
+        # EH: Functions that rely on other copylot hardware
+        self.moveMarker(self.canvas_width / 2, self.canvas_height / 2, self.marker)
 
         # Create an image for drawing activation area
         self.image = QImage(self.size(), QImage.Format_ARGB32)
         # self.image.fill(Qt.white)
         self.lastPoint = QPoint()
-        # Finalize window
+        # Finalize window and set the view as main widget
         self.setCentralWidget(self.view)
         self.setMouseTracking(True)
 
@@ -74,7 +89,7 @@ class LiveViewWindow(QMainWindow):
         self.scan_region_list = []
         self.scan_region_num_list = []
 
-    def initMarker(self, x=100, y=100, text='X', color='black'):
+    def initMarker(self, x=100, y=100, text='+', color='black', size=10):
         """
         Create a marker.
         :param x: x coordinate
@@ -84,10 +99,17 @@ class LiveViewWindow(QMainWindow):
         :return: TextItem object
         """
         marker = QGraphicsSimpleTextItem(text)
+
+        ## Modify the font size
+        # marker_font = QFont()
+        # marker_font.setPointSize(20)
+        # marker_font.setBold(True)
+        # marker.setFont(marker_font)
         if isinstance(color, str):
             marker.setBrush(QColor(color))
         else:
             marker.setBrush(color)
+
         return self.moveMarker(x, y, marker)
 
     def initMarkerlist(self, cord_ref, cord_ctrl):
@@ -100,8 +122,11 @@ class LiveViewWindow(QMainWindow):
         for i in range(len(cord_ref)):
             self.ref_marker_list.append(
                 self.initMarker(
-                    cord_ref[i][0], cord_ref[i][1],
-                    color=QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                    cord_ref[i][0],
+                    cord_ref[i][1],
+                    color=QColor(76, 0, 153)
+                    if self.parent.current_laser == 0
+                    else Qt.red,
                     text='O',
                 )
             )
@@ -126,8 +151,15 @@ class LiveViewWindow(QMainWindow):
         Initialize window after changing window size.
         """
         self.initOffset()
-        self.scene.setSceneRect(0, 0, self.canvas_width - self.sidebar_size, self.canvas_height - self.topbar_size)
-        print(f'window size {self.frameGeometry().x(), self.frameGeometry().y(), self.canvas_width, self.canvas_height}')
+        self.scene.setSceneRect(
+            0,
+            0,
+            self.canvas_width - self.sidebar_size,
+            self.canvas_height - self.topbar_size,
+        )
+        print(
+            f'window size {self.frameGeometry().x(), self.frameGeometry().y(), self.canvas_width, self.canvas_height}'
+        )
 
     def drawMarker(self, marker, movable=False):
         """
@@ -142,7 +174,13 @@ class LiveViewWindow(QMainWindow):
         path = QPainterPath(QPointF(*coord[0]))
         [path.lineTo(QPointF(*i)) for i in coord[1:] + coord[:1]]
         painter = QPainter(self.image)
-        painter.setPen(QPen(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red, 1, Qt.DotLine))
+        painter.setPen(
+            QPen(
+                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                1,
+                Qt.DotLine,
+            )
+        )
         painter.eraseRect(self.rect())
         painter.drawPath(path)
         self.view.viewport().update()
@@ -162,29 +200,39 @@ class LiveViewWindow(QMainWindow):
         :return: a marker object at new position
         """
         if not self.parent.demo_mode:
-            if self.parent.transform_list[self.parent.current_laser].affmatrix is not None:
-                cord = self.parent.transform_list[self.parent.current_laser].affineTrans([x, y])
+            if (
+                self.parent.transform_list[self.parent.current_laser].affmatrix
+                is not None
+            ):
+                cord = self.parent.transform_list[
+                    self.parent.current_laser
+                ].affineTrans([x, y])
             else:
                 cord = [x, y]
-            if with_dac:
-                signal_to_dac(
-                    self.parent.ao_range,
-                    cord[0],
-                    value_range=(0, self.canvas_width),  # range of output laser power
-                    Vout_range=(-10, 10),
-                    dac_ch=self.parent.galvo_x,
-                    board_num=self.parent.board_num,
-                    invert=True,
-                )
-                signal_to_dac(
-                    self.parent.ao_range,
-                    cord[1],
-                    value_range=(0, self.canvas_height),  # range of output laser power
-                    Vout_range=(-10, 10),
-                    dac_ch=self.parent.galvo_y,
-                    board_num=self.parent.board_num,
-                    invert=True,
-                )
+            if self.parent.dac_mode:
+                # signal_to_dac(
+                #     self.parent.ao_range,
+                #     cord[0],
+                #     value_range=(0, self.canvas_width),  # range of output laser power
+                #     Vout_range=(-10, 10),
+                #     dac_ch=self.parent.galvo_x,
+                #     board_num=self.parent.board_num,
+                #     invert=True,
+                # )
+                # signal_to_dac(
+                #     self.parent.ao_range,
+                #     cord[1],
+                #     value_range=(0, self.canvas_height),  # range of output laser power
+                #     Vout_range=(-10, 10),
+                #     dac_ch=self.parent.galvo_y,
+                #     board_num=self.parent.board_num,
+                #     invert=True,
+                # )
+                raise NotImplementedError("DAC not implemented")
+            else:
+                self.mirror.position_x = cord[0]
+                self.mirror.position_y = cord[1]
+
         if marker is not None:
             return self.dispMarkerbyCenter(marker, [x, y])
 
@@ -248,16 +296,28 @@ class LiveViewWindow(QMainWindow):
         if event.type() == QEvent.MouseMove:
             if self.iscalib:
                 self.moveTetragon()
-                ctrl_marker_posi = [self.getMarkerCenter(mk) for mk in self.ctrl_marker_list]
-                self.parent.tabmanager.laser_cali.dac_controller.data_list = list(map(list, zip(*ctrl_marker_posi)))
+                ctrl_marker_posi = [
+                    self.getMarkerCenter(mk) for mk in self.ctrl_marker_list
+                ]
+                # self.parent.tabmanager.laser_cali.dac_controller.data_list = list(map(list, zip(*ctrl_marker_posi)))
                 print(f'Ctrl. marker {ctrl_marker_posi}')
             # Draw a selecting bounding box
             elif self.right_hold:
                 # Get the shape
                 # shape_ind = self.parent.tabmanager.pattern_ctrl.bg_pattern_selection.checkedId()
-                shape_ind = self.parent.tabmanager.multi_pattern.bg_indiv.bg_shape.checkedId()
+                shape_ind = (
+                    self.parent.tabmanager.multi_pattern.bg_indiv.bg_shape.checkedId()
+                )
                 painter = QPainter(self.image)
-                painter.setPen(QPen(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red, 3, Qt.DotLine))
+                painter.setPen(
+                    QPen(
+                        QColor(76, 0, 153)
+                        if self.parent.current_laser == 0
+                        else Qt.red,
+                        3,
+                        Qt.DotLine,
+                    )
+                )
                 self.scanregion = QRect(
                     self.lastPoint.x(),
                     self.lastPoint.y(),
@@ -274,26 +334,36 @@ class LiveViewWindow(QMainWindow):
             elif self.left_hold:
                 cord = self.getMarkerCenter(self.marker)
                 if not self.parent.demo_mode:
-                    if self.parent.transform_list[self.parent.current_laser].affmatrix is not None:
+                    if (
+                        self.parent.transform_list[self.parent.current_laser].affmatrix
+                        is not None
+                    ):
                         print('transforming coordinate...')
-                        cord = self.parent.transform_list[self.parent.current_laser].affineTrans(cord)
+                        cord = self.parent.transform_list[
+                            self.parent.current_laser
+                        ].affineTrans(cord)
                         print(f'tranferred {cord}')
-                    signal_to_dac(
-                        self.parent.ao_range,
-                        cord[0],
-                        (0, self.canvas_width),
-                        Vout_range=(-10, 10),
-                        dac_ch=self.parent.galvo_x,
-                        invert=True,
-                    )
-                    signal_to_dac(
-                        self.parent.ao_range,
-                        cord[1],
-                        (0, self.canvas_height),
-                        Vout_range=(-10, 10),
-                        dac_ch=self.parent.galvo_y,
-                        invert=True,
-                    )
+                    if self.parent.dac_mode:
+                        # signal_to_dac(
+                        #     self.parent.ao_range,
+                        #     cord[0],
+                        #     (0, self.canvas_width),
+                        #     Vout_range=(-10, 10),
+                        #     dac_ch=self.parent.galvo_x,
+                        #     invert=True,
+                        # )
+                        # signal_to_dac(
+                        #     self.parent.ao_range,
+                        #     cord[1],
+                        #     (0, self.canvas_height),
+                        #     Vout_range=(-10, 10),
+                        #     dac_ch=self.parent.galvo_y,
+                        #     invert=True,
+                        # )
+                        raise NotImplementedError("DAC not implemented")
+                    else:
+                        self.mirror.position_x = cord[0]
+                        self.mirror.position_x = cord[1]
                 print(f'raw {cord}')
         elif event.type() == QEvent.MouseButtonPress:
             print('mouse pressed')
@@ -303,7 +373,7 @@ class LiveViewWindow(QMainWindow):
                 print('left button clicked.')
             elif event.buttons() == Qt.RightButton:
                 if self.iscalib:
-                    self.parent.tabmanager.laser_cali.apply_cailb()
+                    self.parent.tabmanager.laser_cali.apply_calib()
                     print('Laser calibration applied.')
                 else:
                     self.right_hold = True
@@ -320,7 +390,6 @@ class LiveViewWindow(QMainWindow):
                 self.right_hold = False
                 print('mouse released')
 
-
         elif event.type() == QEvent.MouseButtonDblClick:
             print('double clicked')
         elif event.type() == QEvent.Paint:
@@ -334,11 +403,20 @@ class LiveViewWindow(QMainWindow):
 
     def draw_preview(self, scan_path):
         painter = QPainter(self.image)
-        painter.setPen(QPen(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red, 2, Qt.SolidLine))
+        painter.setPen(
+            QPen(
+                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                2,
+                Qt.SolidLine,
+            )
+        )
         painter.eraseRect(self.scanregion)
         for i in range(len(scan_path[0]) - 1):
             painter.drawLine(
-                scan_path[0][i], scan_path[1][i], scan_path[0][i + 1], scan_path[1][i + 1],
+                scan_path[0][i],
+                scan_path[1][i],
+                scan_path[0][i + 1],
+                scan_path[1][i + 1],
             )
         self.view.viewport().update()
         print(f'drawing preview')
@@ -359,7 +437,13 @@ class LiveViewWindow(QMainWindow):
             item = QGraphicsEllipseItem(*param)
         itemn = QGraphicsSimpleTextItem(str(len(self.scan_region_list) + 1))
         itemn.setPos(param[0], param[1])
-        item.setPen(QPen(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red, 2, Qt.SolidLine))
+        item.setPen(
+            QPen(
+                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                2,
+                Qt.SolidLine,
+            )
+        )
         b = QBrush(Qt.DiagCrossPattern)
         b.setColor(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red)
         item.setBrush(b)
@@ -380,3 +464,23 @@ class LiveViewWindow(QMainWindow):
             j.setText(str(i + 1))
 
 
+class photom_marker(QGraphicsSimpleTextItem):
+    """
+    Photom marker that allows dragging with the left click and trigger secondary function with right click
+
+    Parameters
+    ----------
+    QGraphicsSimpleTextItem :
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.RightButton:
+            brush = QBrush(Qt.red)
+            self.setBrush(brush)
+        elif event.button() == Qt.LeftButton:
+            brush = QBrush(Qt.black)
+            self.setBrush(brush)
+        super().mousePressEvent(event)

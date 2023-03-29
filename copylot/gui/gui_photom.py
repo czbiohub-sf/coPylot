@@ -15,12 +15,13 @@ from qtpy.QtWidgets import (
 
 from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
 from copylot import __version__
+from copylot.gui._qt.photom_control.logger import configure_logger
 
+logger = configure_logger(name='photom')
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.threadpool = QThreadPool()
 
         self.title = "Pisces Parameter Controller"
@@ -38,23 +39,6 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
-
-        self.init_defaults = [
-            ["exposure", 0.001, 1, 0.02],
-            ["nb_timepoints", 1, 10000, 600],
-            ["scan_step", 0.01, 1, 0.1],
-            ["stage_scan_range", 0, 10000, 1000],
-            ["vertical_pixels", 0, 4000, 2048],
-            ["num_samples", 0, 100, 20],
-            ["offset_view1", 0, 3180, 1550],
-            ["offset_view2", 0, 3180, 1650],
-            ["view1_galvo1", -10, 10, 4.2],
-            ["view1_galvo2", -10, 10, -4.08],
-            ["view2_galvo1", -10, 10, -4.37],
-            ["view2_galvo2", -10, 10, 3.66],
-            ["stripe_reduction_range", 0, 10, 0.1],
-            ["stripe_reduction_offset", -10, 10, 0.58],
-        ]
 
         try:
             with open(

@@ -16,32 +16,52 @@ from PyQt5.QtWidgets import (
     QShortcut,
 )
 
+
+from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
+from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import (
+    LaserSelectionBox,
+)
+from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
+
+# TODO: import with the DAC
 # from dac_controller.scan import DACscan
 # from dac_controller.scan_points import ScanPoints
-from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
-from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import LaserSelectionBox
 
 
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+# TODO: add a method to reset the corners of the trapezoid
+# TODO modify the LaserSelection Box to automatically get values from copylot
 class LaserPositionCalibration(QWidget):
     """
     A class obj for the laser spot calibration tab.
     """
+
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        self.window1 = parent.parent.window1
+        self.controlpanel = self.parent.parent
+        self.window1 = self.controlpanel.window1
         self.target_marker = None  # target marker widget
         self.ref_markers = []  # markers to create a reference tetragon
+
+        # import the mirrors
+        self.mirror_0 = self.controlpanel.mirror_0
 
         # Create buttons & text boxes
         self.laser_selection_box = LaserSelectionBox(self.parent)
         self.reset2center = QPushButton('Center')
-        self.loadpath_input = QLineEdit(join(self.parent.parent.savepath_configs, ''), self)
+        self.loadpath_input = QLineEdit(
+            join(self.controlpanel.savepath_configs, ''), self
+        )
         self.browse_load = QPushButton('Browse', self)
         self.load_button = QPushButton('Load', self)
         self.browse_save = QPushButton('Browse', self)
         self.savepath_input = QLineEdit(
-            join(self.parent.parent.savepath_configs, f'calibration.txt'), self
+            join(self.controlpanel.savepath_configs, f'calibration.txt'), self
         )
         self.pb_start = QPushButton('Start', self)
         self.pb_apply = QPushButton('Apply', self)
@@ -86,16 +106,17 @@ class LaserPositionCalibration(QWidget):
         self.pb_start.clicked.connect(self.window1.initWindowsize)
         self.pb_start.clicked.connect(self.initVout)
         self.pb_start.clicked.connect(self.start_scan)
-        self.pb_apply.clicked.connect(self.apply_cailb)
+        self.pb_apply.clicked.connect(self.apply_calib)
         self.pb_finish.clicked.connect(self.stop_scan)
         self.reset2center.clicked.connect(self.initVout)
         self.browse_load.clicked.connect(self.open_loadialog)
         self.load_button.clicked.connect(self.load_affinematrix)
         self.browse_save.clicked.connect(self.open_savedialog)
+
         # Assign shortcut keys
         self.shortcut_refresh = QShortcut(QKeySequence('Ctrl+r'), self)
-        self.shortcut_refresh.activated.connect(self.apply_cailb)
-        self.initVout()  # assign the center of the window to (0, 0) volt
+        self.shortcut_refresh.activated.connect(self.apply_calib)
+        # self.initVout()  # assign the center of the window to (0, 0) volt
 
         # Set layout
         self.layout = QVBoxLayout()
@@ -114,11 +135,14 @@ class LaserPositionCalibration(QWidget):
         self.ref_rect_coord = []
         self.ctrl_rect_coord = []
         self.scan_path = []
-        # self.dac_controller = ScanPoints(self.parent.parent, sampling_rate=4 if self.parent.parent.demo_mode else 100)
-        # self.dac_controller = None if self.parent.parent.demo_mode else DACscan([[0, 0, 0, 0], [0]], self.parent.parent, sampling_rate=2)
+        # self.dac_controller = ScanPoints(self.controlpanel, sampling_rate=4 if self.controlpanel.demo_mode else 100)
+        # self.dac_controller = None if self.controlpanel.demo_mode else DACscan([[0, 0, 0, 0], [0]], self.controlpanel, sampling_rate=2)
 
     def size2cord(self, size):
-        x0y0 = (-size[0] / 2 + self.window1.offset_x, -size[1] / 2 + self.window1.offset_y)
+        x0y0 = (
+            -size[0] / 2 + self.window1.offset_x,
+            -size[1] / 2 + self.window1.offset_y,
+        )
         x1y0 = (x0y0[0] + size[0], x0y0[1])
         x1y1 = (x0y0[0] + size[0], x0y0[1] + size[1])
         x0y1 = (x0y0[0], x0y0[1] + size[1])
@@ -130,18 +154,31 @@ class LaserPositionCalibration(QWidget):
         offset_x & y are the coordinates of the center position in the window.
         """
         self.window1.initOffset()
-        self.window1.moveMarker(self.window1.offset_x, self.window1.offset_y, self.window1.marker, with_dac=True)
+        self.window1.moveMarker(
+            self.window1.offset_x,
+            self.window1.offset_y,
+            self.window1.marker,
+            with_dac=True,
+        )
         print(f'offset: {(self.window1.offset_x, self.window1.offset_y)}')
 
     def init_cord(self):
-        initial_ref_size = (self.window1.canvas_width * 2 / 3, self.window1.canvas_height * 2 / 3)
-        initial_ctrl_size = (self.window1.canvas_width / 6, self.window1.canvas_height / 6)
+        initial_ref_size = (
+            self.window1.canvas_width * 2 / 3,
+            self.window1.canvas_height * 2 / 3,
+        )
+        initial_ctrl_size = (
+            self.window1.canvas_width / 6,
+            self.window1.canvas_height / 6,
+        )
         self.ref_rect_coord = self.size2cord(initial_ref_size)
         self.ctrl_rect_coord = self.size2cord(initial_ctrl_size)
         self.scan_path = [[i[j] for i in self.ctrl_rect_coord] for j in range(2)]
 
     def load_affinematrix(self):
-        e = self.parent.parent.transform_list[self.parent.parent.current_laser].loadmatrix(self.loadpath_input.text())
+        e = self.controlpanel.transform_list[
+            self.controlpanel.current_laser
+        ].loadmatrix(self.loadpath_input.text())
         if e is None:
             self.parent.update_calibration_status()
             self.msgbox.update_msg('Calibration loaded successfully.')
@@ -161,24 +198,29 @@ class LaserPositionCalibration(QWidget):
         dlg = QFileDialog()
         dlg.setDirectory(dirname(self.savepath_input.text()))
         dlg.setAcceptMode(QFileDialog.AcceptSave)
-        laser_num = self.parent.parent.current_laser
+        laser_num = self.controlpanel.current_laser
         if dlg.exec_():
             filepath = dlg.selectedFiles()[0]
             self.savepath_input.setText(filepath)
-            if self.parent.parent.transform_list[laser_num].affmatrix is not None:
+            if self.controlpanel.transform_list[laser_num].affmatrix is not None:
                 savepath = self.check_savepath()
-                self.parent.parent.transform_list[laser_num].savematrix(filename=savepath)
+                self.controlpanel.transform_list[laser_num].savematrix(
+                    filename=savepath
+                )
 
     def check_savepath(self):
         if self.savepath_input.text()[-4:] == '.txt':
             savepath = self.savepath_input.text()
             os.makedirs(dirname(savepath), exist_ok=True)
-            self.msgbox.update_msg(f'Calibration is saved as {abspath(savepath)}', )
-        else:
-            savepath = f'calibration_laser{self.parent.parent.current_laser}.txt'
             self.msgbox.update_msg(
-                'Save path is not a txt file. \n' + f'Calibration is saved as {join(os.getcwd(), savepath)}',
-                'red'
+                f'Calibration is saved as {abspath(savepath)}',
+            )
+        else:
+            savepath = f'calibration_laser{self.controlpanel.current_laser}.txt'
+            self.msgbox.update_msg(
+                'Save path is not a txt file. \n'
+                + f'Calibration is saved as {join(os.getcwd(), savepath)}',
+                'red',
             )
         return savepath
 
@@ -186,33 +228,60 @@ class LaserPositionCalibration(QWidget):
         self.window1.initWindowsize()
         self.init_cord()
         self.msgbox.update_msg('Calibration has started.')
+        # Hide the red/central marker
         self.window1.marker.setFlag(QGraphicsItem.ItemIsMovable, False)
         self.window1.marker.setOpacity(0)
         self.window1.iscalib = True
         self.window1.initMarkerlist(self.ref_rect_coord, self.ctrl_rect_coord)
         self.window1.drawTetragon(self.ref_rect_coord)
-        self.parent.parent.transform_list[self.parent.parent.current_laser].affmatrix = None
+        self.controlpanel.transform_list[
+            self.controlpanel.current_laser
+        ].affmatrix = None
         self.parent.update_calibration_status()
-        # self.dac_controller.start_scan(self.ctrl_rect_coord)
-        # self.dac_controller.trans_obj = self.parent.parent.transform_list[self.parent.parent.current_laser]
-        # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
-        # self.dac_controller.start_scan()
-
-    def apply_cailb(self):
-        if self.window1.iscalib:
-            self.ref_rect_coord, self.ctrl_rect_coord = self.collect_cord()
-            self.parent.parent.transform_list[self.parent.parent.current_laser].getAffineMatrix(*self.collect_cord())
-            # self.dac_controller.trans_obj = self.parent.parent.transform_list[self.parent.parent.current_laser]
-            self.msgbox.update_msg('Calibration has been applied.')
-            # self.dac_controller.apply_matrix = True
-            # self.dac_controller.data_list
-            # self.dac_controller.stop_scan()
-            # self.dac_controller.start_scan(self.collect_cord()[1])
+        if self.controlpanel.dac_mode:
+            # self.dac_controller.start_scan(self.ctrl_rect_coord)
+            # self.dac_controller.trans_obj = self.controlpanel.transform_list[self.controlpanel.current_laser]
             # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
             # self.dac_controller.start_scan()
+            raise NotImplementedError("DAC Controller scanning not implemented")
+        else:
+            logger.debug('Start Scan')
+            self.mirror_controller = ScanPoints(self, self.mirror_0)
+
+    def apply_calib(self):
+        if self.window1.iscalib:
+            self.ref_rect_coord, self.ctrl_rect_coord = self.collect_cord()
+            self.controlpanel.transform_list[
+                self.controlpanel.current_laser
+            ].getAffineMatrix(*self.collect_cord())
+            if self.controlpanel.dac_mode:
+                raise NotImplementedError("DAC Controller scanning not implemented")
+                # self.dac_controller.trans_obj = self.controlpanel.transform_list[self.controlpanel.current_laser]
+                # self.dac_controller.apply_matrix = True
+                # self.dac_controller.data_list
+                # self.dac_controller.stop_scan()
+                # self.dac_controller.start_scan(self.collect_cord()[1])
+                # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
+                # self.dac_controller.start_scan()
+
+            else:
+                self.mirror_controller.trans_obj = self.controlpanel.transform_list[
+                    self.controlpanel.current_laser
+                ]
+                self.mirror_controller.trans_obj.affineTrans(self.ctrl_rect_coord)
+                self.mirror_controller.apply_matrix = True
+                self.mirror_controller.data_list
+                self.mirror_controller.stop_scan()
+                self.mirror_controller.start_scan(self.collect_cord()[1])
+                self.mirror_controller.start_scan()
+            self.msgbox.update_msg('Calibration has been applied.')
 
     def revert_calib(self):
-        # self.dac_controller.apply_matrix = False
+        if self.controlpanel.dac_mode:
+            raise NotImplementedError("DAC Controller scanning not implemented")
+            # self.dac_controller.apply_matrix = False
+        else:
+            self.mirror_controller.apply_matrix = False
         self.msgbox.update_msg('Calibration is not applied.')
 
     def stop_scan(self):
@@ -222,15 +291,29 @@ class LaserPositionCalibration(QWidget):
         self.window1.iscalib = False
         self.window1.clearMarkerlist()
         self.parent.update_calibration_status()
-        # self.dac_controller.stop_scan()
+
+        if self.controlpanel.dac_mode:
+            raise NotImplementedError("DAC Controller scanning not implemented")
+            # self.dac_controller.stop_scan()
+        else:
+            self.mirror_controller.stop_scan()
+
         # save affine matrix
         savepath = self.check_savepath()
         try:
-            self.parent.parent.transform_list[self.parent.parent.current_laser].savematrix(filename=savepath)
+            self.controlpanel.transform_list[
+                self.controlpanel.current_laser
+            ].savematrix(filename=savepath)
         except ValueError as e:
             self.msgbox.update_msg('Calibration is not saved.\n' + str(e))
 
     def collect_cord(self):
-        ref_cord = [self.window1.getMarkerCenter(mk) for mk in self.parent.parent.window1.ref_marker_list]
-        ctrl_cord = [self.window1.getMarkerCenter(mk) for mk in self.parent.parent.window1.ctrl_marker_list]
+        ref_cord = [
+            self.window1.getMarkerCenter(mk)
+            for mk in self.controlpanel.window1.ref_marker_list
+        ]
+        ctrl_cord = [
+            self.window1.getMarkerCenter(mk)
+            for mk in self.controlpanel.window1.ctrl_marker_list
+        ]
         return ref_cord, ctrl_cord

@@ -8,8 +8,12 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-
+#TODO: get the laser labels and values from copylot loaded devices
 class LaserSelectionBox(QGroupBox):
+    """
+    Prompts the available lasers and selects the one due for calibration
+    The user should select and calibrate each laser
+    """
     def __init__(self, tabmanager):
         super().__init__()
         self.tabmanager = tabmanager

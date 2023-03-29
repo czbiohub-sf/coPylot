@@ -10,6 +10,7 @@ from qtpy.QtWidgets import (
     QSlider,
     QTabWidget,
     QDesktopWidget,
+    QMessageBox,
 )
 from qtpy.QtCore import Qt, Signal, Slot
 import time
@@ -17,29 +18,56 @@ import time
 from copylot.gui._qt.job_runners.worker import Worker
 from copylot.gui._qt.photom_control.tab_manager import TabManager
 from copylot.gui._qt.custom_widgets.photom_live_window import LiveViewWindow
-# from widgets.utils.affinetransform import AffineTransform
+from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
+from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
+from copylot.gui._qt.custom_widgets.qt_logger import QtLogger, QtLogBox
+from copylot.gui._qt.photom_control.logger import configure_logger
 import os
+import logging
+
+logger = logging.getLogger('photom')
+
+# This flag disables the loading of the DACs and lasers.
 demo_mode = True
+dac_mode = False
+
+
+if not demo_mode:
+    from copylot.hardware.lasers.vortran import vortran
+    from copylot.hardware.mirrors.optotune import mirror
+
+    serial_num = ''
+    laser_port = ''
+    mirror_port = ''
+    # from copylot.hardware.lasers import
+
 print('Running in the UI demo mode. (from ControlPanel)')
 
+
+# TODO: setup a filelogger location
 class PhotomControlDockWidget(QWidget):
     # TODO: Need to define the threads needed
     # thread_launching = Signal()
     def __init__(self, parent, threadpool):
         super(QWidget, self).__init__(parent)
-        self.demo_mode = demo_mode
 
+        # Variables for testing purposes to run demo mode or dac mode
+        self.demo_mode = demo_mode
+        self.dac_mode = dac_mode
+
+        # Get the number of screens and make the live view
         num_screens = QDesktopWidget().screenCount()
         # Determine window sizes
         self.liveViewGeo = (
             QDesktopWidget().screenGeometry(num_screens - 1).left(),
             QDesktopWidget().screenGeometry(num_screens - 1).top(),
-            min(QDesktopWidget().screenGeometry(num_screens - 1).width() - 400, 1000),
-            min(QDesktopWidget().screenGeometry(num_screens - 1).height(), 1000),
+            min(QDesktopWidget().screenGeometry(num_screens - 1).width() - 400, 800),
+            min(QDesktopWidget().screenGeometry(num_screens - 1).height(), 800),
         )
         print(f'liveViewGeo {self.liveViewGeo}')
         self.ctrlPanelGeo = (
-            QDesktopWidget().screenGeometry(num_screens - 1).left() + self.liveViewGeo[2],
+            QDesktopWidget().screenGeometry(num_screens - 1).left()
+            + self.liveViewGeo[2],
             QDesktopWidget().screenGeometry(num_screens - 1).top(),
             400,
             self.liveViewGeo[3],
@@ -48,20 +76,34 @@ class PhotomControlDockWidget(QWidget):
         self.parent = parent
         self.threadpool = threadpool
         self.state_tracker = False
-        #===============================================
-        #Laser and galco
-        self.current_laser = 0
+        # ===============================================
+        # Laser and galvo
+        self.current_laser = (
+            0  # this variable is used for knowing which laser to calibrate
+        )
 
-        #=============================================
-         # Create folder for saving calibration matrix and other stuff
+        # Scan pattern selection
+        self.current_scan_shape = 0
+        self.current_scan_pattern = 0
+
+        if self.demo_mode:
+            self.mirror_0 = 0
+        else:
+            # Initialize the laser and the galvo
+            self.laser_0 = vortran.VortranLaser(
+                serial_number=serial_num, port=laser_port
+            )
+            self.mirror_0 = mirror.OptoMirror(com_port=mirror_port)
+            if self.dac_mode:
+                pass
+            pass
+
+        # =============================================
+        # Create folder for saving calibration matrix and other stuff
         self.savepath_configs = 'stored_configs'
-        self.savepath_scshot = 'screenshot'
+        # self.savepath_scshot = 'screenshot'
         os.makedirs(self.savepath_configs, exist_ok=True)
-        os.makedirs(self.savepath_scshot, exist_ok=True)
-        # Get paramters from the DAC board
-        self.demo_mode = demo_mode
-        self.board_num = 0
-        self.ao_range = None
+        # os.makedirs(self.savepath_scshot, exist_ok=True)
 
         # Set the main Layout
         self.main_layout = QGridLayout()
@@ -84,18 +126,23 @@ class PhotomControlDockWidget(QWidget):
 
         # Tab Manager
         self.layout.addWidget(self.tabmanager, 3, 0, 1, 3)
-        # def handle_photom_launch(self):
-        #     self.state_tracker = not self.state_tracker
-        #     if self.state_tracker:
-        #         self.setStyleSheet("background-color: red;")
-        #     else:
-        #         scshot_box = QGroupBox('Screen shot')
-        #         scshot_box.setStyleSheet('font-size: 14pt')
-        #         scshot_box.layout = QGridLayout()
-        #         scshot_box.layout.addWidget(self.le_scshot, 0, 0)
-        #         scshot_box.layout.addWidget(self.pb_scshot, 0, 1)
-        #         scshot_box.setLayout(scshot_box.layout)
         self.setLayout(self.layout)
+
+        # Logger
+        log_box = QtLogBox('Logging displayer')
+        self.layout.addWidget(log_box, 4, 0, 1, 3)
+        # Get the StreamHandler attached to the logger
+        log_box_handler = QtLogger(log_box)
+        log_box_handler.setFormatter(logging.Formatter("%(levelname)s - %(module)s - %(message)s"))
+        logger.addHandler(log_box_handler)
+
+        logger.debug('aaaaaa')
+        logger.info('asfasdfasdfsdf')
+        logger.info('asfasdfasdfsdf')
+
+        # ===============================
+        # Transform matrix that aligns cursor with laser point
+        self.transform_list = [AffineTransform(), AffineTransform()]
 
     @property
     def parameters(self):
@@ -105,5 +152,3 @@ class PhotomControlDockWidget(QWidget):
         self.opacity_indicator.setText(f'Opacity {self.sl_opacity.value()} %')
         self.window1.opacity = self.sl_opacity.value() / 100
         self.window1.setWindowOpacity(self.window1.opacity)
-
-

@@ -13,8 +13,8 @@ from PyQt5.QtWidgets import (
     QApplication,
 )
 
-from dac_controller.scan import DACscan
-from widgets.scan_algrthm.scan_algorithm import ScanAlgorithm
+# from dac_controller.scan import DACscan
+from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
 
 
 class DrawPatternUnit(QGroupBox):
@@ -127,11 +127,11 @@ class DrawPatternUnit(QGroupBox):
                 self.select_algorithm()
                 if not self.window.parent.demo_mode:
                     self.messagebox.update_msg(f'Transferring data to DAC board...')
-                    self.dac_controller = DACscan(self.scan_path, self.tabmanager.parent)
-                    self.dac_controller.trans_obj = self.tabmanager.parent.transform_list[
-                        self.tabmanager.parent.current_laser
-                    ]
-                    self.dac_controller.transfer2dac()
+                    # self.dac_controller = DACscan(self.scan_path, self.tabmanager.parent)
+                    # self.dac_controller.trans_obj = self.tabmanager.parent.transform_list[
+                    #     self.tabmanager.parent.current_laser
+                    # ]
+                    # self.dac_controller.transfer2dac()
             self.pause_draw_flag = False
             self.messagebox.update_msg(f'Scanning {self.title} ...')
             if self.window.parent.demo_mode:

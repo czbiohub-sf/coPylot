@@ -13,11 +13,11 @@ from PyQt5.QtWidgets import (
 
 
 from copylot.gui._qt.photom_control.utils.labeledslider import LabeledSlider
-from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac, signal_to_galvo
 
 """
 This script creates the content for the laser control tab.
 """
+
 
 class SimpleLaser(QWidget):
     def __init__(self, parent):
@@ -27,18 +27,22 @@ class SimpleLaser(QWidget):
         self.laser2_power = 0
         self.laser1_Wrange = (0, 100)  # 405nm laser: 0-100 mW
         self.laser2_Wrange = (0, 50)  # 785nm laser: 0-50 mW
-        self.laser1_Vrange = parent.parent.vout_range[2]  # 405nm laser: 0-5 V
-        self.laser2_Vrange = parent.parent.vout_range[3]  # 785nm laser: 0-5 V
+        # self.laser1_Vrange = parent.parent.vout_range[2]  # 405nm laser: 0-5 V
+        # self.laser2_Vrange = parent.parent.vout_range[3]  # 785nm laser: 0-5 V
         self.laser_power_list = [self.laser1_power, self.laser2_power]
         self.laser_Wrange_list = [self.laser1_Wrange, self.laser2_Wrange]
-        self.laser_Vrange_list = [self.laser1_Vrange, self.laser2_Vrange]
+        # self.laser_Vrange_list = [self.laser1_Vrange, self.laser2_Vrange]
 
         # Slide bars to control laser power
         self.laser1_power_indicator = QLabel(str(self.laser1_power))
-        self.laser1_power_slider = LabeledSlider(self.laser1_Wrange[0], self.laser1_Wrange[1], 10)
+        self.laser1_power_slider = LabeledSlider(
+            self.laser1_Wrange[0], self.laser1_Wrange[1], 10
+        )
         self.laser1_power_slider.sl.valueChanged.connect(self.update_laser_power)
         self.laser2_power_indicator = QLabel(str(self.laser2_power))
-        self.laser2_power_slider = LabeledSlider(self.laser2_Wrange[0], self.laser2_Wrange[1], 5)
+        self.laser2_power_slider = LabeledSlider(
+            self.laser2_Wrange[0], self.laser2_Wrange[1], 5
+        )
         self.laser2_power_slider.sl.valueChanged.connect(self.update_laser_power)
 
         # Laser switch
@@ -99,24 +103,24 @@ class SimpleLaser(QWidget):
         self.laser_power_list = [self.laser1_power, self.laser2_power]
         self.laser1_power_indicator.setText('Power: ' + str(self.laser1_power) + ' mW')
         self.laser2_power_indicator.setText('Power: ' + str(self.laser2_power) + ' mW')
-        if self.laser1_switch.isChecked():
-            signal_to_dac(
-                self.parent.parent.ao_range,
-                self.laser1_power,
-                self.laser1_Wrange,
-                self.laser1_Vrange,
-                dac_ch=self.parent.parent.laser405,
-                invert=False,
-            )
-        if self.laser2_switch.isChecked():
-            signal_to_dac(
-                self.parent.parent.ao_range,
-                self.laser2_power,
-                self.laser2_Wrange,
-                self.laser2_Vrange,
-                dac_ch=self.parent.parent.laser785,
-                invert=False,
-            )
+        # if self.laser1_switch.isChecked():
+        #     signal_to_dac(
+        #         self.parent.parent.ao_range,
+        #         self.laser1_power,
+        #         self.laser1_Wrange,
+        #         self.laser1_Vrange,
+        #         dac_ch=self.parent.parent.laser405,
+        #         invert=False,
+        #     )
+        # if self.laser2_switch.isChecked():
+        #     signal_to_dac(
+        #         self.parent.parent.ao_range,
+        #         self.laser2_power,
+        #         self.laser2_Wrange,
+        #         self.laser2_Vrange,
+        #         dac_ch=self.parent.parent.laser785,
+        #         invert=False,
+        #     )
 
     def update_laser_onoff(self, laser_ind=None, laser_escape=True):
         """
@@ -130,14 +134,16 @@ class SimpleLaser(QWidget):
         else:
             laser_list = [laser_ind]
         for ind in laser_list:
-            signal_to_dac(
-                self.parent.parent.ao_range,
-                self.laser_power_list[ind] if self.laser_switch_gp.buttons()[ind].isChecked() else 0,
-                self.laser_Wrange_list[ind],
-                self.laser_Vrange_list[ind],
-                dac_ch=self.parent.parent.channel_list[ind + 2],
-                invert=False,
-            )
+            # signal_to_dac(
+            #     self.parent.parent.ao_range,
+            #     self.laser_power_list[ind]
+            #     if self.laser_switch_gp.buttons()[ind].isChecked()
+            #     else 0,
+            #     self.laser_Wrange_list[ind],
+            #     self.laser_Vrange_list[ind],
+            #     dac_ch=self.parent.parent.channel_list[ind + 2],
+            #     invert=False,
+            # )
             if self.laser_switch_gp.buttons()[ind].isChecked():
                 self.laser_switch_gp.buttons()[ind].setText('On')
             else:
@@ -146,27 +152,29 @@ class SimpleLaser(QWidget):
         # Escape laser point to out of FOV in safe mode
         if self.parent.parent.rb_safemode.isChecked() and laser_escape:
             if any([i.isChecked() for i in self.laser_switch_gp.buttons()]):
-                x, y = self.parent.parent.window1.getMarkerCenter(self.parent.parent.window1.marker)
+                x, y = self.parent.parent.window1.getMarkerCenter(
+                    self.parent.parent.window1.marker
+                )
                 self.parent.parent.window1.moveMarker(x, y, with_dac=True)
             else:
-                signal_to_galvo(
-                    self.parent.parent.ao_range,
-                    (0, 0),
-                    dac_ch_x=self.parent.parent.channel_list[0],
-                    dac_ch_y=self.parent.parent.channel_list[1],
-                    board_num=self.parent.parent.board_num,
-                    invert=True,
-                )
-
-
+                # signal_to_galvo(
+                #     self.parent.parent.ao_range,
+                #     (0, 0),
+                #     dac_ch_x=self.parent.parent.channel_list[0],
+                #     dac_ch_y=self.parent.parent.channel_list[1],
+                #     board_num=self.parent.parent.board_num,
+                #     invert=True,
+                # )
+                pass
 
     def init_laser(self):
         for laser_ind in range(2):
-            signal_to_dac(
-                self.parent.parent.ao_range,
-                0,
-                self.laser_Wrange_list[laser_ind],
-                self.laser_Vrange_list[laser_ind],
-                dac_ch=self.parent.parent.channel_list[laser_ind + 2],
-                invert=False,
-            )
+            # signal_to_dac(
+            #     self.parent.parent.ao_range,
+            #     0,
+            #     self.laser_Wrange_list[laser_ind],
+            #     self.laser_Vrange_list[laser_ind],
+            #     dac_ch=self.parent.parent.channel_list[laser_ind + 2],
+            #     invert=False,
+            # )
+            pass

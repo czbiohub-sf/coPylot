@@ -8,14 +8,19 @@ from PyQt5.QtWidgets import (
     QApplication,
 )
 
-from dac_controller.scan import DACscan
-from widgets.scan_algrthm.scan_algorithm import ScanAlgorithm
+# from dac_controller.scan import DACscan
+from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
+from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
 
 
 class StartStop(QGroupBox):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        self.controlpanel = parent.parent.parent
+        self.mirror_0 = self.controlpanel.mirror_0
+
+        # QT components
         self.prgbar_intra = QProgressBar(self)
         self.prgbar_inter = QProgressBar(self)
         self.pb_start = QPushButton('Start')
@@ -84,19 +89,27 @@ class StartStop(QGroupBox):
                     self.curr_intra = 0
                     self.prgbar_inter.setValue(self.curr_inter)
                     self.prgbar_intra.setMaximum(len(self.curr_scan_path[0]) * scan[-2])
-                if not self.parent.parent.parent.demo_mode:
-                    # Transfer data to DAC board
-                    self.parent.msgbox.update_msg(f'Transferring data #{self.curr_inter} to DAC board...')
-                    if not self.pause_scan_flag:
-                        self.dac_controller = DACscan(self.curr_scan_path, self.parent.parent.parent)
-                        self.dac_controller.trans_obj = self.parent.parent.parent.transform_list[
-                            self.parent.parent.parent.current_laser
-                        ]
-                        self.dac_controller.transfer2dac()
+                if not self.controlpanel.demo_mode:
+                    if self.controlpanel.dac_mode:
+                        raise NotImplementedError("DAC Controller scanning not implemented")
+                        # # Transfer data to DAC board
+                        # self.parent.msgbox.update_msg(f'Transferring data #{self.curr_inter} to DAC board...')
+                        # if not self.pause_scan_flag:
+                        #     self.dac_controller = DACscan(self.curr_scan_path, self.controlpanel)
+                        #     self.dac_controller.trans_obj = self.controlpanel.transform_list[
+                        #         self.controlpanel.current_laser
+                        #     ]
+                        #     self.dac_controller.transfer2dac()
+                    else:
+                        if not self.pause_scan_flag:
+                            self.mirror_controller = ScanPoints(self, self.mirror_0)
+                            self.mirror_controller.trans_obj = self.controlpanel.transform_list[
+                                self.controlpanel.current_laser
+                            ]                            
                 self.pause_scan_flag = False
                 self.parent.msgbox.update_msg(f'Scanning #{self.curr_inter} region...')
 
-                if self.parent.parent.parent.demo_mode:
+                if self.controlpanel.demo_mode:
                     self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
                     steps_per_cycle = len(self.curr_scan_path[0])
                     total_steps = steps_per_cycle * scan[-2]
@@ -105,10 +118,10 @@ class StartStop(QGroupBox):
                         if self.stop_scan_flag or self.pause_scan_flag:
                             break
                         else:
-                            self.parent.parent.parent.window1.moveMarker(
+                            self.controlpanel.window1.moveMarker(
                                 self.curr_scan_path[0][self.curr_intra % steps_per_cycle],
                                 self.curr_scan_path[1][self.curr_intra % steps_per_cycle],
-                                self.parent.parent.parent.window1.marker
+                                self.controlpanel.window1.marker
                             )
                             self.curr_intra += 1
                             self.prgbar_intra.setValue(self.curr_intra)
@@ -116,7 +129,7 @@ class StartStop(QGroupBox):
                     self.dac_controller.start_scan()
                     self.enable_buttons([self.pb_pause, self.pb_stop])
                     self.dac_controller.update_values(
-                        self.parent.parent.parent.window1,
+                        self.controlpanel.window1,
                         self.prgbar_intra,
                         laser_escape=True if self.curr_inter == len(self.scanobj_list) - 1 else False
                     )
@@ -138,7 +151,7 @@ class StartStop(QGroupBox):
         if self.scan_inprogress_flag:
             self.pause_scan_flag = True
             self.disable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
-            if not self.parent.parent.parent.demo_mode:
+            if not self.controlpanel.demo_mode:
                 curr_count, curr_index = self.dac_controller.pause_scan()
                 print(f'pausing at index: {curr_index}')
                 self.curr_scan_path = self.trimdata(self.curr_scan_path, curr_index // 2)
@@ -152,7 +165,7 @@ class StartStop(QGroupBox):
         """
         if self.scan_inprogress_flag:
             self.disable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
-            if not self.parent.parent.parent.demo_mode:
+            if not self.controlpanel.demo_mode:
                 self.dac_controller.stop_scan()
             self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
         self.stop_scan_flag = True
@@ -174,10 +187,10 @@ class StartStop(QGroupBox):
                     scan_path = self.generate_scanpath_perregion(scan[0], scan[-1])
                     scan_path_all_x += scan_path[0]
                     scan_path_all_y += scan_path[1]
-                self.parent.parent.parent.window1.draw_preview((scan_path_all_x, scan_path_all_y))
+                self.controlpanel.window1.draw_preview((scan_path_all_x, scan_path_all_y))
                 self.parent.msgbox.update_msg('Showing preview of scanning path.')
         else:
-            self.parent.parent.parent.window1.clear_preview('all')
+            self.controlpanel.window1.clear_preview('all')
             self.parent.msgbox.update_msg('')
 
     def collect_row(self, row):

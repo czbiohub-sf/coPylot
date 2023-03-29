@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QButtonGroup,
     QVBoxLayout,
+    QLabel
 )
 from copylot.gui._qt.photom_control.helper_functions.draw_pattern_unit import DrawPatternUnit
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
@@ -12,18 +13,20 @@ from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import 
 class PatternControl(QWidget):
     def __init__(self, parent):
         super().__init__()
+
+        #inherit the control panel arguments
         self.parent = parent
+        self.controlpanel = self.parent.parent
         self.laser_selection_box = LaserSelectionBox(self.parent)
         self.bttngp_sq = DrawPatternUnit('Square', parent)
         self.bttngp_di = DrawPatternUnit('Disk', parent)
-        self.msgbox = MessageBox('Current Status')
-
+        self.msgbox = MessageBox('Current Status')        
         # A ButtonGroup with exclusive selection for shape selection
         self.bg_pattern_selection = QButtonGroup(self)
         self.bg_pattern_selection.addButton(self.bttngp_sq.rb_group, 0)
         self.bg_pattern_selection.addButton(self.bttngp_di.rb_group, 1)
         self.bg_pattern_selection.setExclusive(True)
-        self.bg_pattern_selection.buttons()[self.parent.parent.current_scan_shape].setChecked(True)
+        self.bg_pattern_selection.buttons()[self.controlpanel.current_scan_shape].setChecked(True)
         self.bg_pattern_selection.buttonClicked.connect(
             lambda: self.parent.update_scan_shape(self.bg_pattern_selection.checkedId())
         )

@@ -2,9 +2,9 @@ from PyQt5.QtWidgets import (
     QTabWidget,
 )
 from copylot.gui._qt.photom_control.calibration_position import LaserPositionCalibration
-# from copylot.gui._qt.photom_control.multi_pattern import MultiPatternControl
-# from widgets.simple_laser import SimpleLaser
-# from copylot.gui._qt.photom_control.pattern_control import PatternControl
+from copylot.gui._qt.photom_control.multi_pattern import MultiPatternControl
+from copylot.gui._qt.photom_control.pattern_control import PatternControl
+# from copylot.gui._qt.photom_control.simple_laser import SimpleLaser
 
 
 class TabManager(QTabWidget):
@@ -15,19 +15,20 @@ class TabManager(QTabWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
+        
         # self.buttonSize = (200, 100)
 
         # Add contents for each tab
         self.laser_cali = LaserPositionCalibration(self)
         # self.simple_laser = SimpleLaser(self)
-        # self.pattern_ctrl = PatternControl(self)
-        # self.multi_pattern = MultiPatternControl(self)
+        self.pattern_ctrl = PatternControl(self)
+        self.multi_pattern = MultiPatternControl(self)
 
         # Add tabs
         # self.addTab(self.simple_laser, 'Simple Laser')
         self.addTab(self.laser_cali, 'Calibration')
-        # self.addTab(self.pattern_ctrl, 'Single Scan')
-        # self.addTab(self.multi_pattern, 'Multi Scans')
+        self.addTab(self.pattern_ctrl, 'Single Scan')
+        self.addTab(self.multi_pattern, 'Multi Scans')
 
     def update_current_laser(self, laser_idx):
         """
@@ -53,7 +54,7 @@ class TabManager(QTabWidget):
                 for laser_num in range(2):
                     if self.parent.transform_list[laser_num].affmatrix is None:
                         boxgrid.itemAtPosition(laser_num, 1).widget().setText('Not calibrated')
-                        boxgrid.itemAtPosition(laser_num, 1).widget().setStyleSheet('color: gray')
+                        boxgrid.itemAtPosition(laser_num, 1).widget().setStyleSheet('color: white')
                     else:
                         boxgrid.itemAtPosition(laser_num, 1).widget().setText('Calibration Done!')
                         boxgrid.itemAtPosition(laser_num, 1).widget().setStyleSheet('color: green')
