@@ -74,12 +74,7 @@ class LiveControlDockWidget(QWidget):
             daq_card_worker = Worker(self.timelapse_worker_method)
 
             logger.info(
-                "called with:",
-                self.parent.parameters_widget.parameters,
-                "view",
-                self.combobox_view,
-                "and channel",
-                self.combobox_channel,
+                f"called with: {self.parent.parameters_widget.parameters} view {self.combobox_view}, and channel {self.combobox_channel}"
             )
 
             # connect
