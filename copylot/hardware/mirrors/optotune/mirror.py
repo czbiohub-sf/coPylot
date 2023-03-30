@@ -6,7 +6,7 @@ Optotune Tip-tilt mirror controller MR-E-2 python wrapper
 For more details regarding operation, refer to the manuals in https://www.optotune.com/fast-steering-mirrors
 
 """
-
+from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
 
 
@@ -30,13 +30,13 @@ class OptoMirror:
         self.channel_y = self.mirror.Mirror.Channel_1
         self.channel_y.SetControlMode(optoMDC.Units.XY)
         self.channel_y.StaticInput.SetAsInput()
-        print("mirror connected")
+        logger.info("mirror connected")
 
     def __del__(self):
         self.position_x = 0
         self.position_y = 0
         self.mirror.disconnect()
-        print("mirror disconnected")
+        logger.info("mirror disconnected")
 
     @property
     def positions(self):
@@ -77,7 +77,7 @@ class OptoMirror:
             nearest edge of the unit circle
         """
         self.channel_x.StaticInput.SetXY(value)
-        print(f"position_x set to: {value}")
+        logger.info(f"position_x set to: {value}")
 
     @property
     def position_y(self):
@@ -106,4 +106,4 @@ class OptoMirror:
 
         """
         self.channel_y.StaticInput.SetXY(value)
-        print(f"position_y set to: {value}")
+        logger.info(f"position_y set to: {value}")

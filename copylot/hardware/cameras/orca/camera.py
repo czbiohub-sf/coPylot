@@ -1,3 +1,4 @@
+from copylot import logger
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot.hardware.cameras.orca.dcam import Dcamapi, Dcam
 
@@ -49,9 +50,9 @@ class OrcaCamera(AbstractCamera):
                             else:
                                 dcamerr = dcam.lasterr()
                                 if dcamerr.is_timeout():
-                                    print("===: timeout")
+                                    logger.error("===: timeout")
                                 else:
-                                    print(
+                                    logger.error(
                                         f"dcam.wait_event() fails with error {dcamerr}"
                                     )
                                     break

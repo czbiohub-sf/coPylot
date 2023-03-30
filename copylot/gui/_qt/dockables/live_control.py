@@ -2,6 +2,7 @@ from qtpy.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxL
 from qtpy.QtCore import Qt, Signal, Slot
 import time
 
+from copylot import logger
 from copylot.gui._qt.job_runners.worker import Worker
 from copylot.hardware.daqs.ni.legacy_daxi_nidaq import NIDaq
 
@@ -72,7 +73,7 @@ class LiveControlDockWidget(QWidget):
 
             daq_card_worker = Worker(self.timelapse_worker_method)
 
-            print(
+            logger.info(
                 "called with:",
                 self.parent.parameters_widget.parameters,
                 "view",

@@ -14,7 +14,7 @@ from qtpy.QtWidgets import (
 )
 
 from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
-from copylot import __version__
+from copylot import __version__, logger
 
 
 class MainWindow(QMainWindow):
@@ -132,7 +132,7 @@ class MainWindow(QMainWindow):
         self.setupMenubar()
 
     def closeEvent(self, event):
-        print("closeEvent of mainwindow is called")
+        logger.info("closeEvent of mainwindow is called")
         app = QApplication.instance()
         app.quit()
 
