@@ -21,11 +21,9 @@ from copylot.gui._qt.custom_widgets.photom_live_window import LiveViewWindow
 from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.custom_widgets.qt_logger import QtLogger, QtLogBox
-from copylot.gui._qt.photom_control.logger import configure_logger
 import os
 import logging
-
-logger = logging.getLogger('photom')
+from copylot import logger
 
 # This flag disables the loading of the DACs and lasers.
 demo_mode = True
@@ -54,7 +52,7 @@ class PhotomControlDockWidget(QWidget):
         # Variables for testing purposes to run demo mode or dac mode
         self.demo_mode = demo_mode
         self.dac_mode = dac_mode
-
+        self.logger = logger
         # Get the number of screens and make the live view
         num_screens = QDesktopWidget().screenCount()
         # Determine window sizes
@@ -108,6 +106,16 @@ class PhotomControlDockWidget(QWidget):
         # Set the main Layout
         self.main_layout = QGridLayout()
 
+        # Initialize Logger Stream Handler
+        log_box = QtLogBox('Logging')
+        # Get the StreamHandler attached to the logger
+        log_box_handler = QtLogger(log_box)
+        log_box_handler.setFormatter(logging.Formatter("%(levelname)s - %(module)s - %(message)s"))
+        log_box_handler.setLevel(logging.DEBUG)
+        logger.addHandler(log_box_handler)
+        logger.debug(logger.name)
+        logger.info(logger.handlers)
+
         # Photom overlay window
         self.window1 = LiveViewWindow(self)
         self.tabmanager = TabManager(self)
@@ -125,21 +133,10 @@ class PhotomControlDockWidget(QWidget):
         self.layout.addWidget(self.opacity_indicator, 0, 1)
 
         # Tab Manager
-        self.layout.addWidget(self.tabmanager, 3, 0, 1, 3)
+        self.layout.addWidget(self.tabmanager, 1, 0, 1, 2)
         self.setLayout(self.layout)
-
-        # Logger
-        log_box = QtLogBox('Logging displayer')
-        self.layout.addWidget(log_box, 4, 0, 1, 3)
-        # Get the StreamHandler attached to the logger
-        log_box_handler = QtLogger(log_box)
-        log_box_handler.setFormatter(logging.Formatter("%(levelname)s - %(module)s - %(message)s"))
-        logger.addHandler(log_box_handler)
-
-        logger.debug('aaaaaa')
-        logger.info('asfasdfasdfsdf')
-        logger.info('asfasdfasdfsdf')
-
+        # Logger Panel
+        self.layout.addWidget(log_box, 2, 0, 1, 2)
         # ===============================
         # Transform matrix that aligns cursor with laser point
         self.transform_list = [AffineTransform(), AffineTransform()]
