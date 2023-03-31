@@ -18,7 +18,6 @@ class OrcaCamera(AbstractCamera):
     """
 
     def __init__(self, camera_index: int = 0):
-
         self._camera_index = camera_index
 
     def run(self, nb_frame: int = 100000):
@@ -37,7 +36,6 @@ class OrcaCamera(AbstractCamera):
             if dcam.dev_open():
                 nb_buffer_frames = 3
                 if dcam.buf_alloc(nb_buffer_frames):
-
                     if dcam.cap_start():
                         timeout_milisec = 20
 
