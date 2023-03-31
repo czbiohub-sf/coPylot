@@ -8,6 +8,8 @@ from qtpy.QtCore import Qt, Slot
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QWidget, QGridLayout, QLabel, QComboBox
 
+from copylot import logger
+
 
 class ParametersDockWidget(QWidget):
     def __init__(self, parent):
@@ -56,7 +58,7 @@ class ParametersDockWidget(QWidget):
         self.row_counter = 1
         self.parameter_objects = []
 
-        print(self.parent.defaults)
+        logger.info(self.parent.defaults)
 
         # for i in self.parameter_list:
         #     print(i)

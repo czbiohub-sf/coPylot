@@ -7,23 +7,11 @@ For more details regarding operation,
 refer to the manuals in https://www.vortranlaser.com/
 
 """
+from copylot import logger
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
 import serial
 from serial.tools import list_ports
 import time
-import logging
-
-# Setting up the Logger
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter(
-    '%(asctime)s - %(name)s -\
-                                 %(levelname)s - %(message)s'
-)
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
 
 class VortranLaser(AbstractLaser):
