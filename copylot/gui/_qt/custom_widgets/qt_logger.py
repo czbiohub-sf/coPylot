@@ -1,6 +1,7 @@
 import textwrap
 
 from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QPlainTextEdit,
     QGroupBox,
@@ -17,6 +18,7 @@ class QtLogger(logging.Handler):
     def __init__(self, widget):
         super().__init__()
         self.widget = widget
+        self.widget.setMinimumHeight(200)
 
     def emit(self, record):
         msg = self.format(record)
@@ -27,8 +29,9 @@ class QtLogBox(QGroupBox):
     def __init__(self, title: str):
         super().__init__()
         self.setTitle(title)
+
         # self.setStyleSheet('QGroupBox::title {subcontrol-origin: margin; background: transparent;}')
-        self.setStyleSheet('QGroupBox {font-size: 14pt;}')
+        self.setStyleSheet('QGroupBox {font-size: 12pt;}')
         # self.setMaximumHeight(200)
         # Add a log_txt to display text.
         self.log_txt = QPlainTextEdit()
@@ -45,6 +48,6 @@ class QtLogBox(QGroupBox):
 
         # Configure layout
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 10, 0, 0)
         layout.addWidget(self.scroll)
         self.setLayout(layout)

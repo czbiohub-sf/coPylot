@@ -1,10 +1,7 @@
 from copylot.hardware.mirrors.optotune.mirror import OptoMirror
 import time
 from copylot.gui._qt.photom_control.helper_functions.qthreadworker import Worker
-import logging
-
-logger = logging.getLogger(__name__)
-
+from copylot import logger
 class ScanPoints:
     def __init__(self, parent, mirror: OptoMirror):
         super().__init__()
@@ -23,7 +20,7 @@ class ScanPoints:
 
     def start_scan(self, data_list):
         self.data_list = data_list
-        if self.isrunning:
+        if self.is_running:
             self.controlpanel.window1.iscalib = False
             self.threadpool.clear()
             while not self.threadpool.waitForDone():

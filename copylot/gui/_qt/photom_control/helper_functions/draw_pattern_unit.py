@@ -15,8 +15,7 @@ from PyQt5.QtWidgets import (
 
 # from dac_controller.scan import DACscan
 from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
-
-
+from copylot import logger
 class DrawPatternUnit(QGroupBox):
     def __init__(self, title, tabmanager):
         super().__init__()
@@ -44,7 +43,6 @@ class DrawPatternUnit(QGroupBox):
         self.pause_draw_flag = False
         self.draw_inprogress_flag = False
         self.external_draw_list = None
-        self.messagebox = None
         self.current_prog = 0
         self.scanobj = None
         self.scan_path = None
@@ -63,7 +61,7 @@ class DrawPatternUnit(QGroupBox):
         self.bg_scan.buttons()[self.tabmanager.parent.current_scan_pattern].setChecked(True)
 
         # Construct grid layout
-        self.setStyleSheet('font-size: 14pt')
+        # self.setStyleSheet('font-size: 12pt')
         grid = QGridLayout()
         grid.setSpacing(10)
         grid.setColumnStretch(0, 1)
@@ -118,22 +116,21 @@ class DrawPatternUnit(QGroupBox):
         if self.checkstatus():
             self.centerMarker2scanregion()
             self.disable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
-            if self.messagebox is not None:
-                self.messagebox.update_msg(f'Scan {self.title} initiated.')
+            logger.info(f'Scan {self.title} initiated.')
             self.stop_draw_flag = False
             self.draw_inprogress_flag = True
             if not self.pause_draw_flag:
                 self.current_prog = 0
                 self.select_algorithm()
                 if not self.window.parent.demo_mode:
-                    self.messagebox.update_msg(f'Transferring data to DAC board...')
+                    logger.info(f'Transferring data to DAC board...')
                     # self.dac_controller = DACscan(self.scan_path, self.tabmanager.parent)
                     # self.dac_controller.trans_obj = self.tabmanager.parent.transform_list[
                     #     self.tabmanager.parent.current_laser
                     # ]
                     # self.dac_controller.transfer2dac()
             self.pause_draw_flag = False
-            self.messagebox.update_msg(f'Scanning {self.title} ...')
+            logger.info(f'Scanning {self.title} ...')
             if self.window.parent.demo_mode:
                 self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
                 steps_per_cycle = len(self.scan_path[0])
@@ -165,9 +162,8 @@ class DrawPatternUnit(QGroupBox):
             if (
                     not self.pause_draw_flag
                     and not self.stop_draw_flag
-                    and self.messagebox is not None
             ):
-                self.messagebox.update_msg(f'Scanning {self.title} has completed.')
+                logger.info(f'Scanning {self.title} has completed.')
             self.enable_buttons([self.pb_start])
             QApplication.processEvents()
 
@@ -183,8 +179,7 @@ class DrawPatternUnit(QGroupBox):
                 print(f'pausing at index: {curr_index}')
                 self.scan_path = self.trimdata(self.scan_path, curr_index // 2)
                 self.dac_controller.transfer2dac(self.scan_path)
-            if self.messagebox is not None:
-                self.messagebox.update_msg(f'Pausing scanning {self.title}.')
+            logger.info(f'Pausing scanning {self.title}.')
             self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
 
     def stop_scan(self):
@@ -203,49 +198,46 @@ class DrawPatternUnit(QGroupBox):
         self.current_prog = 0
         self.prgbar.setValue(self.current_prog)
         self.resetMarkerPosition()
-        if self.messagebox is not None:
-            self.messagebox.update_msg(f'Scanning {self.title} has stopped.')
+        logger.info(f'Scanning {self.title} has stopped.')
 
     def checkstatus(self):
         """
         Safty check before start scanning
         """
-        self.messagebox.update_msg(f'Checking status ...')
+        logger.info(f'Checking status ...')
         if not self.rb_group.isChecked():
-            if self.messagebox is not None:
-                self.messagebox.update_msg(f'{self.title} pattern is not selected. \nPlease select the pattern.')
+            logger.info(f'{self.title} pattern is not selected. \nPlease select the pattern.')
             return False
         if any([i.draw_inprogress_flag for i in self.external_draw_list]):
-            if self.messagebox is not None:
-                self.messagebox.update_msg('Other pattern is scanning now. \nPlease stop it or wait until it ends.')
+            logger.info('Other pattern is scanning now. \nPlease stop it or wait until it ends.')
             return False
         else:
             try:
                 self.size_par = (float(self.verticalsize_input.text()), float(self.horizontalsize_input.text()))
             except:
-                self.messagebox.update_msg(f'Invalid input in Size. \nInterval value must be a number.')
+                logger.info(f'Invalid input in Size. \nInterval value must be a number.')
                 return False
             try:
                 self.cycl_par = float(self.cyl_input.text())
                 # if self.cycl_par != float(self.cyl_input.text()):
-                #     self.messagebox.update_msg(f'Cycle is rounded to {self.cycl_par}.')
+                #     logger.info(f'Cycle is rounded to {self.cycl_par}.')
             except:
-                self.messagebox.update_msg(f'Invalid input in Cycle. \nInterval value must be an integer.')
+                logger.info(f'Invalid input in Cycle. \nInterval value must be an integer.')
                 return False
             try:
                 self.gap_par = float(self.gap_input.text())
             except:
-                self.messagebox.update_msg('Invalid input in Interval. \nInterval value must be a number.')
+                logger.info('Invalid input in Interval. \nInterval value must be a number.')
                 return False
             try:
                 self.speed_par = float(self.speed_input.text())
             except:
-                self.messagebox.update_msg('Invalid input in Speed. \nInterval value must be a number.')
+                logger.info('Invalid input in Speed. \nInterval value must be a number.')
                 return False
             try:
                 ScanAlgorithm(self.marker_pos0, self.size_par, self.gap_par, self.title, self.speed_par, )
             except ValueError as e:
-                self.messagebox.update_msg(str(e))
+                logger.info(str(e))
                 return False
             return True
 
@@ -253,7 +245,7 @@ class DrawPatternUnit(QGroupBox):
         """
         Select scanning algorithm. Scanning data will be created in self.scan_path.
         """
-        self.messagebox.update_msg(f'Selecting algorithm ...')
+        logger.info(f'Selecting algorithm ...')
         if position is None:
             self.marker_pos0 = self.window.getMarkerCenter(self.window.marker)
         else:
@@ -308,7 +300,7 @@ class DrawPatternUnit(QGroupBox):
                 print(f'H: {self.window.scanregion.height()}, W: {self.window.scanregion.width()}')
                 self.select_algorithm((self.window.scanregion.center().x(), self.window.scanregion.center().y()))
                 self.window.draw_preview(self.scan_path)
-                self.messagebox.update_msg('Showing preview of scanning path.')
+                logger.info('Showing preview of scanning path.')
         else:
             self.window.clear_preview()
-            self.messagebox.update_msg('')
+            logger.info('')

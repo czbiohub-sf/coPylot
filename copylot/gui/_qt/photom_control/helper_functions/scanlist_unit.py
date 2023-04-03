@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QHeaderView,
 )
 
+from copylot import logger
 
 class ScanTable(QGroupBox):
     def __init__(self, parent):
@@ -30,7 +31,7 @@ class ScanTable(QGroupBox):
 
         # Set layout
         self.setTitle('Scan Table')
-        self.setStyleSheet('font-size: 14pt')
+        # self.setStyleSheet('font-size: 14pt')
         grid = QGridLayout()
         grid.setContentsMargins(0, 0, 0, 0)
         grid.addWidget(self.tableWidget, 0, 0, 1, 2)
@@ -89,28 +90,28 @@ class ScanTable(QGroupBox):
         """
         Check if all parameters are numbers and fill them into attributes.
         """
-        self.parent.msgbox.update_msg(f'Checking status ...')
+        logger.info(f'Checking status ...')
         try:
             [float(i) for i in self.parent.bg_indiv.scan_size]
         except:
-            self.parent.msgbox.update_msg(f'Invalid input in Size. \nInterval value must be a number.', 'red')
+            logger.info(f'Invalid input in Size. \nInterval value must be a number.', 'red')
             return False
         try:
             self.cycl_par = float(self.parent.bg_indiv.cyl_input.text())
             # if self.cycl_par != float(self.cyl_input.text()):
-            #     self.parent.msgbox.update_msg(f'Cycle is rounded to {self.cycl_par}.')
+            #     logger.info(f'Cycle is rounded to {self.cycl_par}.')
         except:
-            self.parent.msgbox.update_msg(f'Invalid input in Cycle. \nInterval value must be an integer.', 'red')
+            logger.info(f'Invalid input in Cycle. \nInterval value must be an integer.', 'red')
             return False
         try:
             self.gap_par = float(self.parent.bg_indiv.gap_input.text())
         except:
-            self.parent.msgbox.update_msg('Invalid input in Interval. \nInterval value must be a number.', 'red')
+            logger.info('Invalid input in Interval. \nInterval value must be a number.', 'red')
             return False
         try:
             self.speed_par = float(self.parent.bg_indiv.speed_input.text())
         except:
-            self.parent.msgbox.update_msg('Invalid input in Speed. \nInterval value must be a number.', 'red')
+            logger.info('Invalid input in Speed. \nInterval value must be a number.', 'red')
             return False
-        self.parent.msgbox.update_msg('')
+        logger.info('')
         return True

@@ -17,7 +17,7 @@ import time
 
 from copylot.gui._qt.job_runners.worker import Worker
 from copylot.gui._qt.photom_control.tab_manager import TabManager
-from copylot.gui._qt.custom_widgets.photom_live_window import LiveViewWindow
+from copylot.gui._qt.custom_windows.photom_live_window import LiveViewWindow
 from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.custom_widgets.qt_logger import QtLogger, QtLogBox
@@ -129,6 +129,7 @@ class PhotomControlDockWidget(QWidget):
         # Set the Widget Layout
         self.layout = QGridLayout()
         self.layout.setAlignment(Qt.AlignTop)
+
         self.layout.addWidget(self.sl_opacity, 0, 0)
         self.layout.addWidget(self.opacity_indicator, 0, 1)
 

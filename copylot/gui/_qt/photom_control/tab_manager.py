@@ -5,8 +5,7 @@ from copylot.gui._qt.photom_control.calibration_position import LaserPositionCal
 from copylot.gui._qt.photom_control.multi_pattern import MultiPatternControl
 from copylot.gui._qt.photom_control.pattern_control import PatternControl
 # from copylot.gui._qt.photom_control.simple_laser import SimpleLaser
-
-
+from copylot import logger
 class TabManager(QTabWidget):
     """
     A TabManager that manages multiple tabs.
@@ -15,20 +14,19 @@ class TabManager(QTabWidget):
     def __init__(self, parent):
         super().__init__()
         self.parent = parent
-        
-        # self.buttonSize = (200, 100)
-
         # Add contents for each tab
         self.laser_cali = LaserPositionCalibration(self)
         # self.simple_laser = SimpleLaser(self)
         self.pattern_ctrl = PatternControl(self)
         self.multi_pattern = MultiPatternControl(self)
 
+        self.setMaximumHeight(600)
         # Add tabs
         # self.addTab(self.simple_laser, 'Simple Laser')
         self.addTab(self.laser_cali, 'Calibration')
         self.addTab(self.pattern_ctrl, 'Single Scan')
         self.addTab(self.multi_pattern, 'Multi Scans')
+
 
     def update_current_laser(self, laser_idx):
         """

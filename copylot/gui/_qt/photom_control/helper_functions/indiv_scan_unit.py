@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import (
 )
 
 from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
-
+from copylot import logger
 
 class IndividualScanSetting(QGroupBox):
     def __init__(self, tabmanager, parent):
@@ -58,7 +58,7 @@ class IndividualScanSetting(QGroupBox):
 
         # Construct grid layout
         self.setTitle('Individual pattern')
-        self.setStyleSheet('font-size: 14pt')
+        # self.setStyleSheet('font-size: 14pt')
         grid = QGridLayout()
         grid.setSpacing(10)
         grid.setColumnStretch(0, 1)
@@ -102,10 +102,10 @@ class IndividualScanSetting(QGroupBox):
                 path = self.scan_path
                 self.window.draw_preview(path)
                 if len(path[0]) > 0:
-                    self.parent.msgbox.update_msg('Showing preview of scanning path.')
+                    logger.info('Showing preview of scanning path.')
         else:
             self.window.clear_preview()
-            self.parent.msgbox.update_msg('')
+            logger.info('')
 
     def update_scanpar(self):
         """
@@ -120,28 +120,28 @@ class IndividualScanSetting(QGroupBox):
         """
         Check if all parameters are numbers and fill them into attributes.
         """
-        self.parent.msgbox.update_msg(f'Checking status ...')
+        logger.info(f'Checking status ...')
         try:
             [float(i) for i in self.scan_size]
         except:
-            self.parent.msgbox.update_msg(f'Invalid input in Size. \nInterval value must be a number.', 'red')
+            logger.info(f'Invalid input in Size. \nInterval value must be a number.', 'red')
             return False
         try:
             self.cycl_par = float(self.cyl_input.text())
             # if self.cycl_par != float(self.cyl_input.text()):
-            #     self.parent.msgbox.update_msg(f'Cycle is rounded to {self.cycl_par}.')
+            #     logger.info(f'Cycle is rounded to {self.cycl_par}.')
         except:
-            self.parent.msgbox.update_msg(f'Invalid input in Cycle. \nInterval value must be an integer.', 'red')
+            logger.info(f'Invalid input in Cycle. \nInterval value must be an integer.', 'red')
             return False
         try:
             self.gap_par = float(self.gap_input.text())
         except:
-            self.parent.msgbox.update_msg('Invalid input in Interval. \nInterval value must be a number.', 'red')
+            logger.info('Invalid input in Interval. \nInterval value must be a number.', 'red')
             return False
         try:
             self.speed_par = float(self.speed_input.text())
         except:
-            self.parent.msgbox.update_msg('Invalid input in Speed. \nInterval value must be a number.', 'red')
+            logger.info('Invalid input in Speed. \nInterval value must be a number.', 'red')
             return False
         return True
 
@@ -149,7 +149,7 @@ class IndividualScanSetting(QGroupBox):
         """
         Select scanning algorithm. Scanning data will be created in self.scan_path.
         """
-        self.parent.msgbox.update_msg(f'Selecting algorithm ...')
+        logger.info(f'Selecting algorithm ...')
         if position is None:
             self.marker_pos0 = self.window.getMarkerCenter(self.window.marker)
         else:

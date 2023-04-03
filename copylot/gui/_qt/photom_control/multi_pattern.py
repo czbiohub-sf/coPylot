@@ -20,8 +20,6 @@ class MultiPatternControl(QWidget):
         self.bg_table = ScanTable(self)
         self.bg_start = StartStop(self)
 
-        self.msgbox = MessageBox('Current Status')
-
         # Set layout
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignCenter)
@@ -30,6 +28,5 @@ class MultiPatternControl(QWidget):
         self.layout.addWidget(self.bg_indiv)
         self.layout.addWidget(self.bg_table)
         self.layout.addWidget(self.bg_start)
-        self.layout.addWidget(self.msgbox)
         self.setLayout(self.layout)
 

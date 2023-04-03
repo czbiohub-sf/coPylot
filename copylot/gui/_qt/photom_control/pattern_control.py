@@ -8,19 +8,19 @@ from PyQt5.QtWidgets import (
 from copylot.gui._qt.photom_control.helper_functions.draw_pattern_unit import DrawPatternUnit
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import LaserSelectionBox
+from copylot import logger
 
 
 class PatternControl(QWidget):
     def __init__(self, parent):
         super().__init__()
-
+        
         #inherit the control panel arguments
         self.parent = parent
         self.controlpanel = self.parent.parent
         self.laser_selection_box = LaserSelectionBox(self.parent)
         self.bttngp_sq = DrawPatternUnit('Square', parent)
         self.bttngp_di = DrawPatternUnit('Disk', parent)
-        self.msgbox = MessageBox('Current Status')        
         # A ButtonGroup with exclusive selection for shape selection
         self.bg_pattern_selection = QButtonGroup(self)
         self.bg_pattern_selection.addButton(self.bttngp_sq.rb_group, 0)
@@ -40,17 +40,16 @@ class PatternControl(QWidget):
         # Link groups
         self.bttngp_sq.external_draw_list = [self.bttngp_di]
         self.bttngp_di.external_draw_list = [self.bttngp_sq]
-        self.bttngp_sq.messagebox = self.msgbox
-        self.bttngp_di.messagebox = self.msgbox
+
 
         # Set layout
+        self.setMinimumHeight(500)
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignCenter)
         self.layout.setContentsMargins(5, 0, 5, 0)
         self.layout.addWidget(self.laser_selection_box)
         self.layout.addWidget(self.bttngp_sq)
         self.layout.addWidget(self.bttngp_di)
-        self.layout.addWidget(self.msgbox)
         self.setLayout(self.layout)
 
     def get_pattern_unit(self):

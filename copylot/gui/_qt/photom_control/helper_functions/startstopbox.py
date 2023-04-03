@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
 from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
 from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
 
+from copylot import logger
 
 class StartStop(QGroupBox):
     def __init__(self, parent):
@@ -30,7 +31,7 @@ class StartStop(QGroupBox):
         self.pb_preview.setCheckable(True)
 
         self.setTitle('Scan multi-region')
-        self.setStyleSheet('font-size: 14pt')
+        # self.setStyleSheet('font-size: 14pt')
         grid = QGridLayout()
         grid.addWidget(QLabel('Intraregion'), 0, 0)
         grid.addWidget(self.prgbar_intra, 0, 1, 1, 3)
@@ -75,7 +76,7 @@ class StartStop(QGroupBox):
     def start_scan(self):
         if self.collect_scanobj():
             self.disable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
-            self.parent.msgbox.update_msg(f'Scan initiated.')
+            logger.info(f'Scan initiated.')
             self.stop_scan_flag = False
             self.scan_inprogress_flag = True
             if not self.pause_scan_flag:
@@ -93,7 +94,7 @@ class StartStop(QGroupBox):
                     if self.controlpanel.dac_mode:
                         raise NotImplementedError("DAC Controller scanning not implemented")
                         # # Transfer data to DAC board
-                        # self.parent.msgbox.update_msg(f'Transferring data #{self.curr_inter} to DAC board...')
+                        # logger.info(f'Transferring data #{self.curr_inter} to DAC board...')
                         # if not self.pause_scan_flag:
                         #     self.dac_controller = DACscan(self.curr_scan_path, self.controlpanel)
                         #     self.dac_controller.trans_obj = self.controlpanel.transform_list[
@@ -107,7 +108,7 @@ class StartStop(QGroupBox):
                                 self.controlpanel.current_laser
                             ]                            
                 self.pause_scan_flag = False
-                self.parent.msgbox.update_msg(f'Scanning #{self.curr_inter} region...')
+                logger.info(f'Scanning #{self.curr_inter} region...')
 
                 if self.controlpanel.demo_mode:
                     self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
@@ -141,7 +142,7 @@ class StartStop(QGroupBox):
             print('scanning process finished.')
             self.scan_inprogress_flag = False
             if not self.pause_scan_flag and not self.stop_scan_flag:
-                self.parent.msgbox.update_msg(f'Scan has completed.')
+                logger.info(f'Scan has completed.')
             self.enable_buttons([self.pb_start])
 
     def pause_scan(self):
@@ -156,7 +157,7 @@ class StartStop(QGroupBox):
                 print(f'pausing at index: {curr_index}')
                 self.curr_scan_path = self.trimdata(self.curr_scan_path, curr_index // 2)
                 self.dac_controller.transfer2dac(self.curr_scan_path)
-            self.parent.msgbox.update_msg(f'Pausing scanning.')
+            logger.info(f'Pausing scanning.')
             self.enable_buttons([self.pb_start, self.pb_pause, self.pb_stop])
 
     def stop_scan(self):
@@ -175,11 +176,11 @@ class StartStop(QGroupBox):
         self.curr_inter = 0
         self.prgbar_intra.setValue(self.curr_intra)
         self.prgbar_inter.setValue(self.curr_inter)
-        self.parent.msgbox.update_msg(f'Scan stopped.')
+        logger.info(f'Scan stopped.')
 
     def draw_preview(self):
         if self.pb_preview.isChecked():
-            self.parent.msgbox.update_msg('Generating scan path...')
+            logger.info('Generating scan path...')
             if self.collect_scanobj():
                 scan_path_all_x = []
                 scan_path_all_y = []
@@ -188,10 +189,10 @@ class StartStop(QGroupBox):
                     scan_path_all_x += scan_path[0]
                     scan_path_all_y += scan_path[1]
                 self.controlpanel.window1.draw_preview((scan_path_all_x, scan_path_all_y))
-                self.parent.msgbox.update_msg('Showing preview of scanning path.')
+                logger.info('Showing preview of scanning path.')
         else:
             self.controlpanel.window1.clear_preview('all')
-            self.parent.msgbox.update_msg('')
+            logger.info('')
 
     def collect_row(self, row):
         """
@@ -251,7 +252,7 @@ class StartStop(QGroupBox):
             else:
                 par.append(item.text())
         if stop:
-            self.parent.msgbox.update_msg('\n'.join(msg), 'red')
+            logger.info('\n'.join(msg), 'red')
         else:
             return par
 
@@ -259,7 +260,7 @@ class StartStop(QGroupBox):
         """
         Return scan_path with scanobj and algorithm.
         """
-        self.parent.msgbox.update_msg(f'Selecting algorithm ...')
+        logger.info(f'Selecting algorithm ...')
         scan_path = ([], [])
         if algorithm == 'Lissajous':
             scan_path = scanobj.generate_lissajous()

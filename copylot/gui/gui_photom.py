@@ -15,16 +15,14 @@ from qtpy.QtWidgets import (
 
 from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
 from copylot import __version__
-from copylot.gui._qt.photom_control.logger import configure_logger
-
-logger = configure_logger(name='photom')
+from copylot import logger
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.threadpool = QThreadPool()
 
-        self.title = "Pisces Parameter Controller"
+        self.title = "Photom Controller"
         self.version = __version__
 
         self.desktop = QApplication.desktop()
