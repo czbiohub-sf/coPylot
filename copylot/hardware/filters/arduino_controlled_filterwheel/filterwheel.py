@@ -1,6 +1,8 @@
 import time
 import serial
 
+from copylot import logger
+
 
 class ArduinoControlledFilterwheel:
     """FilterWheel
@@ -21,7 +23,7 @@ class ArduinoControlledFilterwheel:
 
         self.serial_connection.open()
 
-        print(self.serial_connection.name)
+        logger.info(self.serial_connection.name)
 
         time.sleep(0.5)
 
@@ -62,4 +64,4 @@ class ArduinoControlledFilterwheel:
 
         message = f"#s{position_index}"
         self._send_message(message)
-        print(self._read_response())
+        logger.info(self._read_response())

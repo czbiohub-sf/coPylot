@@ -1,6 +1,8 @@
 import serial
 from enum import IntEnum
 
+from copylot import logger
+
 
 class ASIStageScanMode(IntEnum):
     """
@@ -47,7 +49,7 @@ class ASIStage:
             self.serial_connection.reset_input_buffer()
             self.serial_connection.reset_output_buffer()
 
-        print(self.serial_connection.name)
+        logger.info(self.serial_connection.name)
 
     def __del__(self):
         self.serial_connection.close()
@@ -75,7 +77,7 @@ class ASIStage:
         """
         self._send_message(message)
         response = self._read_response()
-        print(response)
+        logger.info(response)
         return response
 
     def set_speed_x(self, speed):
@@ -87,7 +89,7 @@ class ASIStage:
 
         """
         message = f"SPEED x={speed}"
-        print("set speed to scan: " + message)
+        logger.info("set speed to scan: " + message)
         self.execute_message(message)
 
     def set_speed_y(self, speed):
@@ -99,7 +101,7 @@ class ASIStage:
 
         """
         message = f"SPEED y={speed}"
-        print("set speed to scan: " + message)
+        logger.info("set speed to scan: " + message)
         self.execute_message(message)
 
     def set_default_speed_xy(self):
@@ -107,13 +109,13 @@ class ASIStage:
         Currently default values are x=10 y=10.
         """
         message = "SPEED x=10 y=10"
-        print("set speed to scan: " + message)
+        logger.info("set speed to scan: " + message)
         self.execute_message(message)
 
     def set_backlash(self):
         """Set backlash on the stage."""
         message = "BACKLASH x=0.04 y=0.0"
-        print("set backlash: " + message)
+        logger.info("set backlash: " + message)
         self.execute_message(message)
 
     def set_scan_mode(self, mode: ASIStageScanMode = ASIStageScanMode.RASTER):
@@ -182,4 +184,4 @@ class ASIStage:
             bytes('\r', encoding="ascii")
         )
         response = "\n".join([line.decode() for line in lines])
-        print(response)
+        logger.info(response)
