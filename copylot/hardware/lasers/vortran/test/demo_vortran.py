@@ -1,5 +1,5 @@
 # %%
-from copylot.hardware.lasers.vortran import vortran
+from copylot.hardware.lasers.vortran.vortran import VortranLaser
 import time
 
 
@@ -7,7 +7,7 @@ def demo_get_laser_list():
     """
     Get the Voltran Lasers Connected to the system
     """
-    laser_list = vortran.VortranLaser.get_lasers()
+    laser_list = VortranLaser.get_lasers()
     print(laser_list)
 
 
@@ -17,8 +17,8 @@ def demo_set_power():
     To read the value, emission = 1
     """
     power = 3.0
-    laser_list = vortran.VortranLaser.get_lasers()
-    laser = vortran.VortranLaser(port=laser_list[0][0])
+    laser_list = VortranLaser.get_lasers()
+    laser = VortranLaser(port=laser_list[0][0])
     laser.toggle_emission = 1
     laser.laser_power = 2.0
     assert (laser.laser_power - power) < (power * 0.2)
@@ -33,8 +33,8 @@ def demo_toggle_emission():
     """
     Test toggling the emission
     """
-    laser_list = vortran.VortranLaser.get_lasers()
-    laser = vortran.VortranLaser(port=laser_list[0][0])
+    laser_list = VortranLaser.get_lasers()
+    laser = VortranLaser(port=laser_list[0][0])
     laser.set_emission_delay = 0
     laser.laser_power = 2.0
     laser.toggle_emission = 1
