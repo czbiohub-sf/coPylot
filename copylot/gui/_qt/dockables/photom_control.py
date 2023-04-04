@@ -22,6 +22,7 @@ from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.custom_widgets.qt_logger import QtLogger, QtLogBox
 import os
+#Logger
 import logging
 from copylot import logger
 
@@ -39,7 +40,7 @@ if not demo_mode:
     mirror_port = ''
     # from copylot.hardware.lasers import
 
-print('Running in the UI demo mode. (from ControlPanel)')
+logger.info('Running in the UI demo mode. (from ControlPanel)')
 
 
 # TODO: setup a filelogger location
@@ -124,7 +125,7 @@ class PhotomControlDockWidget(QWidget):
         self.sl_opacity.setRange(0, 100)
         self.sl_opacity.setValue(int(self.window1.opacity * 100))
         self.opacity_indicator = QLabel(f'Opacity {0.0 * 100} %')
-        self.sl_opacity.valueChanged.connect(self.change_trancparancy)
+        self.sl_opacity.valueChanged.connect(self.change_transparency)
 
         # Set the Widget Layout
         self.layout = QGridLayout()
@@ -146,7 +147,7 @@ class PhotomControlDockWidget(QWidget):
     def parameters(self):
         raise NotImplementedError("parameters not yet implemented")
 
-    def change_trancparancy(self):
+    def change_transparency(self):
         self.opacity_indicator.setText(f'Opacity {self.sl_opacity.value()} %')
         self.window1.opacity = self.sl_opacity.value() / 100
         self.window1.setWindowOpacity(self.window1.opacity)

@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 
-from widgets.scan_algrthm.scan_algorithm import ScanAlgorithm
-from widgets.utils.affinetransform import AffineTransform
+from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
+from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
 mpl.rcParams['agg.path.chunksize'] = 20000
 
 #%%

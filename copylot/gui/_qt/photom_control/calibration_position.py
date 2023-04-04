@@ -16,21 +16,18 @@ from PyQt5.QtWidgets import (
     QShortcut,
 )
 
-
 from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import (
     LaserSelectionBox,
 )
 from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
+from copylot.gui._qt.photom_control.utils.demo_mode import demo_scan_points
 
 # TODO: import with the DAC
 # from dac_controller.scan import DACscan
 # from dac_controller.scan_points import ScanPoints
 
-
-import logging
-
-logger = logging.getLogger('photom')
+from copylot import logger
 
 
 # TODO: add a method to reset the corners of the trapezoid
@@ -117,7 +114,6 @@ class LaserPositionCalibration(QWidget):
         self.shortcut_refresh = QShortcut(QKeySequence('Ctrl+r'), self)
         self.shortcut_refresh.activated.connect(self.apply_calib)
 
-
         # Set layout
         self.layout = QVBoxLayout()
         self.layout.setAlignment(Qt.AlignCenter)
@@ -133,7 +129,8 @@ class LaserPositionCalibration(QWidget):
         self.ref_rect_coord = []
         self.ctrl_rect_coord = []
         self.scan_path = []
-            #TODO: Check this function
+
+        # TODO: Check this function
         # self.initVout()  # assign the center of the window to (0, 0) volt
         # self.dac_controller = ScanPoints(self.controlpanel, sampling_rate=4 if self.controlpanel.demo_mode else 100)
         # self.dac_controller = None if self.controlpanel.demo_mode else DACscan([[0, 0, 0, 0], [0]], self.controlpanel, sampling_rate=2)
@@ -238,15 +235,23 @@ class LaserPositionCalibration(QWidget):
             self.controlpanel.current_laser
         ].affmatrix = None
         self.parent.update_calibration_status()
-        if self.controlpanel.dac_mode:
-            # self.dac_controller.start_scan(self.ctrl_rect_coord)
-            # self.dac_controller.trans_obj =mj self.controlpanel.transform_list[self.controlpanel.current_laser]
-            # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
-            # self.dac_controller.start_scan()
-            raise NotImplementedError("DAC Controller scanning not implemented")
+        if self.demo_mode:
+            self.demo_mode_controller = demo_scan_points(self.controlpanel)
+            self.demo_mode_controller.trans_obj = self.controlpanel.transform_list[
+                self.controlpanel.current_laser
+            ]
+            self.demo_mode_controller.start_scan()
+            pass
         else:
-            logger.debug('Start Scan')
-            self.mirror_controller = ScanPoints(self, self.mirror_0)
+            if self.controlpanel.dac_mode:
+                # self.dac_controller.start_scan(self.ctrl_rect_coord)
+                # self.dac_controller.trans_obj = self.controlpanel.transform_list[self.controlpanel.current_laser]
+                # self.dac_controller.transfer2dac(self.ctrl_rect_coord)
+                # self.dac_controller.start_scan()
+                raise NotImplementedError("DAC Controller scanning not implemented")
+            else:
+                logger.debug('Start Scan')
+                self.mirror_controller = ScanPoints(self, self.mirror_0)
 
     def apply_calib(self):
         if self.window1.iscalib:
@@ -255,7 +260,6 @@ class LaserPositionCalibration(QWidget):
                 self.controlpanel.current_laser
             ].getAffineMatrix(*self.collect_cord())
             if self.demo_mode:
-
                 pass
             else:
                 if self.controlpanel.dac_mode:
@@ -296,11 +300,14 @@ class LaserPositionCalibration(QWidget):
         self.window1.clearMarkerlist()
         self.parent.update_calibration_status()
 
-        if self.controlpanel.dac_mode:
-            raise NotImplementedError("DAC Controller scanning not implemented")
-            # self.dac_controller.stop_scan()
+        if self.demo_mode:
+            pass
         else:
-            self.mirror_controller.stop_scan()
+            if self.controlpanel.dac_mode:
+                raise NotImplementedError("DAC Controller scanning not implemented")
+                # self.dac_controller.stop_scan()
+            else:
+                self.mirror_controller.stop_scan()
 
         # save affine matrix
         savepath = self.check_savepath()

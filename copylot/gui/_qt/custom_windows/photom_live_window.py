@@ -11,10 +11,11 @@ from PyQt5.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsRectItem,
 )
-from PyQt5.QtCore import Qt, QEvent, QPoint, QRect, QPointF
+from PyQt5.QtCore import Qt, QEvent, QPoint, QRect, QPointF, QLineF
 from PyQt5 import QtGui
 
 # from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac
+from copylot import logger
 
 """
 This script creates a LiveViewWindow to control laser spot when overlaid with camera display.
@@ -338,11 +339,11 @@ class LiveViewWindow(QMainWindow):
                         self.parent.transform_list[self.parent.current_laser].affmatrix
                         is not None
                     ):
-                        print('transforming coordinate...')
+                        logger.info('transforming coordinate...')
                         cord = self.parent.transform_list[
                             self.parent.current_laser
                         ].affineTrans(cord)
-                        print(f'tranferred {cord}')
+                        logger.debug(f'tranferred {cord}')
                     if self.parent.dac_mode:
                         # signal_to_dac(
                         #     self.parent.ao_range,
@@ -364,7 +365,7 @@ class LiveViewWindow(QMainWindow):
                     else:
                         self.mirror.position_x = cord[0]
                         self.mirror.position_x = cord[1]
-                print(f'raw {cord}')
+                logger.debug(f'raw {cord}')
         elif event.type() == QEvent.MouseButtonPress:
             print('mouse pressed')
             self.lastPoint = event.pos()
@@ -412,14 +413,12 @@ class LiveViewWindow(QMainWindow):
         )
         painter.eraseRect(self.scanregion)
         for i in range(len(scan_path[0]) - 1):
-            painter.drawLine(
-                scan_path[0][i],
-                scan_path[1][i],
-                scan_path[0][i + 1],
-                scan_path[1][i + 1],
-            )
+            point1 = QPointF(scan_path[0][i], scan_path[1][i])
+            point2 = QPointF(scan_path[0][i+1], scan_path[1][i+1])
+            line = QLineF(point1, point2)
+            painter.drawLine(line)
         self.view.viewport().update()
-        print(f'drawing preview')
+        logger.info('Drawing preview...')
 
     def clear_preview(self, region=None):
         if region is None:

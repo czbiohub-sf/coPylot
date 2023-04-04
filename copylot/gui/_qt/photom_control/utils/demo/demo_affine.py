@@ -4,7 +4,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 sys.path.append(os.path.join(os.pardir, os.pardir, os.pardir))
-from widgets.utils.affinetransform import AffineTransform
+from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
 
 xv, yv = np.meshgrid(
     np.linspace(1, 10, 10),
@@ -42,3 +42,4 @@ plt.figure()
 plt.scatter(xv1, yv1, s=12)
 plt.scatter(dst[0], dst[1], s = 12)
 plt.legend(['original', 'transformed'])
+plt.show()

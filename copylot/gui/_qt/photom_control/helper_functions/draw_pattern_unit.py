@@ -265,7 +265,7 @@ class DrawPatternUnit(QGroupBox):
         elif self.bg_scan.checkedId() == 2:
             self.scan_path = self.scanobj.generate_spiral()
         print(f'total number of points {len(self.scan_path[0])}')
-        self.prgbar.setMaximum(len(self.scan_path[0]) * self.cycl_par)
+        self.prgbar.setMaximum(int(len(self.scan_path[0]) * self.cycl_par))
 
     def resetMarkerPosition(self):
         """
