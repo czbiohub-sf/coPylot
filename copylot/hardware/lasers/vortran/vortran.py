@@ -86,7 +86,7 @@ class VortranLaser(AbstractLaser):
         self._pulse_power = None
         self._pulse_mode = None
         self._max_power = None
-        self._is_connected = None
+        self._is_connected = False
 
         self.connect()
 
@@ -102,18 +102,20 @@ class VortranLaser(AbstractLaser):
         - beam shape
 
         """
-        try:
-            if self.port is None:
-                ports = (
-                    list_ports.comports()
-                    if self._in_serial_num is not None
-                    else VortranLaser.get_lasers()
-                )
-            else:
-                ports = [self.port]
+        if self.port is None:
+            ports = (
+                list_ports.comports()
+                if self._in_serial_num is not None
+                else [laser[0] for laser in VortranLaser.get_lasers()]
+            )
+        else:
+            ports = [self.port]
 
-            for port in ports:
-                self.port = port
+        # try to connect to each candidate port
+        laser_found = False
+        for port in ports:
+            self.port = port
+            try:
                 self.address = serial.Serial(
                     port=self.port,
                     baudrate=self.baudrate,
@@ -122,32 +124,43 @@ class VortranLaser(AbstractLaser):
                     stopbits=serial.STOPBITS_ONE,
                     timeout=self.timeout,
                 )
+                self._identify_laser()
+            except RuntimeError:
+                logger.debug(
+                    f"A runtime error occurred while attempting to connect to port {self.port}"
+                )
+                self.disconnect()
+                continue
 
-                if self._in_serial_num == self.serial_number:
-                    logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
-                else:
-                    self.disconnect()
-                    raise Exception
+            # if we were able to connect to the port,
+            # then we accept the connection *unless* the user specified a serial number,
+            # in which case we first check that the laser matches it
+            if self._in_serial_num is None or self._in_serial_num == self.serial_number:
+                logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
+                laser_found = True
+                break
+            else:
+                self.disconnect()
 
-            self._identify_laser()
-        except RuntimeError:
-            logger.debug(f"No laser found in {self.port}")
+        if not laser_found:
+            if self._in_serial_num is not None:
+                message = f'No laser found for serial number {self.serial_number}'
+            else:
+                message = f'No laser found on ports {ports}'
+            logger.warning(message)
 
     def disconnect(self):
         """Disconnects the device"""
-        self.address.close()
+        if self.is_connected:
+            self.address.close()
         self.address = None
 
     @property
     def is_connected(self):
         """Check if device is connected to COM Port and return True/False"""
         logger.debug(f'{self.port} is open')
+        self._is_connected = self.address is not None and self.address.is_open
         return self._is_connected
-
-    @is_connected.getter
-    def is_connected(self):
-        """Check if device is connected to COM Port and return True/False"""
-        self._is_connected = self.address.is_open
 
     def _write_cmd(self, cmd, value=None):
         """
@@ -173,17 +186,16 @@ class VortranLaser(AbstractLaser):
                     cmd_LF = cmd + '=' + str(value) + '\r'
                 else:
                     cmd_LF = cmd + '\r'
-                self.address.write(cmd_LF.encode('utf-8'))
                 logger.debug(
-                    f"Write to laser <{self.serial_number}> \
-                    -> cmd:<{cmd.encode('utf-8')}>"
+                    f"Write to laser <{self.serial_number}> -> cmd:<{cmd_LF.encode('utf-8')}>"
                 )
+                self.address.write(cmd_LF.encode('utf-8'))
                 msg_out = self._read_cmd(cmd)
                 return msg_out
             else:
-                raise ValueError("Command not found")
+                raise ValueError(f"Command '{cmd}' not found")
         except Exception as e:
-            raise RuntimeError("Error: sending command") from e
+            raise RuntimeError(f"Error sending command: {str(e)}")
 
     def _read_cmd(self, cmd):
         """
@@ -210,9 +222,9 @@ class VortranLaser(AbstractLaser):
                     if msg.endswith('\n') or msg.endswith('\r'):
                         if msg[: len(cmd) + 1] == (cmd + '='):
                             values = msg[len(cmd) + 1 : -2].split(', ')
-                            # logger.debug("msg_out > {msg}")
+                            logger.debug(f"msg_out > {msg}")
                             break
-            logger.debug(f"Read: {values}")
+            logger.debug(f"Parsed values: {values}")
             if values is None:
                 values = ['0']
                 # TODO: maybe raise warning?
@@ -225,8 +237,7 @@ class VortranLaser(AbstractLaser):
         """
         Helper function to identify the parameters for the connected laser.
         Updates the laser information
-        (i.e serial number, wavelength,
-        part number, max power, and laser shape)
+        (i.e serial number, wavelength, part number, max power, and laser shape)
         """
         laser_param = self._write_cmd('?LI')
         self.serial_number = laser_param[0]
@@ -236,10 +247,6 @@ class VortranLaser(AbstractLaser):
         self.laser_shape = laser_param[4]
         logger.debug(f'Laser param: {laser_param}')
 
-    # --------------------------------------------------------------------------------------------------
-
-    # ---------------------------------------PROPERTIES-------------------------------------------------
-
     # TODO: implement table 9.3.4 from  PDF
     @property
     def drive_control_mode(self):
@@ -248,6 +255,7 @@ class VortranLaser(AbstractLaser):
         Sets Power or Current Control
         (1 = Current Control)
         """
+        self._ctrl_mode = self._write_cmd('?C')[0]
         return self._ctrl_mode
 
     @drive_control_mode.setter
@@ -261,22 +269,13 @@ class VortranLaser(AbstractLaser):
         """
         self._ctrl_mode = self._write_cmd('C', str(mode))[0]
 
-    @drive_control_mode.getter
-    def get_control_mode(self):
-        """
-        Laser Drive Control Mode
-        Gets Power or Current Control
-        (1 = Current Control)
-        (0 = Power Control)
-        """
-        self._ctrl_mode = self._write_cmd('?C')[0]
-
     @property
     def emission_delay(self):
         """
         Toggle 5 Second Laser Emission Delay On and Off
         (1 = On, 0 = Off)
         """
+        self._delay = self._write_cmd('?DELAY')[0]
         return self._delay
 
     @emission_delay.setter
@@ -287,29 +286,14 @@ class VortranLaser(AbstractLaser):
         """
         self._delay = self._write_cmd('DELAY', str(mode))[0]
 
-    @emission_delay.getter
-    def emission_delay(self):
-        """
-        Toggle 5 Second Laser Emission Delay On and Off
-        (1 = On, 0 = Off)
-        """
-        self._delay = self._write_cmd('?DELAY')[0]
-
     @property
     def external_power_control(self):
         """
         Enables External Power Control
         (1= External Control)
         """
-        return self._ext_power_ctrl
-
-    @external_power_control.getter
-    def external_power_control(self):
-        """
-        Enables External Power Control
-        (1= External Control, 0 = Off)
-        """
         self._ext_power_ctrl = self._write_cmd('?EPC')[0]
+        return self._ext_power_ctrl
 
     @external_power_control.setter
     def set_external_power_control(self, control):
@@ -324,14 +308,8 @@ class VortranLaser(AbstractLaser):
         """
         Laser Current Control (0-Max)
         """
-        return self._current_ctrl
-
-    @current_control.getter
-    def current_control(self):
-        """
-        Laser Current Control (0-Max)
-        """
         self._current_ctrl = self._write_cmd('?LC')[0]
+        return self._current_ctrl
 
     @current_control.setter
     def current_control(self, value):
@@ -346,6 +324,7 @@ class VortranLaser(AbstractLaser):
         Toggles Laser Emission On and Off
         (1 = On, 0 = Off)
         """
+        self._toggle_emission = self._write_cmd('?LE')[0]
         return self._toggle_emission
 
     @toggle_emission.setter
@@ -355,14 +334,6 @@ class VortranLaser(AbstractLaser):
         (1 = On, 0 = Off)
         """
         self._toggle_emission = self._write_cmd('LE', value)[0]
-
-    @toggle_emission.getter
-    def toggle_emission(self):
-        """
-        Toggles Laser Emission On and Off
-        (1 = On, 0 = OffFFF)
-        """
-        self._toggle_emission = self._write_cmd('?LE')[0]
 
     def turn_on(self):
         """
@@ -381,14 +352,6 @@ class VortranLaser(AbstractLaser):
         return self._toggle_emission
 
     @property
-    def laser_power(self):
-        """
-        Sets the laser power
-        Requires pulse_mode() to be OFF
-        """
-        return self._curr_power
-
-    @laser_power.getter
     def laser_power(self):
         """
         Sets the laser power
@@ -417,14 +380,8 @@ class VortranLaser(AbstractLaser):
         Pulse Power configuration
         Requires pulse_mode() to be ON
         """
-        return self._pulse_power
-
-    @pulse_power.getter
-    def pulse_power(self):
-        """
-        Pulse Power configuration
-        """
         self._pulse_power = float(self._write_cmd('?PP')[0])
+        return self._pulse_power
 
     @pulse_power.setter
     def set_pulse_power(self, power):
@@ -439,14 +396,8 @@ class VortranLaser(AbstractLaser):
         """
         Toggle Pulse Mode On and Off (1=On)
         """
-        return self._pulse_mode
-
-    @pulse_mode.getter
-    def pulse_mode(self):
-        """
-        Toggle Pulse Mode On and Off (1=On)
-        """
         self._pulse_mode = self._write_cmd('?PUL')[0]
+        return self._pulse_mode
 
     @pulse_mode.setter
     def set_pulse_mode(self, mode=0):
@@ -460,14 +411,8 @@ class VortranLaser(AbstractLaser):
         """
         Request Maximum Laser Power
         """
-        return self._max_power
-
-    @maximum_power.getter
-    def maximum_power(self):
-        """
-        Request Maximum Laser Power
-        """
         self._max_power = float(self._write_cmd('?MAXP')[0])
+        return self._max_power
 
     def _echo_off(self):
         self._write_cmd('ECHO', 0)
@@ -485,7 +430,7 @@ class VortranLaser(AbstractLaser):
                     logger.info(f"Found: {laser.port}:{laser.serial_number}")
                     laser.disconnect()
                 else:
-                    raise Exception
+                    continue
             except (RuntimeWarning, RuntimeError):
                 logger.debug(f'No laser found in {port}')
 

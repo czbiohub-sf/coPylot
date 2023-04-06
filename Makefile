@@ -26,7 +26,7 @@ lint:
 # (requires pre-commit to be installed)
 .PHONY: pre-commit
 pre-commit:
-	pre-commit run --all-files
+	pre-commit run
 
 .PHONY: test
 test:
