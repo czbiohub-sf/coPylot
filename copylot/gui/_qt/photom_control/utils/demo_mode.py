@@ -25,12 +25,10 @@ from copylot.gui._qt.photom_control.helper_functions.qthreadworker import Worker
 from copylot import logger
 
 class demo_scan_points:
-
     def __init__(self, controlpanel):
         self.controlpanel = controlpanel
         # self.ch_list = controlpanel.channel_list
-        self.num_chans = 2
-        self.board_num = controlpanel.board_num
+        # self.num_chans = 2
         self.input_range_list = [(0, controlpanel.window1.canvas_width), (0, controlpanel.window1.canvas_height)]
         # self.vout_range = controlpanel.galvo_x_range
         # self.ao_range = controlpanel.ao_range
@@ -39,8 +37,9 @@ class demo_scan_points:
         self.threadpool = QThreadPool()
         self.isrunning = False
         self.apply_matrix = False
-        self.laser_circle = demo_laser()
-
+        points = generate_square()
+        self.laser_circle = demo_laser(points)
+        self.sampling_rate = 1
 
     def exec_scan(self):
         self.trans_obj = self.controlpanel.transform_list[self.controlpanel.current_laser]
@@ -56,11 +55,14 @@ class demo_scan_points:
                 scan_path = self.data_list
             for x, y in zip(scan_path[0], scan_path[1]):
                 #TODO: write logic to move a point in a Window
-                self.laser_circle.move_circle((x, y))
+                self.laser_circle.x = x
+                self.laser_circle.y = y
+                self.laser_circle.move_circle()
                 time.sleep(1 / self.sampling_rate)
         self.isrunning = False
 
     def start_scan(self, data_list):
+        logger.info('Start Demo Scan')
         self.data_list = data_list
         if self.isrunning:
             self.controlpanel.window1.iscalib = False

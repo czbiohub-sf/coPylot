@@ -151,12 +151,15 @@ class LaserPositionCalibration(QWidget):
         offset_x & y are the coordinates of the center position in the window.
         """
         self.window1.initOffset()
-        self.window1.moveMarker(
-            self.window1.offset_x,
-            self.window1.offset_y,
-            self.window1.marker,
-            with_dac=True,
-        )
+
+        if self.demo_mode:
+            self.window1.moveMarker(
+                self.window1.offset_x, self.window1.offset_y, self.window1.marker
+            )
+        elif self.controlpanel.dac_mode:
+            self.window1.moveMarker(
+                self.window1.offset_x, self.window1.offset_y, self.window1.marker
+            )
         print(f'offset: {(self.window1.offset_x, self.window1.offset_y)}')
 
     def init_cord(self):
@@ -221,6 +224,16 @@ class LaserPositionCalibration(QWidget):
             )
         return savepath
 
+    def size2cord(self, size):
+        x0y0 = (
+            -size[0] / 2 + self.window1.offset_x,
+            -size[1] / 2 + self.window1.offset_y,
+        )
+        x1y0 = (x0y0[0] + size[0], x0y0[1])
+        x1y1 = (x0y0[0] + size[0], x0y0[1] + size[1])
+        x0y1 = (x0y0[0], x0y0[1] + size[1])
+        return x0y0, x1y0, x1y1, x0y1
+
     def start_scan(self):
         self.window1.initWindowsize()
         self.init_cord()
@@ -240,7 +253,12 @@ class LaserPositionCalibration(QWidget):
             self.demo_mode_controller.trans_obj = self.controlpanel.transform_list[
                 self.controlpanel.current_laser
             ]
-            self.demo_mode_controller.start_scan()
+            demo_ctrl_size = (
+                self.window1.canvas_width / 2,
+                self.window1.canvas_height / 2,
+            )
+            demo_rect_coord = self.size2cord(demo_ctrl_size)
+            self.demo_mode_controller.start_scan(demo_rect_coord)
             pass
         else:
             if self.controlpanel.dac_mode:
@@ -288,6 +306,9 @@ class LaserPositionCalibration(QWidget):
         if self.controlpanel.dac_mode:
             raise NotImplementedError("DAC Controller scanning not implemented")
             # self.dac_controller.apply_matrix = False
+        elif self.demo_mode:
+            logger.debug('Revert Calib DEMO')
+            pass
         else:
             self.mirror_controller.apply_matrix = False
         logger.info('Calibration is not applied.')

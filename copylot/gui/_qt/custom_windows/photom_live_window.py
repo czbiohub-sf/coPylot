@@ -134,7 +134,7 @@ class LiveViewWindow(QMainWindow):
             self.drawMarker(self.ref_marker_list[-1], True)
         for i in range(len(cord_ctrl)):
             self.ctrl_marker_list.append(
-                self.initMarker(cord_ctrl[i][0], cord_ctrl[i][1], color='black')
+                self.initMarker(cord_ctrl[i][0], cord_ctrl[i][1], color='blue')
             )
             self.drawMarker(self.ctrl_marker_list[-1], True)
 
@@ -191,13 +191,12 @@ class LiveViewWindow(QMainWindow):
             coord = [self.getMarkerCenter(mk) for mk in self.ref_marker_list]
             self.drawTetragon(coord)
 
-    def moveMarker(self, x, y, marker=None, with_dac=False):
+    def moveMarker(self, x, y, marker=None):
         """
-        Move marker to a designated position. Only dac signal will be sent when marker is None.
+        Move marker to a designated position.
         :param x: x coordinate of the destination
         :param y: y coordinate of the destination
         :param marker: marker object
-        :param with_dac: signals will be sent to the DAC board if True
         :return: a marker object at new position
         """
         if not self.parent.demo_mode:
