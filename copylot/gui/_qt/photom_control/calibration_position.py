@@ -249,16 +249,18 @@ class LaserPositionCalibration(QWidget):
         ].affmatrix = None
         self.parent.update_calibration_status()
         if self.demo_mode:
-            self.demo_mode_controller = demo_scan_points(self.controlpanel)
-            self.demo_mode_controller.trans_obj = self.controlpanel.transform_list[
-                self.controlpanel.current_laser
-            ]
+            # self.demo_mode_controller = demo_scan_points(self.controlpanel)
+            # self.demo_mode_controller.trans_obj = self.controlpanel.transform_list[
+            #     self.controlpanel.current_laser
+            # ]
             demo_ctrl_size = (
                 self.window1.canvas_width / 2,
                 self.window1.canvas_height / 2,
             )
             demo_rect_coord = self.size2cord(demo_ctrl_size)
-            self.demo_mode_controller.start_scan(demo_rect_coord)
+            self.window1.draw_demo_calib(demo_rect_coord)
+
+            # self.demo_mode_controller.start_scan(demo_rect_coord)
             pass
         else:
             if self.controlpanel.dac_mode:

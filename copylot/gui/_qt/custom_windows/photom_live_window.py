@@ -186,6 +186,11 @@ class LiveViewWindow(QMainWindow):
         painter.drawPath(path)
         self.view.viewport().update()
 
+    def draw_demo_calib(self, coord):
+        for x, y in coord:
+            circle = self.scene.addEllipse(x - 10, y - 10, 20, 20)
+            circle.setBrush(QBrush(QColor("red")))  # set color
+
     def moveTetragon(self):
         if len(self.ref_marker_list) > 0:
             coord = [self.getMarkerCenter(mk) for mk in self.ref_marker_list]
@@ -413,7 +418,7 @@ class LiveViewWindow(QMainWindow):
         painter.eraseRect(self.scanregion)
         for i in range(len(scan_path[0]) - 1):
             point1 = QPointF(scan_path[0][i], scan_path[1][i])
-            point2 = QPointF(scan_path[0][i+1], scan_path[1][i+1])
+            point2 = QPointF(scan_path[0][i + 1], scan_path[1][i + 1])
             line = QLineF(point1, point2)
             painter.drawLine(line)
         self.view.viewport().update()
