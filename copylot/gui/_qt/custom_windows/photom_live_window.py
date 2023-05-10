@@ -11,11 +11,24 @@ from PyQt5.QtWidgets import (
     QGraphicsEllipseItem,
     QGraphicsRectItem,
 )
-from PyQt5.QtCore import Qt, QEvent, QPoint, QRect, QPointF, QLineF
+from PyQt5.QtCore import (
+    Qt,
+    QEvent,
+    QPoint,
+    QRect,
+    QPointF,
+    QLineF,
+    QTimer,
+    QThread,
+    pyqtSignal,
+)
 from PyQt5 import QtGui
+from copylot.gui._qt.job_runners.worker import WorkerSignals
+from qtpy.QtCore import Qt, Signal, Slot, QRunnable
 
 # from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac
 from copylot import logger
+
 
 """
 This script creates a LiveViewWindow to control laser spot when overlaid with camera display.
@@ -23,12 +36,15 @@ This script creates a LiveViewWindow to control laser spot when overlaid with ca
 
 
 class LiveViewWindow(QMainWindow):
+    laser_demo_pos = pyqtSignal(QPointF)
+
     def __init__(self, parent):
         super().__init__()
         # Inherit arguments from ControlPanel
         self.parent = parent
         self.demo_mode = parent.demo_mode
         self.mirror = self.parent.mirror_0
+
         # Create a LiveViewwindow
         self.setMouseTracking(True)
         self.opacity = 0.7
@@ -89,6 +105,13 @@ class LiveViewWindow(QMainWindow):
         self.iscalib = False
         self.scan_region_list = []
         self.scan_region_num_list = []
+
+    def initCircle(self, x=100, y=100, color='red', size=10):
+        marker = QGraphicsEllipseItem(0, 0, size, size)
+        marker.setBrush(QBrush(QColor(color)))
+        self.drawMarker(marker, movable=False)
+        return self.moveMarker(x, y, marker)
+        # self.drawMarker(marker, movable=False)
 
     def initMarker(self, x=100, y=100, text='+', color='black', size=10):
         """
@@ -186,11 +209,6 @@ class LiveViewWindow(QMainWindow):
         painter.drawPath(path)
         self.view.viewport().update()
 
-    def draw_demo_calib(self, coord):
-        for x, y in coord:
-            circle = self.scene.addEllipse(x - 10, y - 10, 20, 20)
-            circle.setBrush(QBrush(QColor("red")))  # set color
-
     def moveTetragon(self):
         if len(self.ref_marker_list) > 0:
             coord = [self.getMarkerCenter(mk) for mk in self.ref_marker_list]
@@ -247,11 +265,16 @@ class LiveViewWindow(QMainWindow):
         :param marker: a marker object
         :return: coordinate x & y of the marker center
         """
-        fm = QtGui.QFontMetricsF(QtGui.QFont())
-        boundingRect = fm.tightBoundingRect(marker.text())
-        mergintop = fm.ascent() + boundingRect.top()
-        x = marker.pos().x() + boundingRect.left() + boundingRect.width() / 2
-        y = marker.pos().y() + mergintop + boundingRect.height() / 2
+        if isinstance(marker, QGraphicsEllipseItem):
+            boundingRect = marker.boundingRect()
+            x = marker.pos().x() + boundingRect.left() + boundingRect.width() / 2
+            y = marker.pos().y() + boundingRect.height() / 2
+        elif isinstance(marker, QGraphicsSimpleTextItem):
+            fm = QtGui.QFontMetricsF(QtGui.QFont())
+            boundingRect = fm.tightBoundingRect(marker.text())
+            margintop = fm.ascent() + boundingRect.top()
+            x = marker.pos().x() + boundingRect.left() + boundingRect.width() / 2
+            y = marker.pos().y() + margintop + boundingRect.height() / 2
         return x, y
 
     def dispMarkerbyCenter(self, marker, cord=None):
@@ -262,13 +285,21 @@ class LiveViewWindow(QMainWindow):
         """
         if cord is None:
             cord = (marker.x(), marker.y())
-        fm = QtGui.QFontMetricsF(QtGui.QFont())
-        boundingRect = fm.tightBoundingRect(marker.text())
-        mergintop = fm.ascent() + boundingRect.top()
-        marker.setPos(
-            cord[0] - boundingRect.left() - boundingRect.width() / 2,
-            cord[1] - mergintop - boundingRect.height() / 2,
-        )
+
+        if isinstance(marker, QGraphicsEllipseItem):
+            boundingRect = marker.boundingRect()
+            marker.setPos(
+                cord[0] - boundingRect.width() / 2,
+                cord[1] - boundingRect.height() / 2,
+            )
+        elif isinstance(marker, QGraphicsSimpleTextItem):
+            fm = QtGui.QFontMetricsF(QtGui.QFont())
+            boundingRect = fm.tightBoundingRect(marker.text())
+            margintop = fm.ascent() + boundingRect.top()
+            marker.setPos(
+                cord[0] - boundingRect.left() - boundingRect.width() / 2,
+                cord[1] - margintop - boundingRect.height() / 2,
+            )
         return marker
 
     def removeMarker(self, marker):
@@ -297,8 +328,9 @@ class LiveViewWindow(QMainWindow):
         Event filter is used to track mouse action in real-time.
         This is required by Qt natively.
         """
-
         if event.type() == QEvent.MouseMove:
+            mouse_pos = event.pos()
+            self.statusBar().showMessage(f"Cursor position: ({mouse_pos.x()}, {mouse_pos.y()})")
             if self.iscalib:
                 self.moveTetragon()
                 ctrl_marker_posi = [
@@ -367,6 +399,7 @@ class LiveViewWindow(QMainWindow):
                         # )
                         raise NotImplementedError("DAC not implemented")
                     else:
+                        # TODO: Coordinates should be transformed?
                         self.mirror.position_x = cord[0]
                         self.mirror.position_x = cord[1]
                 logger.debug(f'raw {cord}')
@@ -405,6 +438,23 @@ class LiveViewWindow(QMainWindow):
             self.image = QImage(self.size(), QImage.Format_ARGB32)
             self.image.fill(Qt.white)
         return QWidget.eventFilter(self, source, event)
+
+    def draw_demo_calib(self, scan_path):
+        painter = QPainter(self.image)
+        painter.setPen(
+            QPen(
+                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                2,
+                Qt.SolidLine,
+            )
+        )
+        for i in range(len(scan_path[0]) - 1):
+            point1 = QPointF(scan_path[0][i], scan_path[1][i])
+            point2 = QPointF(scan_path[0][i + 1], scan_path[1][i + 1])
+            line = QLineF(point1, point2)
+            painter.drawLine(line)
+        self.view.viewport().update()
+        logger.info('Drawing Demo Calib Path...')
 
     def draw_preview(self, scan_path):
         painter = QPainter(self.image)
@@ -465,6 +515,62 @@ class LiveViewWindow(QMainWindow):
     def reorder_scanregion(self):
         for i, j in enumerate(self.scan_region_num_list):
             j.setText(str(i + 1))
+
+    # def update_cursor(self, pos):
+    #     self.statusBar().showMessage(f'Cursor pos:({pos.x()}, {pos.y()})')
+
+    def start_laser_demo(self):
+        self.laser_demo_thread = LaserDemo(self)
+        self.laser_demo_thread.laser_demo_pos.connect(self.update_demo_pos)
+        self.laser_demo_thread.start()
+
+    def update_demo_pos(self, pos):
+        self.laser_demo_X = pos.x()
+        self.laser_demo_Y = pos.y()
+        self.update()
+
+    def stop_laser_demo(self):
+        self.laser_demo_thread.stop()
+
+
+class LaserDemo(QThread):
+    laser_demo_pos = pyqtSignal(QPointF)
+
+    def __init__(self, parent):
+        super().__init__()
+        self.parent = parent
+        self.index = 0
+        self.vertices = [(0, 0), (200, 0), (300, 200), (100, 200)]
+        self.num_coords_per_side = 20
+        self.coords = self.generate_trapezoid_coordinates(
+            self.vertices, self.num_coords_per_side
+        )
+        # self.laserDemo = True
+
+    def run(self):
+        while True:
+            if self.parent.isRunning:
+                self.index += 1
+                if self.index >= len(self.coords):
+                    self.index = 0
+                self.laser_demo_pos.emit(QPointF(*self.coords[self.index]))
+            self.msleep(50)
+
+    @staticmethod
+    def generate_trapezoid_coordinates(vertices, num_coords_per_side):
+        # Generate the coordinates along each side of the trapezoid
+        coordinates = []
+        for i in range(len(vertices)):
+            start = vertices[i]
+            end = vertices[(i + 1) % len(vertices)]
+            x_diff = end[0] - start[0]
+            y_diff = end[1] - start[1]
+            for j in range(num_coords_per_side):
+                x = start[0] + j * (x_diff / num_coords_per_side)
+                y = start[1] + j * (y_diff / num_coords_per_side)
+                coordinates.append([x, y])
+
+        return coordinates
 
 
 class photom_marker(QGraphicsSimpleTextItem):
