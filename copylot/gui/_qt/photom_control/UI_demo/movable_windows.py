@@ -20,10 +20,7 @@ from PyQt5.QtWidgets import (
 
 from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPainter, QPen, QMouseEvent, QCursor
-
-#TODO; custom logger that has to be properly implemented in main package
-from copylot.gui._qt.photom_control.logger import setup_logger
-logger = setup_logger()
+from copylot import logger
 
 class CustomWindow(QMainWindow):
     def __init__(self):

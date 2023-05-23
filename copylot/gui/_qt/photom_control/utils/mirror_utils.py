@@ -2,7 +2,9 @@ from copylot.hardware.mirrors.optotune.mirror import OptoMirror
 import time
 from copylot.gui._qt.photom_control.helper_functions.qthreadworker import Worker
 from copylot import logger
-class ScanPoints:
+
+
+class MirrorScanPoints:
     def __init__(self, parent, mirror: OptoMirror):
         super().__init__()
         self.parent = parent

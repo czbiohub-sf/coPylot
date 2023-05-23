@@ -1,3 +1,4 @@
+#%%
 import os
 import sys
 import numpy as np
@@ -43,3 +44,28 @@ plt.scatter(xv1, yv1, s=12)
 plt.scatter(dst[0], dst[1], s = 12)
 plt.legend(['original', 'transformed'])
 plt.show()
+# %%
+
+ref_cord= [[133.33333333333331, 133.33333333333331], [666.6666666666667, 133.33333333333331], [666.6666666666667, 666.6666666666667], [133.33333333333331, 666.6666666666667]] 
+ctrl_cord = [[380.0, 380.0], [420.0, 380.0], [420.0, 420.0], [380.0, 420.0]]
+data_list = [[380.0, 420.0, 420.0, 380.0], [380.0, 380.0, 420.0, 420.0]]
+#get the coords
+x_coords = [point[0] for point in ctrl_cord]
+y_coords = [point[1] for point in ctrl_cord]
+
+#get the coords
+x_coord_ref = [point[0] for point in ref_cord]
+y_coords_ref = [point[1] for point in ref_cord]
+
+trans = AffineTransform()
+M = trans.getAffineMatrix(ref_cord, ctrl_cord)
+dst = trans.affineTrans(data_list)
+print(dst)
+# Plot the points as a scatter plot
+plt.figure()
+plt.scatter(x_coords, y_coords, s=12)
+plt.scatter(x_coord_ref, y_coords_ref, s=12)
+plt.scatter(dst[0], dst[1], s=12)
+plt.legend(['original', 'reference', 'transformed'])
+plt.show()
+# %%
