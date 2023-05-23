@@ -50,7 +50,12 @@ class DrawPatternUnit(QGroupBox):
         self.cycl_par = None
         self.gap_par = None
         self.speed_par = None
+
+        # Live Window Marker
         self.marker_pos0 = self.window.getMarkerCenter(self.window.marker)
+
+        #Initialize controllers
+        #TODO: Check if this is the best place to initialize or to inherit this from another window
         self.dac_controller = None
 
         # ButtonGroups for scanning algorithm
@@ -149,9 +154,14 @@ class DrawPatternUnit(QGroupBox):
                 if not self.pause_draw_flag:
                     self.resetMarkerPosition()
             else:
-                self.dac_controller.start_scan()
-                self.enable_buttons([self.pb_pause, self.pb_stop])
-                self.dac_controller.update_values(self.window, self.prgbar)
+                if self.dac_mode:
+                    self.dac_controller.start_scan()
+                    self.enable_buttons([self.pb_pause, self.pb_stop])
+                    self.dac_controller.update_values(self.window, self.prgbar)
+                else:
+                    self.enable_buttons([self.pb_pause, self.pb_stop])
+                    raise NotImplementedError("NON DAC Pattern start not implemented")
+                
             print('scanning process finished.')
             self.draw_inprogress_flag = False
             print('scan_inprogress_flag turned False')
@@ -297,7 +307,9 @@ class DrawPatternUnit(QGroupBox):
     def preview(self):
         if self.pb_preview.isChecked():
             if self.checkstatus():
+                #Get the determined scan region shape
                 print(f'H: {self.window.scanregion.height()}, W: {self.window.scanregion.width()}')
+                #Trace the pattern given the scan region center
                 self.select_algorithm((self.window.scanregion.center().x(), self.window.scanregion.center().y()))
                 self.window.draw_preview(self.scan_path)
                 logger.info('Showing preview of scanning path.')

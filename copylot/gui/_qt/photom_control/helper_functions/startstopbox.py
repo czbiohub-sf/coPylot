@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
 
 # from dac_controller.scan import DACscan
 from copylot.gui._qt.photom_control.scan_algrthm.scan_algorithm import ScanAlgorithm
-from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
+# from copylot.gui._qt.photom_control.utils.mirror_utils import ScanPoints
 
 from copylot import logger
 
@@ -103,10 +103,11 @@ class StartStop(QGroupBox):
                         #     self.dac_controller.transfer2dac()
                     else:
                         if not self.pause_scan_flag:
-                            self.mirror_controller = ScanPoints(self, self.mirror_0)
-                            self.mirror_controller.trans_obj = self.controlpanel.transform_list[
-                                self.controlpanel.current_laser
-                            ]                            
+                            # self.mirror_controller = ScanPoints(self, self.mirror_0)
+                            # self.mirror_controller.trans_obj = self.controlpanel.transform_list[
+                            #     self.controlpanel.current_laser
+                            # ]        
+                            raise NotImplementedError                    
                 self.pause_scan_flag = False
                 logger.info(f'Scanning #{self.curr_inter} region...')
 
