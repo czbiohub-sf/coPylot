@@ -12,6 +12,7 @@ class WorkerSignals(QObject):
     running = Signal()
     finished = Signal()
     cancelled = Signal()
+    update = Signal()
 
 
 class Worker(QRunnable):

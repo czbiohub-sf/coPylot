@@ -39,7 +39,7 @@ class TabManager(QTabWidget):
         for i in range(self.count()):
             if hasattr(self.widget(i), 'laser_selection_box'):
                 self.widget(i).laser_selection_box.laser_selection.buttons()[self.parent.current_laser].setChecked(True)
-
+ 
     def update_calibration_status(self):
         """
         To update calibration status in the laser selection boxes.

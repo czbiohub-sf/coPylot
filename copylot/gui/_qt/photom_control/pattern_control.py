@@ -6,7 +6,6 @@ from PyQt5.QtWidgets import (
     QLabel
 )
 from copylot.gui._qt.photom_control.helper_functions.draw_pattern_unit import DrawPatternUnit
-from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.photom_control.helper_functions.laser_selection_box import LaserSelectionBox
 from copylot import logger
 

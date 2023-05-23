@@ -24,11 +24,12 @@ from PyQt5.QtCore import (
 )
 from PyQt5 import QtGui
 from copylot.gui._qt.job_runners.worker import WorkerSignals
-from qtpy.QtCore import Qt, Signal, Slot, QRunnable
+from qtpy.QtCore import Qt, Signal, Slot, QRunnable, QRectF
 
-# from copylot.gui._qt.photom_control.utils.update_dac import signal_to_dac
+# from copylot.gui._qt.photom_control.utils.conversion import signal_to_dac
+from copylot.gui._qt.photom_control.utils.conversion import value_converter
 from copylot import logger
-
+import time
 
 """
 This script creates a LiveViewWindow to control laser spot when overlaid with camera display.
@@ -41,9 +42,9 @@ class LiveViewWindow(QMainWindow):
     def __init__(self, parent):
         super().__init__()
         # Inherit arguments from ControlPanel
-        self.parent = parent
+        self.controlpanel = parent
         self.demo_mode = parent.demo_mode
-        self.mirror = self.parent.mirror_0
+        self.mirror = self.controlpanel.mirror_0
 
         # Create a LiveViewwindow
         self.setMouseTracking(True)
@@ -51,7 +52,7 @@ class LiveViewWindow(QMainWindow):
         self.setWindowOpacity(self.opacity)
         self.left_hold = False
         self.right_hold = False
-        self.setGeometry(*self.parent.liveViewGeo)
+        self.setGeometry(*self.controlpanel.liveViewGeo)
         self.setWindowTitle('Mouse Tracker')
         self.show()
         print(
@@ -59,8 +60,12 @@ class LiveViewWindow(QMainWindow):
         )
 
         # Correct geometry with top and side bars
-        self.topbar_size = self.frameGeometry().height() - self.parent.liveViewGeo[3]
-        self.sidebar_size = self.frameGeometry().width() - self.parent.liveViewGeo[2]
+        self.topbar_size = (
+            self.frameGeometry().height() - self.controlpanel.liveViewGeo[3]
+        )
+        self.sidebar_size = (
+            self.frameGeometry().width() - self.controlpanel.liveViewGeo[2]
+        )
         self.canvas_height = self.frameGeometry().height() - self.topbar_size
         self.canvas_width = self.frameGeometry().width() - self.sidebar_size
         self.offset_x = self.canvas_width / 2
@@ -106,6 +111,10 @@ class LiveViewWindow(QMainWindow):
         self.scan_region_list = []
         self.scan_region_num_list = []
 
+        # TODO: this laser demo is not implemented properly.Needs further debugging
+        self.laser_demo_X = 0
+        self.laser_demo_Y = 0
+
     def initCircle(self, x=100, y=100, color='red', size=10):
         marker = QGraphicsEllipseItem(0, 0, size, size)
         marker.setBrush(QBrush(QColor(color)))
@@ -124,11 +133,6 @@ class LiveViewWindow(QMainWindow):
         """
         marker = QGraphicsSimpleTextItem(text)
 
-        ## Modify the font size
-        # marker_font = QFont()
-        # marker_font.setPointSize(20)
-        # marker_font.setBold(True)
-        # marker.setFont(marker_font)
         if isinstance(color, str):
             marker.setBrush(QColor(color))
         else:
@@ -149,7 +153,7 @@ class LiveViewWindow(QMainWindow):
                     cord_ref[i][0],
                     cord_ref[i][1],
                     color=QColor(76, 0, 153)
-                    if self.parent.current_laser == 0
+                    if self.controlpanel.current_laser == 0
                     else Qt.red,
                     text='O',
                 )
@@ -157,7 +161,7 @@ class LiveViewWindow(QMainWindow):
             self.drawMarker(self.ref_marker_list[-1], True)
         for i in range(len(cord_ctrl)):
             self.ctrl_marker_list.append(
-                self.initMarker(cord_ctrl[i][0], cord_ctrl[i][1], color='blue')
+                self.initMarker(cord_ctrl[i][0], cord_ctrl[i][1], color='red')
             )
             self.drawMarker(self.ctrl_marker_list[-1], True)
 
@@ -200,7 +204,7 @@ class LiveViewWindow(QMainWindow):
         painter = QPainter(self.image)
         painter.setPen(
             QPen(
-                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                QColor(76, 0, 153) if self.controlpanel.current_laser == 0 else Qt.red,
                 1,
                 Qt.DotLine,
             )
@@ -222,39 +226,52 @@ class LiveViewWindow(QMainWindow):
         :param marker: marker object
         :return: a marker object at new position
         """
-        if not self.parent.demo_mode:
+        if not self.controlpanel.demo_mode:
+            # Apply the transformation
             if (
-                self.parent.transform_list[self.parent.current_laser].affmatrix
+                self.controlpanel.transform_list[
+                    self.controlpanel.current_laser
+                ].affmatrix
                 is not None
-            ):
-                cord = self.parent.transform_list[
-                    self.parent.current_laser
+            ):  
+                print('not demo and not affmat none')
+                cord = self.controlpanel.transform_list[
+                    self.controlpanel.current_laser
                 ].affineTrans([x, y])
+                logger.info(f'moving marker {cord}')
             else:
                 cord = [x, y]
-            if self.parent.dac_mode:
+            if self.controlpanel.dac_mode:
                 # signal_to_dac(
-                #     self.parent.ao_range,
+                #     self.controlpanel.ao_range,
                 #     cord[0],
                 #     value_range=(0, self.canvas_width),  # range of output laser power
                 #     Vout_range=(-10, 10),
-                #     dac_ch=self.parent.galvo_x,
-                #     board_num=self.parent.board_num,
+                #     dac_ch=self.controlpanel.galvo_x,
+                #     board_num=self.controlpanel.board_num,
                 #     invert=True,
                 # )
                 # signal_to_dac(
-                #     self.parent.ao_range,
+                #     self.controlpanel.ao_range,
                 #     cord[1],
                 #     value_range=(0, self.canvas_height),  # range of output laser power
                 #     Vout_range=(-10, 10),
-                #     dac_ch=self.parent.galvo_y,
-                #     board_num=self.parent.board_num,
+                #     dac_ch=self.controlpanel.galvo_y,
+                #     board_num=self.controlpanel.board_num,
                 #     invert=True,
                 # )
                 raise NotImplementedError("DAC not implemented")
             else:
-                self.mirror.position_x = cord[0]
-                self.mirror.position_y = cord[1]
+                # TODO: the mirror range is hardcoded..
+                # Rescale coords to mirror values
+                logger.info(f'Start marker to {cord}')
+                cord[0] = value_converter(cord[0], (0, self.canvas_width), (-1.0, 1.0), invert=False)
+                cord[1] = value_converter(cord[1], (0, self.canvas_height), (-1.0, 1.0), invert=True)
+                logger.info(f'rescaled marker to {cord}')  
+                self.mirror.position_x = cord[0][0]
+                self.mirror.position_y = cord[1][0]
+                logger.info(f'Moving marker to {cord}')
+                time.sleep(0.02)
 
         if marker is not None:
             return self.dispMarkerbyCenter(marker, [x, y])
@@ -275,7 +292,7 @@ class LiveViewWindow(QMainWindow):
             margintop = fm.ascent() + boundingRect.top()
             x = marker.pos().x() + boundingRect.left() + boundingRect.width() / 2
             y = marker.pos().y() + margintop + boundingRect.height() / 2
-        return x, y
+        return [x, y]
 
     def dispMarkerbyCenter(self, marker, cord=None):
         """
@@ -330,26 +347,36 @@ class LiveViewWindow(QMainWindow):
         """
         if event.type() == QEvent.MouseMove:
             mouse_pos = event.pos()
-            self.statusBar().showMessage(f"Cursor position: ({mouse_pos.x()}, {mouse_pos.y()})")
+            self.statusBar().showMessage(
+                f"Cursor position: ({mouse_pos.x()}, {mouse_pos.y()})"
+            )
             if self.iscalib:
                 self.moveTetragon()
                 ctrl_marker_posi = [
                     self.getMarkerCenter(mk) for mk in self.ctrl_marker_list
                 ]
-                # self.parent.tabmanager.laser_cali.dac_controller.data_list = list(map(list, zip(*ctrl_marker_posi)))
-                print(f'Ctrl. marker {ctrl_marker_posi}')
+                # TODO: implement this?
+                if not self.controlpanel.demo_mode:
+                    if self.controlpanel.dac_mode:
+                        raise NotImplementedError("eventfiler dac not implemented")
+                    else:
+                        pass
+                        # self.controlpanel.tabmanager.laser_cali.mirror_controller.data_list = list(map(list, zip(*ctrl_marker_posi)))
+                        # logger.info(f'tabmanager data_list {self.controlpanel.tabmanager.laser_cali.mirror_controller.data_list}')
+                # self.controlpanel.tabmanager.laser_cali.dac_controller.data_list = list(map(list, zip(*ctrl_marker_posi)))
+                # print(f'Ctrl. marker {ctrl_marker_posi}')
+
             # Draw a selecting bounding box
             elif self.right_hold:
                 # Get the shape
-                # shape_ind = self.parent.tabmanager.pattern_ctrl.bg_pattern_selection.checkedId()
                 shape_ind = (
-                    self.parent.tabmanager.multi_pattern.bg_indiv.bg_shape.checkedId()
+                    self.controlpanel.tabmanager.multi_pattern.bg_indiv.bg_shape.checkedId()
                 )
                 painter = QPainter(self.image)
                 painter.setPen(
                     QPen(
                         QColor(76, 0, 153)
-                        if self.parent.current_laser == 0
+                        if self.controlpanel.current_laser == 0
                         else Qt.red,
                         3,
                         Qt.DotLine,
@@ -370,39 +397,42 @@ class LiveViewWindow(QMainWindow):
             # Move cursor or draw area using left click
             elif self.left_hold:
                 cord = self.getMarkerCenter(self.marker)
-                if not self.parent.demo_mode:
+                if not self.controlpanel.demo_mode:
                     if (
-                        self.parent.transform_list[self.parent.current_laser].affmatrix
+                        self.controlpanel.transform_list[
+                            self.controlpanel.current_laser
+                        ].affmatrix
                         is not None
                     ):
                         logger.info('transforming coordinate...')
-                        cord = self.parent.transform_list[
-                            self.parent.current_laser
+                        cord = self.controlpanel.transform_list[
+                            self.controlpanel.current_laser
                         ].affineTrans(cord)
-                        logger.debug(f'tranferred {cord}')
-                    if self.parent.dac_mode:
+                        logger.info(f'tranferred {cord}')
+                    if self.controlpanel.dac_mode:
                         # signal_to_dac(
-                        #     self.parent.ao_range,
+                        #     controlpanel.ao_range,
                         #     cord[0],
                         #     (0, self.canvas_width),
                         #     Vout_range=(-10, 10),
-                        #     dac_ch=self.parent.galvo_x,
+                        #     dac_ch=controlpanel.galvo_x,
                         #     invert=True,
                         # )
                         # signal_to_dac(
-                        #     self.parent.ao_range,
+                        #     controlpanel.ao_range,
                         #     cord[1],
                         #     (0, self.canvas_height),
                         #     Vout_range=(-10, 10),
-                        #     dac_ch=self.parent.galvo_y,
+                        #     dac_ch=controlpanel.galvo_y,
                         #     invert=True,
                         # )
                         raise NotImplementedError("DAC not implemented")
                     else:
-                        # TODO: Coordinates should be transformed?
-                        self.mirror.position_x = cord[0]
-                        self.mirror.position_x = cord[1]
-                logger.debug(f'raw {cord}')
+                        logger.info(f'getmarker center {cord}')
+                        cord[0] = value_converter(cord[0], (0, self.canvas_width), (-1.0, 1.0), invert=True)
+                        cord[1] = value_converter(cord[1], (0, self.canvas_height), (-1.0, 1.0), invert=False)
+                        self.mirror.position_x = cord[0][0]
+                        self.mirror.position_y = cord[1][0]
         elif event.type() == QEvent.MouseButtonPress:
             print('mouse pressed')
             self.lastPoint = event.pos()
@@ -411,19 +441,21 @@ class LiveViewWindow(QMainWindow):
                 print('left button clicked.')
             elif event.buttons() == Qt.RightButton:
                 if self.iscalib:
-                    self.parent.tabmanager.laser_cali.apply_calib()
+                    self.controlpanel.tabmanager.laser_cali.apply_calib()
                     print('Laser calibration applied.')
                 else:
                     self.right_hold = True
                 print('right button clicked.')
         elif event.type() == QEvent.MouseButtonRelease:
             if self.iscalib:
-                self.parent.tabmanager.laser_cali.revert_calib()
+                self.controlpanel.tabmanager.laser_cali.revert_calib()
                 print('Laser calibration reverted.')
             else:
                 if self.right_hold:
-                    self.parent.tabmanager.pattern_ctrl.update_scansize(self.scanregion)
-                    self.parent.tabmanager.multi_pattern.bg_indiv.update_scanpar()
+                    self.controlpanel.tabmanager.pattern_ctrl.update_scansize(
+                        self.scanregion
+                    )
+                    self.controlpanel.tabmanager.multi_pattern.bg_indiv.update_scanpar()
                 self.left_hold = False
                 self.right_hold = False
                 print('mouse released')
@@ -439,28 +471,11 @@ class LiveViewWindow(QMainWindow):
             self.image.fill(Qt.white)
         return QWidget.eventFilter(self, source, event)
 
-    def draw_demo_calib(self, scan_path):
-        painter = QPainter(self.image)
-        painter.setPen(
-            QPen(
-                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
-                2,
-                Qt.SolidLine,
-            )
-        )
-        for i in range(len(scan_path[0]) - 1):
-            point1 = QPointF(scan_path[0][i], scan_path[1][i])
-            point2 = QPointF(scan_path[0][i + 1], scan_path[1][i + 1])
-            line = QLineF(point1, point2)
-            painter.drawLine(line)
-        self.view.viewport().update()
-        logger.info('Drawing Demo Calib Path...')
-
     def draw_preview(self, scan_path):
         painter = QPainter(self.image)
         painter.setPen(
             QPen(
-                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                QColor(76, 0, 153) if self.controlpanel.current_laser == 0 else Qt.red,
                 2,
                 Qt.SolidLine,
             )
@@ -492,13 +507,15 @@ class LiveViewWindow(QMainWindow):
         itemn.setPos(param[0], param[1])
         item.setPen(
             QPen(
-                QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red,
+                QColor(76, 0, 153) if self.controlpanel.current_laser == 0 else Qt.red,
                 2,
                 Qt.SolidLine,
             )
         )
         b = QBrush(Qt.DiagCrossPattern)
-        b.setColor(QColor(76, 0, 153) if self.parent.current_laser == 0 else Qt.red)
+        b.setColor(
+            QColor(76, 0, 153) if self.controlpanel.current_laser == 0 else Qt.red
+        )
         item.setBrush(b)
         self.scan_region_list.append(item)
         self.scan_region_num_list.append(itemn)
@@ -519,10 +536,22 @@ class LiveViewWindow(QMainWindow):
     # def update_cursor(self, pos):
     #     self.statusBar().showMessage(f'Cursor pos:({pos.x()}, {pos.y()})')
 
+    def draw_demo_laser(self):
+        painter = QPainter(self)
+        painter.setBrush(QBrush(QColor(0, 255, 0, 127)))
+        painter.drawEllipse(QRectF(self.laser_demo_X, self.laser_demo_Y, 20, 20))
+
     def start_laser_demo(self):
+        self.demo_running = True
         self.laser_demo_thread = LaserDemo(self)
+        self.draw_demo_laser()
         self.laser_demo_thread.laser_demo_pos.connect(self.update_demo_pos)
         self.laser_demo_thread.start()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.Antialiasing)
+        painter.drawEllipse(QRectF(self.laser_demo_X, self.laser_demo_Y, 20, 20))
 
     def update_demo_pos(self, pos):
         self.laser_demo_X = pos.x()
@@ -530,7 +559,7 @@ class LiveViewWindow(QMainWindow):
         self.update()
 
     def stop_laser_demo(self):
-        self.laser_demo_thread.stop()
+        self.demo_running = False
 
 
 class LaserDemo(QThread):
@@ -549,7 +578,8 @@ class LaserDemo(QThread):
 
     def run(self):
         while True:
-            if self.parent.isRunning:
+            if self.parent.demo_running:
+                logger.info(f"coords :{self.coords[self.index]}")
                 self.index += 1
                 if self.index >= len(self.coords):
                     self.index = 0

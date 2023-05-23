@@ -38,6 +38,11 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
 
+        #TODO: keep only the necessary
+        self.init_defaults = [
+            ["registration_points", 0.001, 1, 0.02],
+            ["stage_scan_range", 0, 10000, 1000],
+        ]
         try:
             with open(
                 os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),

@@ -15,19 +15,18 @@ from qtpy.QtWidgets import (
 from qtpy.QtCore import Qt, Signal, Slot
 import time
 
-from copylot.gui._qt.job_runners.worker import Worker
 from copylot.gui._qt.photom_control.tab_manager import TabManager
 from copylot.gui._qt.custom_windows.photom_live_window import LiveViewWindow
 from copylot.gui._qt.photom_control.utils.affinetransform import AffineTransform
-from copylot.gui._qt.photom_control.helper_functions.messagebox import MessageBox
 from copylot.gui._qt.custom_widgets.qt_logger import QtLogger, QtLogBox
 import os
-#Logger
+
+# Logger
 import logging
 from copylot import logger
 
 # This flag disables the loading of the DACs and lasers.
-demo_mode = True
+demo_mode = False
 dac_mode = False
 
 
@@ -38,10 +37,8 @@ if not demo_mode:
     serial_num = ''
     laser_port = ''
     mirror_port = ''
-    # from copylot.hardware.lasers import
 
 logger.info('Running in the UI demo mode. (from ControlPanel)')
-
 
 # TODO: setup a filelogger location
 class PhotomControlDockWidget(QWidget):
@@ -77,25 +74,36 @@ class PhotomControlDockWidget(QWidget):
         self.state_tracker = False
         # ===============================================
         # Laser and galvo
-        self.current_laser = (
-            0  # this variable is used for knowing which laser to calibrate
-        )
+        # this variable is used for knowing which laser to calibrate
+        self.current_laser = 0
 
         # Scan pattern selection
         self.current_scan_shape = 0
         self.current_scan_pattern = 0
 
+        # Transform matrix that aligns cursor with laser point
+        #TODO: Make this modular so that it depends on the num of lasers or laser ID
+        self.transform_list = [AffineTransform(), AffineTransform()]
+        
+        ## TODO: From the copylot initialize these from a 'config.yaml' file
         if self.demo_mode:
-            self.mirror_0 = 0
+            self.mirror_0 = None
         else:
-            # Initialize the laser and the galvo
-            self.laser_0 = vortran.VortranLaser(
-                serial_number=serial_num, port=laser_port
-            )
-            self.mirror_0 = mirror.OptoMirror(com_port=mirror_port)
             if self.dac_mode:
-                pass
-            pass
+                raise NotImplementedError("Initialize Dac mode")
+            else:
+                # Initialize the laser and the galvo
+                #TODO: uncomment when coupling the laser
+                # self.laser_0 = vortran.VortranLaser(
+                #     serial_number=serial_num, port=laser_port
+                # )
+                self.mirror_0 = mirror.OptoMirror()
+                if self.dac_mode:
+                    raise NotImplementedError("DAC mode mirror not implemented")                
+                self.mirror_0.position_x = 0.0
+                self.mirror_0.position_y = 0.0
+
+
 
         # =============================================
         # Create folder for saving calibration matrix and other stuff
@@ -111,7 +119,9 @@ class PhotomControlDockWidget(QWidget):
         log_box = QtLogBox('Logging')
         # Get the StreamHandler attached to the logger
         log_box_handler = QtLogger(log_box)
-        log_box_handler.setFormatter(logging.Formatter("%(levelname)s - %(module)s - %(message)s"))
+        log_box_handler.setFormatter(
+            logging.Formatter("%(levelname)s - %(module)s - %(message)s")
+        )
         log_box_handler.setLevel(logging.DEBUG)
         logger.addHandler(log_box_handler)
         logger.debug(logger.name)
@@ -120,6 +130,7 @@ class PhotomControlDockWidget(QWidget):
         # Photom overlay window
         self.window1 = LiveViewWindow(self)
         self.tabmanager = TabManager(self)
+
         # Buttons
         self.sl_opacity = QSlider(Qt.Horizontal)
         self.sl_opacity.setRange(0, 100)
@@ -140,8 +151,7 @@ class PhotomControlDockWidget(QWidget):
         # Logger Panel
         self.layout.addWidget(log_box, 2, 0, 1, 2)
         # ===============================
-        # Transform matrix that aligns cursor with laser point
-        self.transform_list = [AffineTransform(), AffineTransform()]
+
 
     @property
     def parameters(self):
