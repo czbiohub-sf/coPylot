@@ -2,6 +2,7 @@ from qtpy.QtWidgets import QWidget, QApplication, QComboBox, QPushButton, QVBoxL
 from qtpy.QtCore import Qt, Signal, Slot
 import time
 
+from copylot import logger
 from copylot.gui._qt.job_runners.worker import Worker
 from copylot.hardware.daqs.ni.legacy_daxi_nidaq import NIDaq
 
@@ -52,12 +53,10 @@ class LiveControlDockWidget(QWidget):
 
     def timelapse_worker_method(self):
         view = self.combobox_view
-        channel = self.combobox_channel
         parameters = self.parent.parameters_widget.parameters
 
         daq_card = NIDaq(self, **parameters)
         daq_card.select_view(view)
-        daq_card.select_channel_remove_stripes(channel)
 
     def launch_nidaq(self):
         if self.state_tracker:
@@ -74,13 +73,8 @@ class LiveControlDockWidget(QWidget):
 
             daq_card_worker = Worker(self.timelapse_worker_method)
 
-            print(
-                "called with:",
-                self.parent.parameters_widget.parameters,
-                "view",
-                self.combobox_view,
-                "and channel",
-                self.combobox_channel,
+            logger.info(
+                f"called with: {self.parent.parameters_widget.parameters} view {self.combobox_view}, and channel {self.combobox_channel}"
             )
 
             # connect

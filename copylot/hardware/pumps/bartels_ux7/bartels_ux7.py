@@ -12,6 +12,8 @@ mc          : set signal to srs
 import serial
 import time
 
+from copylot import logger
+
 
 class BartelsUX7:
     """
@@ -47,11 +49,11 @@ class BartelsUX7:
             ser.close()
         ser.open()
         message_freq = b"f" + bytearray(str(freq), "utf-8") + b"\r"
-        print(message_freq)
+        logger.info(message_freq)
         ser.write(message_freq)
         time.sleep(1)  # allow the pump to respond to previous command
         message_amp = b"a" + bytearray(str(amp), "utf-8") + b"\r"
-        print(message_amp)
+        logger.info(message_amp)
         ser.write(message_amp)
         ser.close()
 
@@ -68,11 +70,11 @@ class BartelsUX7:
         if ser.is_open:
             ser.close()
         ser.open()
-        print("start dispensing water")
+        logger.info("start dispensing water")
         ser.write(b"bon\r")
         time.sleep(duration)
         ser.write(b"boff\r")
-        print("stop dispensing water")
+        logger.info("stop dispensing water")
         ser.close()
 
     def read_pump(self):
@@ -83,7 +85,7 @@ class BartelsUX7:
         ser.open()
         ser.write(b"\r")
         message = ser.read(100)
-        print(message.decode("utf-8"))
+        logger.info(message.decode("utf-8"))
         ser.close()
 
     def run_for_recording(self, interval: float, duration: float, freq: int, amp: int):

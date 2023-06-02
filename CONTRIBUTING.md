@@ -75,20 +75,23 @@ conda create -n copylot python=3.9
 # Activate the environment
 conda activate copylot
 
-# Install coPylot
-pip install -e .
+# Install coPylot and dev dependencies
+make setup-develop
 
-# Install developmental dependencies
-pip install -r requirements/development.txt
+# Optionally install the pre-commit hooks (which currently just run `black`)
+pre-commit install
 
-# Before making a PR make sure tests are passing
-# To run tests
-python -m pytest . --disable-pytest-warnings
+# Before making a PR, make sure tests are passing
+make test
 
-# Before making a PR also check if your branch
-# passes style guidelines
-black --check -S -t py39 .
-flake8 --ignore E501,E203,E731,E741,W503 copylot
+# Before making a PR, check that your branch passes linting 
+# and adheres to black's style guidelines
+make check-format
+make lint
+
+# if pre-commit hooks are not installed and your branch does not meet black's style,
+# run `black` manually to format your branch
+make format
 ```
 
 ##### For PyCharm users:
