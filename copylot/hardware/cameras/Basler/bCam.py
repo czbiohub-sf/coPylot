@@ -2,6 +2,8 @@ from pypylon import pylon
 from pypylon import genicam
 import sys
 
+print('hello world!')
+
 exitcode = 0
 
 
