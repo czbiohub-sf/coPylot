@@ -32,7 +32,7 @@ class bCam:
                                                     self.maxCameraToUSe)  # create multiple camera
             # Create and attach all Pylon Devices.
             for idx, cam in enumerate(self.cameras):
-                cam.Attach(self.tlFactory.CreateDevice(self.devices[i]))
+                cam.Attach(self.tlFactory.CreateDevice(self.devices[idx]))
                 # Print the model name of the camera.
                 print("Using device ", cam.GetDeviceInfo().GetModelName())
                 camera_serial = cam.DeviceInfo.GetSerialNumber()
@@ -46,6 +46,7 @@ class bCam:
             print("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
+
     def closecam(self):
         try:
             # Check whether there is any cameras are running and stop the running cam
@@ -54,14 +55,20 @@ class bCam:
                     cam.AcquisitionAbort.Execute()
             #close cam
             self.cameras.Close()
+            if
         except genicam.GenericException as e:
             # Error handling
             print("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
 
-    def trigermode(self,cam):
-        cam.Attach(AcquisitionMode.SetValue(AcquisitionMode_SingleFrame);
-)
+
+
+if __name__ == '__main__':
+
+
+#     def trigermode(self,cam):
+#         cam.Attach(AcquisitionMode.SetValue(AcquisitionMode_SingleFrame);
+# )
 
 
