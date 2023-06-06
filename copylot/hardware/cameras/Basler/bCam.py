@@ -1,13 +1,8 @@
 from pypylon import pylon as py
 from pypylon import genicam
 import sys
-
-
-
 exitcode = 0
-
-
-class bCam:
+class BaslerCamera:
     def __init__(self):
         # get transport layer and all attached devices
         self.cameras = None
@@ -46,6 +41,17 @@ class bCam:
             print("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
+    @property
+    def camOpenStatus(self):
+        '''
+
+        Returns
+        -------
+
+        '''
+
+        return self.cameras.IsOpen()
+
 
     def closecam(self):
         try:
