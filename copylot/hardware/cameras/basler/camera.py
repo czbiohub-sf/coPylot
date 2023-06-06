@@ -5,14 +5,14 @@ exitcode = 0
 class BaslerCamera:
     def __init__(self):
         # get transport layer and all attached devices
-        self.cameras = None
+        self.camera = None
         self.tl_factory = py.TlFactory.GetInstance()
         self.devices = self.tl_factory.EnumerateDevices()
         if len(self.devices) == 0:
             raise py.RuntimeException("No camera connected")
         else:
             self.maxCameraToUSe = len(self.devices)
-            print(len(self.maxCameraToUSe))
+            print(self.maxCameraToUSe)
             for device in self.devices:
                 print(device.GetFriendlyName())  # return readable name
 
@@ -23,17 +23,20 @@ class BaslerCamera:
 
     def opencam(self):
         try:
-            self.cameras = py.InstantCameraArray(min(len(self.devices)),
+            if len(self.devices)<2:
+                self.camera = py.InstantCamera(self.tl_factory.GetInstance().CreateFirstDevice())
+            else:
+                self.camera = py.InstantCameraArray(min(len(self.devices)),
                                                     self.maxCameraToUSe)  # create multiple camera
             # Create and attach all Pylon Devices.
-            for idx, cam in enumerate(self.cameras):
-                cam.Attach(self.tl_factory.CreateDevice(self.devices[idx]))
-                # Print the model name of the camera.
-                print("Using device ", cam.GetDeviceInfo().GetModelName())
-                camera_serial = cam.DeviceInfo.GetSerialNumber()
-                print(f"set context {idx} for camera {camera_serial}")
-                cam.SetCameraContext(idx)
-            self.cameras.Open()
+                for idx, cam in enumerate(self.camera):   ### need to add some ways to selectively open cams
+                    cam.Attach(self.tl_factory.CreateDevice(self.devices[idx]))
+                    # Print the model name of the camera.
+                    print("Using device ", cam.GetDeviceInfo().GetModelName())
+                    camera_serial = cam.DeviceInfo.GetSerialNumber()
+                    print(f"set context {idx} for camera {camera_serial}")
+                    cam.SetCameraContext(idx)
+            self.camera.Open()
 
         except genicam.GenericException as e:
             # Error handling
@@ -49,15 +52,15 @@ class BaslerCamera:
 
         '''
 
-        return self.cameras.IsOpen()
+        return self.camera.IsOpen()
     def closecam(self):
         try:
-            # Check whether there is any cameras are running and stop the running cam
-            if self.cameras.isGrabbing():
-                for idx, cam in enumerate(self.cameras):
+            # Check whether there is any camera(s) are running and stop the running cam
+            if self.camera.isGrabbing():
+                for idx, cam in enumerate(self.camera):
                     cam.AcquisitionAbort.Execute()
             #close cam
-            self.cameras.Close()
+            self.camera.Close()
 
         except genicam.GenericException as e:
             # Error handling
@@ -66,27 +69,56 @@ class BaslerCamera:
             sys.exit(exitcode)
 
     @property
-    def getImagesize(self,camnum):
+    def imagesize(self,camnum=None):
         '''
 
         Returns
         -------
         Size(Height,Width): int
-
-
+                        retun the currnet image size
         '''
+
+
+        return self.image_width(camnum),self.image_height(camnum)
+
+    def image_height(self,camnum=None):
         if camnum is not None:
-            height= self.cameras[camnum].Height.GetValue()
-            width = self.cameras[camnum].Width.GetValue()
+            height= self.camera[camnum].Height.GetValue()
         else:
-            for idx, cam in enumerate(self.cameras):
+            if self.maxCameraToUSe > 1:
+                for idx, cam in enumerate(self.camera):
+                    height = cam.Height.GetValue()
+            else:
+                height = self.camera.Height.GetValue()
+        print(f"SensorMax Width {} for camera {cam.HeightMax.GetValue()}")
+
+        return height
+
+    def image_width(self, camnum=None):
+        if camnum is not None:
+            width = self.camera[camnum].Width.GetValue()
+        else:
+            if self.maxCameraToUSe > 1:
+                for idx, cam in enumerate(self.camera):
+                    width = cam.Width.GetValue()
+            else:
+                width = self.camera.Width.GetValue()
+        print(f"SensorMax Width {} for camera {cam.WidthMax.GetValue()}")
+
+        return width
+
+    @property.setter
+    def imagesize(self,camnum=None,value=None):
+        if camnum is not None:
+            height= self.camera[camnum].Height.SetValue()
+            width = self.camera[camnum].Width.GetValue()
+        else:
+            for idx, cam in enumerate(self.camera):
                 height = cam.Height.GetValue()
                 width = cam.Width.GetValue()
-        print(f"SensorMax Width {} for camera {cam.WidthMax.GetValue()}")
-        print(f"SensorMax Height {} for camera {cam.HeightMax.GetValue()}")
-        return (width,height)
 
-    def aliviableAcqMode(self):
+
+    def aliviable_acqMode(self):
         '''
 
         Returns
@@ -97,7 +129,7 @@ class BaslerCamera:
         return self.cameras[0].AcquisitionMode.GetSymbolics()
 
     @property
-    def AcqMode(self,camnum=None):
+    def acqMode(self,camnum=None):
         '''
 
         Parameters
@@ -117,8 +149,8 @@ class BaslerCamera:
                 value = cam.AcquisitionMode.GetValue()
         return value
 
-    @AcqMode.setter
-    def AcqMode(self,camnum,value):
+    @acqMode.setter
+    def acqMode(self,camnum,value):
         '''
 
         Parameters
