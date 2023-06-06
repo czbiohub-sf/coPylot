@@ -27,14 +27,13 @@ class BaslerCamera:
                                                     self.maxCameraToUSe)  # create multiple camera
             # Create and attach all Pylon Devices.
             for idx, cam in enumerate(self.cameras):
-                cam.Attach(self.tlFactory.CreateDevice(self.devices[idx]))
+                cam.Attach(self.tl_factory.CreateDevice(self.devices[idx]))
                 # Print the model name of the camera.
                 print("Using device ", cam.GetDeviceInfo().GetModelName())
                 camera_serial = cam.DeviceInfo.GetSerialNumber()
                 print(f"set context {idx} for camera {camera_serial}")
                 cam.SetCameraContext(idx)
             self.cameras.Open()
-            self.
 
         except genicam.GenericException as e:
             # Error handling
@@ -42,7 +41,7 @@ class BaslerCamera:
             exitcode = 1
             sys.exit(exitcode)
     @property
-    def camOpenStatus(self):
+    def is_open(self):
         '''
 
         Returns
@@ -51,8 +50,6 @@ class BaslerCamera:
         '''
 
         return self.cameras.IsOpen()
-
-
     def closecam(self):
         try:
             # Check whether there is any cameras are running and stop the running cam
@@ -61,13 +58,65 @@ class BaslerCamera:
                     cam.AcquisitionAbort.Execute()
             #close cam
             self.cameras.Close()
-            if
+
         except genicam.GenericException as e:
             # Error handling
             print("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
 
+    def aliviableAcqMode(self):
+        '''
+
+        Returns
+        -------
+        string:
+         This will return available Acquisition mode that the camera has
+        '''
+        return self.cameras[0].AcquisitionMode.GetSymbolics()
+
+    @property
+    def AcqMode(self,camnum=None):
+        '''
+
+        Parameters
+        ----------
+        camnum:int
+
+            set the camera number and the default would be camera 0
+
+        Returns
+        -------
+
+        '''
+        if camnum is None:
+            if len(self.devices)>1:
+                for idx,cam in enumerate(self.cameras):
+                    cam.AcquisitionMode.GetValue()
+            else:
+                self.cameras[0].AcquisitionMode.GetValue()
+        else:
+            self.cameras[camnum].AcquisitionMode.GetValue()
+
+    @AcqMode.setter
+    def AcqMode(self,camnum,value):
+        '''
+
+        Parameters
+        ----------
+        camnum:int
+            camera number
+        value:string
+            The AcquisitionMode of the camera, two mode available 'SingleFrame' or 'Continuous'
+        '''
+        if camnum is None:
+            if len(self.devices)>1:
+                for idx,cam in enumerate(self.cameras):
+                    cam.AcquisitionMode.SetValue(value)
+            else:
+                self.cameras[0].AcquisitionMode.SetValue(value)
+        else:
+            self.cameras[camnum].AcquisitionMode.SetValue(value)
 
 
 if __name__ == '__main__':
