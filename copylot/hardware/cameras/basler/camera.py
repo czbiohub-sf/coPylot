@@ -65,6 +65,27 @@ class BaslerCamera:
             exitcode = 1
             sys.exit(exitcode)
 
+    @property
+    def getImagesize(self,camnum):
+        '''
+
+        Returns
+        -------
+        Size(Height,Width): int
+
+
+        '''
+        if camnum is not None:
+            height= self.cameras[camnum].Height.GetValue()
+            width = self.cameras[camnum].Width.GetValue()
+        else:
+            for idx, cam in enumerate(self.cameras):
+                height = cam.Height.GetValue()
+                width = cam.Width.GetValue()
+        print(f"SensorMax Width {} for camera {cam.WidthMax.GetValue()}")
+        print(f"SensorMax Height {} for camera {cam.HeightMax.GetValue()}")
+        return (width,height)
+
     def aliviableAcqMode(self):
         '''
 
@@ -82,21 +103,19 @@ class BaslerCamera:
         Parameters
         ----------
         camnum:int
-
             set the camera number and the default would be camera 0
 
         Returns
         -------
-
+            value:string
+                current status of the AcquisitionsMode
         '''
-        if camnum is None:
-            if len(self.devices)>1:
-                for idx,cam in enumerate(self.cameras):
-                    cam.AcquisitionMode.GetValue()
-            else:
-                self.cameras[0].AcquisitionMode.GetValue()
+        if camnum is not None:
+            value = self.cameras[camnum].AcquisitionMode.GetValue()
         else:
-            self.cameras[camnum].AcquisitionMode.GetValue()
+            for idx,cam in enumerate(self.cameras):
+                value = cam.AcquisitionMode.GetValue()
+        return value
 
     @AcqMode.setter
     def AcqMode(self,camnum,value):
@@ -109,14 +128,13 @@ class BaslerCamera:
         value:string
             The AcquisitionMode of the camera, two mode available 'SingleFrame' or 'Continuous'
         '''
-        if camnum is None:
-            if len(self.devices)>1:
-                for idx,cam in enumerate(self.cameras):
-                    cam.AcquisitionMode.SetValue(value)
-            else:
-                self.cameras[0].AcquisitionMode.SetValue(value)
-        else:
+        if camnum is not None:
             self.cameras[camnum].AcquisitionMode.SetValue(value)
+        else:
+            for idx,cam in enumerate(self.cameras):
+                cam.AcquisitionMode.SetValue(value)
+
+    def Acqu
 
 
 if __name__ == '__main__':
