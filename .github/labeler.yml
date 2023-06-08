@@ -1,8 +1,8 @@
 gui:
-  - 'copylot/gui'
+  - 'copylot/gui/**/*'
 
 hardware:
-  - 'copylot/hardware'
+  - 'copylot/hardware/**/*'
 
 algorithms:
-  - 'copylot/algorithms'
+  - 'copylot/algorithms/**/*'
