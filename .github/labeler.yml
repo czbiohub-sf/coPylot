@@ -1,0 +1,8 @@
+gui:
+  - 'copylot/gui/**/*'
+
+hardware:
+  - 'copylot/hardware/**/*'
+
+algorithms:
+  - 'copylot/algorithms/**/*'
