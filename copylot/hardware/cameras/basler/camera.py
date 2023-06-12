@@ -8,7 +8,7 @@ class OrcaCameraException(Exception):
     pass
 
 
-class BaslerCamera(AbstractCamera)::
+class BaslerCamera(AbstractCamera):
     def __init__(self):
         # get transport layer and all attached devices
         self.camera = None
