@@ -25,6 +25,8 @@ class BaslerCamera:
         try:
             if len(self.devices)<2:
                 self.camera = py.InstantCamera(self.tl_factory.GetInstance().CreateFirstDevice())
+                self.SensorWmax = self.camera.WidthMax.GetValue()
+                self.SensorHmax = self.camera.HeightMax.GetValue()
             else:
                 self.camera = py.InstantCameraArray(min(len(self.devices)),
                                                     self.maxCameraToUSe)  # create multiple camera
@@ -36,8 +38,9 @@ class BaslerCamera:
                     camera_serial = cam.DeviceInfo.GetSerialNumber()
                     print(f"set context {idx} for camera {camera_serial}")
                     cam.SetCameraContext(idx)
+                self.SensorWmax = cam.WidthMax.GetValue()
+                self.SensorHmax = cam.HeightMax.GetValue()
             self.camera.Open()
-
         except genicam.GenericException as e:
             # Error handling
             print("An exception occurred. {}".format(e))
@@ -80,7 +83,7 @@ class BaslerCamera:
 
 
         return self.image_width(camnum),self.image_height(camnum)
-
+    @property
     def image_height(self,camnum=None):
         if camnum is not None:
             height= self.camera[camnum].Height.GetValue()
@@ -93,7 +96,7 @@ class BaslerCamera:
         print(f"SensorMax Width {} for camera {cam.HeightMax.GetValue()}")
 
         return height
-
+    @property
     def image_width(self, camnum=None):
         if camnum is not None:
             width = self.camera[camnum].Width.GetValue()
@@ -106,7 +109,22 @@ class BaslerCamera:
         print(f"SensorMax Width {} for camera {cam.WidthMax.GetValue()}")
 
         return width
-
+    @property.setter
+    def image_height(self,camnum=None,value=None):
+        if camnum is not None:
+            if value is not None:
+                self.camera[camnum].Height.SetValue(value)
+            else:
+                self.camera[camnum].Height.SetValue(self.SensorHmax)
+        else:
+            if self.maxCameraToUSe > 1:
+                if value is not None:
+                    for idx, cam in enumerate(self.camera):
+                        cam.Height.SetValue(value)
+                els
+            else:
+                if value is
+               self.camera.Height.SetValue()
     @property.setter
     def imagesize(self,camnum=None,value=None):
         if camnum is not None:
@@ -166,7 +184,6 @@ class BaslerCamera:
             for idx,cam in enumerate(self.cameras):
                 cam.AcquisitionMode.SetValue(value)
 
-    def Acqu
 
 
 if __name__ == '__main__':
