@@ -29,6 +29,15 @@ class BaslerCamera(AbstractCamera):
             for device in self.devices:
                 logger.info(device.GetFriendlyName())  # return readable name
 
+    @property
+    def exposure_mode(self):
+        self.camera.ExposureMode.GetSymbolics()
+        self.camera.ExposureMode.GetValue()
+
+    @exposure_mode.setter
+    def exposure_mode(self, value: str):
+        self.camera.ExposureMode.SetValue(value)
+
     def __del__(self):
         self.closecam()
 
@@ -80,6 +89,9 @@ class BaslerCamera(AbstractCamera):
             value = self.camera.ExposureTime.GetMin()
         self.camera.ExposureTime.SetValue(value)
 
+    def frame_rate(self):
+        return self.camera.AcquisitionFrameRate.GetValue()
+
     @property
     def image_height(self):
         height = self.camera.Height.GetValue()
@@ -100,6 +112,16 @@ class BaslerCamera(AbstractCamera):
 
     @image_width.setter
     def image_width(self, value: int):
+        """
+
+        Parameters
+        ----------
+        value
+
+        Returns
+        -------
+
+        """
         if value % self.minWidth != 0:
             value = int(np.ceil(value / self.minWidth) * self.minWidth)
         self.camera.Width.SetValue(value)
@@ -139,10 +161,26 @@ class BaslerCamera(AbstractCamera):
             value:string
                 current status of the AcquisitionsMode
         '''
-        value = self.camera.AcquisitionMode.GetValue()
-        return value
+        return self.camera.AcquisitionMode.GetValue()
 
     @acq_mode.setter
-    def acq_mode(self, value):
+    def acq_mode(self, value: str):
         if value is not None:
             self.camera.AcquisitionMode.SetValue(value)
+        else:
+            self.camera.AcquisitionMode.SetValue('Continuous')
+
+    @property
+    def binning(self):
+        return self.camera.BinningHorizontal.GetValue(), self.camera.BinningVertical.GetValue()
+
+    @binning.setter
+    def binning(self, value: int):
+        self.camera.BinningHorizontal.SetValue(value)
+        self.camera.BinningVertical.SetValue(value)
+
+    def acquisition_start(self):
+        self.camera.AcquisitionStart.Execute()
+
+    def acquisition_stop(self):
+        self.camera.AcquisitionStop.Execute()
