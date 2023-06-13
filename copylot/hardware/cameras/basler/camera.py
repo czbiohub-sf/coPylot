@@ -13,9 +13,21 @@ class BaslerCameraException(Exception):
     pass
 
 
+def round_to_range(number, lower_bound, upper_bound):
+    return min(max(number, lower_bound), upper_bound)
+
+
 class BaslerCamera(AbstractCamera):
 
     def __init__(self, camera_index: int = 0):
+        self._acquisition_mode = None
+        self._trigger_mode = None
+        self._exposure_mode = None
+        self._pixel_format = None
+        self.minWidth = None
+        self.SensorHmax = None
+        self.SensorWmax = None
+        self._trigger_selector = None
         self.camera_index = camera_index
         # get transport layer and all attached devices
         self.camera = None
@@ -28,15 +40,6 @@ class BaslerCamera(AbstractCamera):
             logger.info(str(self.maxCameraToUSe))
             for device in self.devices:
                 logger.info(device.GetFriendlyName())  # return readable name
-
-    @property
-    def exposure_mode(self):
-        self.camera.ExposureMode.GetSymbolics()
-        self.camera.ExposureMode.GetValue()
-
-    @exposure_mode.setter
-    def exposure_mode(self, value: str):
-        self.camera.ExposureMode.SetValue(value)
 
     def __del__(self):
         self.closecam()
@@ -61,6 +64,11 @@ class BaslerCamera(AbstractCamera):
             if self.camera.IsOpen() is True:
                 self.camera.SensorReadoutTime.GetValue()
                 self.camera.ExposureTime.GetValue()
+                self._trigger_selector = self.camera.TriggerSelector.GetSymbolics()
+                self._pixel_format = self.camera.PixelFormat.GetSymbolics()
+                self._exposure_mode = self.camera.ExposureMode.GetSymbolics()
+                self._trigger_mode = self.camera.TriggerMode.GetSymbolics()
+                self._acquisition_mode = self.camera.AcquisitionMode.GetValue()
         except genicam.GenericException as e:
             # Error handling
             logger.info("An exception occurred. {}".format(e))
@@ -148,12 +156,12 @@ class BaslerCamera(AbstractCamera):
         return self.camera.AcquisitionMode.GetSymbolics()
 
     @property
-    def acq_mode(self):
+    def acquisition_mode(self):
         '''
 
         Parameters
         ----------
-        camnum:int
+        :int
             set the camera number and the default would be camera 0
 
         Returns
@@ -163,12 +171,12 @@ class BaslerCamera(AbstractCamera):
         '''
         return self.camera.AcquisitionMode.GetValue()
 
-    @acq_mode.setter
-    def acq_mode(self, value: str):
-        if value is not None:
+    @acquisition_mode.setter
+    def acquisition_mode(self, value: str):
+        if value in self._acquisition_mode:
             self.camera.AcquisitionMode.SetValue(value)
         else:
-            self.camera.AcquisitionMode.SetValue('Continuous')
+            logger.info('Setting is not an option')
 
     @property
     def binning(self):
@@ -184,3 +192,63 @@ class BaslerCamera(AbstractCamera):
 
     def acquisition_stop(self):
         self.camera.AcquisitionStop.Execute()
+
+    @property
+    def exposure_mode(self):
+        return self.camera.ExposureMode.GetValue()
+
+    @exposure_mode.setter
+    def exposure_mode(self, value: str):
+        if value in self._exposure_mode:
+            self.camera.ExposureMode.SetValue(value)
+        else:
+            logger.info('Setting is not an option')
+
+    @property
+    def pixel_format(self):
+        return self.camera.PixelFormat.GetValue()
+
+    @pixel_format.setter
+    def pixel_format(self, value: str):
+        if value in self._pixel_format:
+            self.camera.PixelFormat.SetValue(value)
+        else:
+            logger.info('Setting is not an option')
+
+    @property
+    def gain(self):
+
+        return self.camera.Gain.GetValue()
+
+    @gain.setter
+    def gain(self, value: float):
+        g_min = self.camera.Gain.GetMin()
+        g_max = self.camera.Gain.Gain.GetMax()
+        if not g_min <= value <= g_max:
+            value = round_to_range(value, g_min, g_max)
+        self.camera.Gain.SetValue(value)
+
+    @property
+    def trigger_selector(self):
+        return self.camera.TriggerSelector.GetValue()
+
+    @trigger_selector.setter
+    def trigger_selector(self, value: str):
+        if value in self._trigger_selector:
+            self.camera.TriggerSelector.SetValue(value)
+        else:
+            logger.info('Setting is not an option')
+
+    @property
+    def trigger_mode(self):
+        self.camera.TriggerMode.GetValue()
+
+    @trigger_mode.setter
+    def trigger_mode(self, value: bool):
+        options = self.camera.TriggerMode.GetSymbolics()
+        if value in options:
+            self.camera.TriggerMode.SetValue(value)
+        else:
+            message = 'pick from '+options
+            logger.info(message)
+
