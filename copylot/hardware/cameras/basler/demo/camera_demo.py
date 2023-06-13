@@ -23,6 +23,11 @@ def camera_set_image_size():
     camera.opencam()
     camera.available_modes()
     print(camera.imagesize())
+    width = 2048
+    height = 2048
+    camera.image_width = width
+    camera.image_height = height
+    print(camera.imagesize())
 
     del camera
 
@@ -35,7 +40,7 @@ def camera_set_image_size():
 
 if __name__ == '__main__':
     # camera_start()
-    camera_para()
+    camera_set_image_size()
     # camera = BaslerCamera()
     # camera.opencam()
     # st()

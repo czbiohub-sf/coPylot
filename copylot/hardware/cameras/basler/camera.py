@@ -3,6 +3,7 @@ from pypylon import pylon as py
 from pypylon import genicam
 import sys
 from copylot import logger
+import numpy as np
 from pdb import set_trace as st
 
 exitcode = 0
@@ -46,6 +47,7 @@ class BaslerCamera(AbstractCamera):
             logger.info(f"set context {self.camera_index} for camera {camera_serial}")
             self.SensorWmax = self.camera.SensorWidth.GetValue()
             self.SensorHmax = self.camera.SensorHeight.GetValue()
+            self.minWidth = 48
             self.camera.Open()
             if self.camera.IsOpen() is True:
                 self.camera.SensorReadoutTime.GetValue()
@@ -55,8 +57,6 @@ class BaslerCamera(AbstractCamera):
             logger.info("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
-
-
 
     def closecam(self):
         try:
@@ -87,7 +87,9 @@ class BaslerCamera(AbstractCamera):
         return self.camera.Height.GetValue()
 
     @image_height.setter
-    def image_height(self, value):
+    def image_height(self, value: int):
+        if value % self.minWidth != 0:
+            value = int(np.ceil(value / self.minWidth) * self.minWidth)
         self.camera.Height.SetValue(value)
 
     @property
@@ -97,22 +99,21 @@ class BaslerCamera(AbstractCamera):
         return self.camera.Width.GetValue()
 
     @image_width.setter
-    def image_width(self, value):
+    def image_width(self, value: int):
+        if value % self.minWidth != 0:
+            value = int(np.ceil(value / self.minWidth) * self.minWidth)
         self.camera.Width.SetValue(value)
 
     def imagesize(self):
-        '''
+        """
 
         Returns
         -------
         Size(Height,Width): int
                         retun the currnet image size
-        '''
+        """
 
         return self.image_width, self.image_height
-
-    def imagesize(self):
-
 
     def available_modes(self):
         '''
