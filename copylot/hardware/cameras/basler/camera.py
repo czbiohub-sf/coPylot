@@ -2,7 +2,9 @@ from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from pypylon import pylon as py
 from pypylon import genicam
 import sys
+
 exitcode = 0
+
 
 class OrcaCameraException(Exception):
     pass
@@ -24,47 +26,40 @@ class BaslerCamera(AbstractCamera):
 
     def __del__(self):
         self.closecam()
-        exitcode = 1
-        sys.exit(exitcode)
 
-    def opencam(self,camnum=None):
+    def opencam(self, camnum=None):
         try:
-            if len(self.devices)<2:
+            if len(self.devices) < 2:
                 self.camera = py.InstantCamera(self.tl_factory.CreateFirstDevice())
             else:
                 if camnum is not None:
-                    self.camera = py.InstantCamera(self.tl_factory.CreateDevice(self.devices[camnum]))  # create multiple camera
+                    self.camera = py.InstantCamera(
+                        self.tl_factory.CreateDevice(self.devices[camnum]))  # create multiple camera
                 else:
                     self.camera = py.InstantCamera(self.tl_factory.CreateDevice(self.devices[0]))
             print("Using device ", self.camera.GetDeviceInfo().GetModelName())
             camera_serial = self.camera.DeviceInfo.GetSerialNumber()
             print(f"set context {camnum} for camera {camera_serial}")
-            self.SensorWmax = self.camera.WidthMax.GetValue()
-            self.SensorHmax = self.camera.HeightMax.GetValue()
+            self.SensorWmax = self.camera.SensorWidth.GetValue()
+            self.SensorHmax = self.camera.SensorHeight.GetValue()
             self.camera.Open()
-            self.is_open()
+            if self.camera.IsOpen() is True:
+                self.camera.SensorReadoutTime.GetValue()
+                self.camera.ExposureTime.GetValue()
         except genicam.GenericException as e:
             # Error handling
             print("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
-    @property
-    def is_open(self):
-        '''
 
-        Returns
-        -------
 
-        '''
 
-        return self.camera.IsOpen()
     def closecam(self):
         try:
             # Check whether there is any camera(s) are running and stop the running cam
-            if self.camera.isGrabbing():
-                for idx, cam in enumerate(self.camera):
-                    cam.AcquisitionAbort.Execute()
-            #close cam
+            if self.camera.AcquisitionStatus.GetValue() is True:
+                self.camera.AcquisitionAbort.Execute()
+            # close cam
             self.camera.Close()
 
         except genicam.GenericException as e:
@@ -74,30 +69,36 @@ class BaslerCamera(AbstractCamera):
             sys.exit(exitcode)
 
     @property
+    def exposure(self):
+
+        return self.camera.ExposureTime.GetValue()
+
+    @exposure.setter
+    def set_exposure(self, value):
+        if value is not None:
+            value = self.camera.ExposureTime.GetMin()
+        self.camera.ExposureTime.SetValue(value)
+
+    @property
     def image_height(self):
         height = self.camera.Height.GetValue()
         print("SensorMax Height {} for camera".format(height))
         return height
-    @property.setter
-    def image_height(self,value=None):
-        if value is not None:
-            self.camera.Height.SetValue(value)
-        else:
-            self.camera.Height.SetValue(self.SensorHmax)
+
+    @image_height.setter
+    def set_image_height(self, value):
+        self.camera.Height.SetValue(value)
+
     @property
     def image_width(self):
         width = self.camera.Width.GetValue()
         print("SensorMax Width {} for camera".format(width))
         return width
 
-    @property.setter
-    def image_width(self,value=None):
-        if value is not None:
-            self.camera.Width.SetValue(value)
-        else:
-            self.camera.Width.SetValue(self.SensorWmax)
+    @image_width.setter
+    def set_image_width(self, value):
+        self.camera.Width.SetValue(value)
 
-    @property
     def imagesize(self):
         '''
 
@@ -107,8 +108,7 @@ class BaslerCamera(AbstractCamera):
                         retun the currnet image size
         '''
 
-        return self.image_width(),self.image_height()
-
+        return self.image_width(), self.image_height()
 
     def aliviable_acqMode(self):
         '''
@@ -118,10 +118,10 @@ class BaslerCamera(AbstractCamera):
         string:
          This will return available Acquisition mode that the camera has
         '''
-        return self.cameras[0].AcquisitionMode.GetSymbolics()
+        return self.camera.AcquisitionMode.GetSymbolics()
 
     @property
-    def acqMode(self):
+    def acq_mode(self):
         '''
 
         Parameters
@@ -137,7 +137,7 @@ class BaslerCamera(AbstractCamera):
         value = self.camera.AcquisitionMode.GetValue()
         return value
 
-    @acqMode.setter
-    def acqMode(self,value=None):
+    @acq_mode.setter
+    def acq_mode(self, value):
         if value is not None:
             self.camera.AcquisitionMode.SetValue(value)
