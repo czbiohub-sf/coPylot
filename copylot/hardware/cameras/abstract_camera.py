@@ -8,8 +8,9 @@ class AbstractCamera(metaclass=ABCMeta):
         """Method to capture a single image from the camera."""
         raise NotImplementedError()
 
+    @staticmethod
     @abstractmethod
-    def list_available_cameras(self):
+    def list_available_cameras():
         """List all cameras that driver discovers."""
         raise NotImplementedError()
 
