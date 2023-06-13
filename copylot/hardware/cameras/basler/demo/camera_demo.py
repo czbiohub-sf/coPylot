@@ -1,9 +1,30 @@
 from copylot.hardware.cameras.basler.camera import BaslerCamera
+from pdb import set_trace as st
 
-if __name__ == '__main__':
+
+def camera_start():
     camera = BaslerCamera()
     camera.opencam()
-    camera.acq_mode()
-    camera.imagesize()
-    camera.aliviable_acqMode()
-    camera.closecam()
+
+    del camera
+
+
+
+
+
+
+
+
+
+
+
+
+if __name__ == '__main__':
+    camera_start()
+
+    # camera = BaslerCamera()
+    # camera.opencam()
+    # st()
+    # camera.available_modes()
+    # camera.imagesize()
+    # camera.closecam()

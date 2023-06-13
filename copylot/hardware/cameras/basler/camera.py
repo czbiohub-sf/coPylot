@@ -2,17 +2,20 @@ from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from pypylon import pylon as py
 from pypylon import genicam
 import sys
+from copylot import logger
+from pdb import set_trace as st
 
 exitcode = 0
 
 
-class OrcaCameraException(Exception):
+class BaslerCameraException(Exception):
     pass
 
 
 class BaslerCamera(AbstractCamera):
     def __init__(self):
         # get transport layer and all attached devices
+        self.camnum: int = None
         self.camera = None
         self.tl_factory = py.TlFactory.GetInstance()
         self.devices = self.tl_factory.EnumerateDevices()
@@ -20,26 +23,26 @@ class BaslerCamera(AbstractCamera):
             raise py.RuntimeException("No camera connected")
         else:
             self.maxCameraToUSe = len(self.devices)
-            print(self.maxCameraToUSe)
+            logger.info(self.maxCameraToUSe)
             for device in self.devices:
-                print(device.GetFriendlyName())  # return readable name
+                logger.info(device.GetFriendlyName())  # return readable name
 
     def __del__(self):
         self.closecam()
 
-    def opencam(self, camnum=None):
+    def opencam(self):
         try:
             if len(self.devices) < 2:
                 self.camera = py.InstantCamera(self.tl_factory.CreateFirstDevice())
             else:
-                if camnum is not None:
+                if self.camnum is not None:
                     self.camera = py.InstantCamera(
-                        self.tl_factory.CreateDevice(self.devices[camnum]))  # create multiple camera
+                        self.tl_factory.CreateDevice(self.devices[self.camnum]))  # create multiple camera
                 else:
                     self.camera = py.InstantCamera(self.tl_factory.CreateDevice(self.devices[0]))
-            print("Using device ", self.camera.GetDeviceInfo().GetModelName())
+            logger.info("Using device ", self.camera.GetDeviceInfo().GetModelName())
             camera_serial = self.camera.DeviceInfo.GetSerialNumber()
-            print(f"set context {camnum} for camera {camera_serial}")
+            logger.info(f"set context {self.camnum} for camera {camera_serial}")
             self.SensorWmax = self.camera.SensorWidth.GetValue()
             self.SensorHmax = self.camera.SensorHeight.GetValue()
             self.camera.Open()
@@ -48,7 +51,7 @@ class BaslerCamera(AbstractCamera):
                 self.camera.ExposureTime.GetValue()
         except genicam.GenericException as e:
             # Error handling
-            print("An exception occurred. {}".format(e))
+            logger.info("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
 
@@ -56,15 +59,12 @@ class BaslerCamera(AbstractCamera):
 
     def closecam(self):
         try:
-            # Check whether there is any camera(s) are running and stop the running cam
-            if self.camera.AcquisitionStatus.GetValue() is True:
-                self.camera.AcquisitionAbort.Execute()
             # close cam
             self.camera.Close()
 
         except genicam.GenericException as e:
             # Error handling
-            print("An exception occurred. {}".format(e))
+            logger.info("An exception occurred. {}".format(e))
             exitcode = 1
             sys.exit(exitcode)
 
@@ -74,7 +74,7 @@ class BaslerCamera(AbstractCamera):
         return self.camera.ExposureTime.GetValue()
 
     @exposure.setter
-    def set_exposure(self, value):
+    def exposure(self, value):
         if value is not None:
             value = self.camera.ExposureTime.GetMin()
         self.camera.ExposureTime.SetValue(value)
@@ -82,21 +82,21 @@ class BaslerCamera(AbstractCamera):
     @property
     def image_height(self):
         height = self.camera.Height.GetValue()
-        print("SensorMax Height {} for camera".format(height))
+        logger.info("SensorMax Height {} for camera".format(height))
         return height
 
     @image_height.setter
-    def set_image_height(self, value):
+    def image_height(self, value):
         self.camera.Height.SetValue(value)
 
     @property
     def image_width(self):
         width = self.camera.Width.GetValue()
-        print("SensorMax Width {} for camera".format(width))
+        logger.info("SensorMax Width {} for camera".format(width))
         return width
 
     @image_width.setter
-    def set_image_width(self, value):
+    def image_width(self, value):
         self.camera.Width.SetValue(value)
 
     def imagesize(self):
@@ -110,7 +110,7 @@ class BaslerCamera(AbstractCamera):
 
         return self.image_width(), self.image_height()
 
-    def aliviable_acqMode(self):
+    def available_modes(self):
         '''
 
         Returns
