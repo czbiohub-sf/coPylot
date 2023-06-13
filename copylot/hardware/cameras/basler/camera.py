@@ -13,9 +13,10 @@ class BaslerCameraException(Exception):
 
 
 class BaslerCamera(AbstractCamera):
-    def __init__(self):
+
+    def __init__(self, camera_index: int = 0):
+        self.camera_index = camera_index
         # get transport layer and all attached devices
-        self.camnum: int = None
         self.camera = None
         self.tl_factory = py.TlFactory.GetInstance()
         self.devices = self.tl_factory.EnumerateDevices()
@@ -23,7 +24,7 @@ class BaslerCamera(AbstractCamera):
             raise py.RuntimeException("No camera connected")
         else:
             self.maxCameraToUSe = len(self.devices)
-            logger.info(self.maxCameraToUSe)
+            logger.info(str(self.maxCameraToUSe))
             for device in self.devices:
                 logger.info(device.GetFriendlyName())  # return readable name
 
@@ -35,14 +36,14 @@ class BaslerCamera(AbstractCamera):
             if len(self.devices) < 2:
                 self.camera = py.InstantCamera(self.tl_factory.CreateFirstDevice())
             else:
-                if self.camnum is not None:
+                if self.camera_index != 0:
                     self.camera = py.InstantCamera(
-                        self.tl_factory.CreateDevice(self.devices[self.camnum]))  # create multiple camera
+                        self.tl_factory.CreateDevice(self.devices[self.camera_index]))  # create multiple camera
                 else:
-                    self.camera = py.InstantCamera(self.tl_factory.CreateDevice(self.devices[0]))
-            logger.info("Using device ", self.camera.GetDeviceInfo().GetModelName())
+                    self.camera = py.InstantCamera(self.tl_factory.CreateDevice(self.devices[self.camera_index]))
+            logger.info(self.camera.GetDeviceInfo().GetModelName())
             camera_serial = self.camera.DeviceInfo.GetSerialNumber()
-            logger.info(f"set context {self.camnum} for camera {camera_serial}")
+            logger.info(f"set context {self.camera_index} for camera {camera_serial}")
             self.SensorWmax = self.camera.SensorWidth.GetValue()
             self.SensorHmax = self.camera.SensorHeight.GetValue()
             self.camera.Open()
@@ -83,7 +84,7 @@ class BaslerCamera(AbstractCamera):
     def image_height(self):
         height = self.camera.Height.GetValue()
         logger.info("SensorMax Height {} for camera".format(height))
-        return height
+        return self.camera.Height.GetValue()
 
     @image_height.setter
     def image_height(self, value):
@@ -93,7 +94,7 @@ class BaslerCamera(AbstractCamera):
     def image_width(self):
         width = self.camera.Width.GetValue()
         logger.info("SensorMax Width {} for camera".format(width))
-        return width
+        return self.camera.Width.GetValue()
 
     @image_width.setter
     def image_width(self, value):
@@ -108,7 +109,10 @@ class BaslerCamera(AbstractCamera):
                         retun the currnet image size
         '''
 
-        return self.image_width(), self.image_height()
+        return self.image_width, self.image_height
+
+    def imagesize(self):
+
 
     def available_modes(self):
         '''

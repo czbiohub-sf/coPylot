@@ -9,8 +9,22 @@ def camera_start():
     del camera
 
 
+def camera_para():
+    camera = BaslerCamera()
+    camera.opencam()
+    camera.available_modes()
+    print(camera.imagesize())
+    del camera
 
 
+
+def camera_set_image_size():
+    camera = BaslerCamera()
+    camera.opencam()
+    camera.available_modes()
+    print(camera.imagesize())
+
+    del camera
 
 
 
@@ -20,8 +34,8 @@ def camera_start():
 
 
 if __name__ == '__main__':
-    camera_start()
-
+    # camera_start()
+    camera_para()
     # camera = BaslerCamera()
     # camera.opencam()
     # st()
