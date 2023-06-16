@@ -1,4 +1,4 @@
-from flir_camera import FlirCamera
+from copylot.hardware.cameras.flir.flir_camera import FlirCamera
 
 if __name__ == '__main__':
     cam1 = FlirCamera()
