@@ -357,14 +357,6 @@ class BaslerCamera(AbstractCamera):
     def software_trigger(self):
         self.camera.ExecuteSoftwareTrigger()
 
-    def snap(self):
-        if self.camera.IsOpen() is True:
-            self.camera.camera.StartGrabbing(1)
-            grab = self.camera.RetrieveResult(2000, pylon.TimeoutHandling_Return)
-            if grab.GrabSucceeded():
-                img = grab.GetArray()
-                print(f'Size of image: {img.shape}')
-        return img
 
     def config_trigger(self, triggertype: str = "FREERUN"):
         """
@@ -426,7 +418,7 @@ class BaslerCamera(AbstractCamera):
         img = np.uint16(65535 * (img.astype("float") - minVal) / (maxVal - minVal))
 
         return img
-    def snapImage(self):
+    def snap(self):
         """
         If the camera is running, returns a numpy array containing the image data from the camera.
 
