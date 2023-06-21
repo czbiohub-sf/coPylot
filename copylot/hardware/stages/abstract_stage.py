@@ -1,13 +1,20 @@
 from abc import ABCMeta, abstractmethod
 
+
 class AbstractStage(metaclass=ABCMeta):
+
+    @staticmethod
+    @abstractmethod
+    def list_available_stages():
+        """List all stages that driver discovers."""
+        raise NotImplementedError()
 
     @property
     @abstractmethod
     def position(self):
         "Method to get/set the position in um"
         raise NotImplementedError()
-    
+
     @position.setter
     @abstractmethod
     def position(self, value):
@@ -24,7 +31,7 @@ class AbstractStage(metaclass=ABCMeta):
             (min_valid_position, max_valid_position)
         """
         raise NotImplementedError()
-    
+
     @travel_range.setter
     @abstractmethod
     def travel_range(self, value):
@@ -34,10 +41,14 @@ class AbstractStage(metaclass=ABCMeta):
         Tuple
             (min_valid_position, max_valid_position)
         """
-    
+        raise NotImplementedError()
+
     @abstractmethod
     def move_relative(self, value):
-        " Move the relative distance from current position"
+        "Move the relative distance from current position"
         raise NotImplementedError()
-    
-    
+
+    @abstractmethod
+    def zero_position(self):
+        "Move the stage to 0 position"
+        raise NotImplementedError()
