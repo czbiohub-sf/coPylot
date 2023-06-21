@@ -52,7 +52,7 @@ class FlirCamera(AbstractCamera):
             #  some image information
             width = image_result.GetWidth()
             height = image_result.GetHeight()
-            logger.info("Image width, height: " + width + " " + height)
+            logger.info(f"Image width, height: {width} {height}")
 
             #  Convert image to mono 8. Converted has no need to be released. Optional color processing.
             image_converted = processor.Convert(image_result, PySpin.PixelFormat_Mono8)
@@ -165,7 +165,9 @@ class FlirCamera(AbstractCamera):
         nodemap = cam.GetNodeMap()
 
         # Call method to acquire images
-        self.acquire_images(cam, nodemap, nodemap_tldevice, mode, n_images=n_images)
+        result &= self.acquire_images(
+            cam, nodemap, nodemap_tldevice, mode, n_images=n_images
+        )
 
         # Deinitialize camera
         cam.DeInit()
@@ -177,11 +179,15 @@ class FlirCamera(AbstractCamera):
         Take and save a single frame at a time for 1+ cameras
         """
         result = True
+        # num_cameras = self.cam_list.GetSize()
+        # print('Number of cameras detected: %d' % num_cameras)
+
         for i, cam in enumerate(self.cam_list):
             result &= self.run_single_camera(cam)
 
         # clean up pointer object
         del cam
+
         # clear camera list
         self.cam_list.Clear()
         # release system instance
@@ -200,9 +206,11 @@ class FlirCamera(AbstractCamera):
         result = True
         for i, cam in enumerate(self.cam_list):
             result &= self.run_single_camera(cam, 'Continuous', n_images)
+            del cam
 
         # clean up pointer object
-        del cam
+        # del cam
+
         # clear camera list
         self.cam_list.Clear()
         # release system instance
@@ -210,15 +218,33 @@ class FlirCamera(AbstractCamera):
 
         return result
 
-    @Decorators.handler
+    # Not adding more decorators (at least not yet)
+    def get_min_exp(self, cam):
+        """
+        Returns the minimum exposure of one camera (cam, type CameraPtr) in microseconds
+        """
+        return cam.ExposureTime.GetMin()
+
+    def get_max_exp(self, cam):
+        """
+        Returns the maximum exposure of one camera (cam, type CameraPtr) in microseconds
+        """
+        return cam.ExposureTime.GetMax()
+
+    def get_exposure(self, cam):
+        """
+        Returns the most recent exposure setting of one camera (cam, type CameraPtr) in microseconds
+        """
+        return cam.ExposureTime.GetValue()
+
     def set_exposure(self, cam, exp):
         """
-        Set exposure time of one camera. Time in microseconds
+        Set exposure time of one camera (Default is 5 ms)
 
         Parameters
         ----------
         cam: single input camera. Type: CameraPtr
-        exp: exposure in milliseconds. Type: int
+        exp: exposure in microseconds. Type: int
         """
         result = True
 
@@ -229,15 +255,58 @@ class FlirCamera(AbstractCamera):
         # Disable automatic exposure
         cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
         if cam.ExposureTime.GetAccessMode() != PySpin.RW:
-            logger.error('Unable to set exposure time. Aborting...')
+            logger.error('Unable to set exposure time')
             return False
 
-        # Ensure desired exposure time does not exceed the maximum
-        exp = min(cam.ExposureTime.GetMax(), exp)
+        # Ensure desired exposure time does not exceed the max or min
+        exp = min(self.get_max_exp(cam), exp)
+        exp = max(self.get_min_exp(cam), exp)
         cam.ExposureTime.SetValue(exp)
 
         return result
 
-    @Decorators.handler
-    def get_exposure(self, cam):
-        return cam.ExposureTime.GetValue()
+    def get_min_gain(self, cam):
+        """
+        Returns the minimum gain of one camera (cam, type CameraPtr) in dB
+        """
+        return cam.Gain.GetMin()
+
+    def get_max_gain(self, cam):
+        """
+        Returns the maximum gain of one camera (cam, type CameraPtr) in dB
+        """
+        return cam.Gain.GetMax()
+
+    def get_gain(self, cam):
+        """
+        Returns the most recent gain setting of one camera (cam, type CameraPtr) in dB
+        """
+        return cam.Gain.GetValue()
+
+    def set_gain(self, cam, gain):
+        """
+        Set gain of one camera.
+
+        Parameters
+        ----------
+        cam: single input camera. Type: CameraPtr
+        gain: gain in dB. Type: int
+        """
+        result = True
+
+        if cam.GainAuto.GetAccessMode() != PySpin.RW:
+            logger.error('Unable to disable automatic gain')
+            return False
+
+        # Disable automatic gain
+        cam.GainAuto.SetValue(PySpin.GainAuto_Off)
+        if cam.Gain.GetAccessMode() != PySpin.RW:
+            logger.error('Unable to set gain')
+            return False
+
+        # ensure gain is higher than min and lower than max
+        gain = min(self.get_max_gain(cam), gain)
+        gain = max(self.get_min_gain(cam), gain)
+        cam.Gain.SetValue(gain)
+
+        return result
