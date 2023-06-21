@@ -59,17 +59,23 @@ class KCube_PiezoInertia(AbstractStage):
         self.stage_direction = stage_positive
         self.polling = polling
         self.channel = KCube_PiezoInertia.CHANNEL_MAP[channel]
+
         self.min_travel_range = None
         self.max_travel_range = None
-        
+        self.step_rate_val = 500
+        self.step_acceleration_val = 1000
+
         if self.simulator:
             SimulationManager.Instance.InitializeSimulations()
 
         self.list_available_stages()
         self.connect()
 
-    def __del__(self):
-        self.disconnect()
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
         logger.info("thorlabs stage disconnected")
 
     def list_available_stages(self):
@@ -85,9 +91,13 @@ class KCube_PiezoInertia(AbstractStage):
         self.device_settings = ThorlabsInertialMotorSettings.GetSettings(
             self.device_config
         )
-        # Default Settings
-        self.device_settings.Drive.Channel(self.channel).StepRate = 1000
-        self.device_settings.Drive.Channel(self.channel).StepAcceleration = 100000
+        self.update_configuration()
+
+    def update_configuration(self):
+        self.device_settings.Drive.Channel(self.channel).StepRate = self.step_rate_val
+        self.device_settings.Drive.Channel(
+            self.channel
+        ).StepAcceleration = self.step_acceleration_val
         self.device.SetSettings(self.device_settings, True, True)
 
     def connect(self):
@@ -134,7 +144,7 @@ class KCube_PiezoInertia(AbstractStage):
         logger.info('Zeroing device')
         self.device.SetPositionAs(self.channel, 0)
 
-    def disconnect(self):
+    def close(self):
         # TODO: does it need to move back to a position?
         # self.position = 0
         if self.polling:
@@ -161,9 +171,9 @@ class KCube_PiezoInertia(AbstractStage):
     def position(self, value: np.int32):
         # Check if position is within the desired travel range
         if self.min_travel_range and self.max_travel_range is not None:
-            if value > self.max_travel_range :
+            if value > self.max_travel_range:
                 value = self.max_travel_range
-            if value < self.min_travel_range :
+            if value < self.min_travel_range:
                 value = self.min_travel_range
         self.device.MoveTo(self.channel, value, self.timeout)
         time.sleep(1)
@@ -175,7 +185,8 @@ class KCube_PiezoInertia(AbstractStage):
 
     @step_rate.setter
     def step_rate(self, value):
-        self.device_settings.Drive.Channel(self.channel).StepRate = value
+        self.step_rate_val = value
+        self.update_configuration()
 
     @property
     def step_acceleration(self):
@@ -185,7 +196,8 @@ class KCube_PiezoInertia(AbstractStage):
 
     @step_acceleration.setter
     def step_acceleration(self, value):
-        self.device_settings.Drive.Channel(self.channel).StepAcceleration = value
+        self.step_acceleration_val = value
+        self.update_configuration()
 
     def move_relative(self, offset):
         target_position = self.position + offset
@@ -202,4 +214,6 @@ class KCube_PiezoInertia(AbstractStage):
     def travel_range(self, value):
         self.min_travel_range = value[0]
         self.max_travel_range = value[1]
-        logger.info(f'Travel range set to ({self.min_travel_range}, {self.max_travel_range})')
+        logger.info(
+            f'Travel range set to ({self.min_travel_range}, {self.max_travel_range})'
+        )
