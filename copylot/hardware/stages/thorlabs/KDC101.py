@@ -58,8 +58,11 @@ class KCube_DCServo(AbstractStage):
         self.device_list()
         self.connect()
 
-    def __del__(self):
-        self.disconnect()
+    def __enter__(self):
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
         logger.info("thorlabs stage disconnected")
 
     def list_available_stages(self):
@@ -118,7 +121,7 @@ class KCube_DCServo(AbstractStage):
         logger.info('Zeroing device')
         self.device.SetPositionAs(self.channel, 0)
 
-    def disconnect(self):
+    def close(self):
         # TODO: does it need to move back to a position?
         # self.position = 0.0
         if self.polling:
