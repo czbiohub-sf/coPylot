@@ -120,7 +120,7 @@ class KCube_DCServo(AbstractStage):
 
     def disconnect(self):
         # TODO: does it need to move back to a position?
-        self.position = 0.0
+        # self.position = 0.0
         if self.polling:
             self.device.StopPolling()
         self.device.Disconnect()
@@ -167,12 +167,8 @@ class KCube_DCServo(AbstractStage):
                 (MotorDirection.Forward, Decimal(abs_value), self.timeout)
 
     def move_relative_2(self, value):
-        curr_position = self.position
-        target_position = curr_position + value
-        if target_position < 0:
-            logger.warning('Stage out of range')
-        else:
-            self.position = target_position
+        target_position = self.position + value
+        self.position = target_position
 
     def home_device(self):
         return self.device.Home(60000)

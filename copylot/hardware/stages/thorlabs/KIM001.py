@@ -136,7 +136,7 @@ class KCube_PiezoInertia(AbstractStage):
 
     def disconnect(self):
         # TODO: does it need to move back to a position?
-        self.position = 0
+        # self.position = 0
         if self.polling:
             self.device.StopPolling()
         self.device.Disconnect()
