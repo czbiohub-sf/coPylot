@@ -25,21 +25,32 @@ clr.AddReference(
 clr.AddReference(
     "C:\\Program Files\\Thorlabs\\Kinesis\\ThorLabs.MotionControl.KCube.DCServoCLI.dll"
 )
+
 from Thorlabs.MotionControl.DeviceManagerCLI import *
 from Thorlabs.MotionControl.GenericMotorCLI import *
 from Thorlabs.MotionControl.KCube.DCServoCLI import *
 from System import Decimal
 
+
 class KCube_DCServo(AbstractStage):
-    def __init__(self, device_name, serial_number='27000001', stage_positive = 'forward', polling = False, simulator=False):
+    def __init__(
+        self,
+        device_name,
+        serial_number='27000001',
+        stage_positive='forward',
+        polling=False,
+        simulator=False,
+    ):
         self.serial_number = serial_number
         self.device = None
         self.device_name = device_name
         self.simulator = simulator
-        self.timeout = 20000  #ms
+        self.timeout = 20000  # ms
         self.device_config = None
         self.stage_direction = stage_positive
         self.polling = polling
+        self.max_travel_range = None
+        self.min_travel_range = None
 
         if self.simulator:
             SimulationManager.Instance.InitializeSimulations()
@@ -51,7 +62,7 @@ class KCube_DCServo(AbstractStage):
         self.disconnect()
         logger.info("thorlabs stage disconnected")
 
-    def device_list(self):
+    def list_available_stages(self):
         DeviceManagerCLI.BuildDeviceList()
         dev_list = DeviceManagerCLI.GetDeviceList()
         logger.info(f"Device List {dev_list}")
@@ -132,33 +143,45 @@ class KCube_DCServo(AbstractStage):
 
     @position.setter
     def position(self, value):
+        if self.min_travel_range and self.max_travel_range is not None:
+            if value > self.max_travel_range:
+                value = self.max_travel_range
+            if value < self.min_travel_range:
+                value = self.min_travel_range
         value = Decimal(value)
         self.device.MoveTo(value, self.timeout)
         time.sleep(1)
         logger.info(f'Stage< {self.device_name} > reached position: {value}')
 
-    def move_relative(self,value):
+    def move_relative(self, value):
         abs_value = abs(value)
         if self.stage_direction == 'forward':
             if value > 0:
-                (MotorDirection.Forward, Decimal(abs_value) , self.timeout)
+                (MotorDirection.Forward, Decimal(abs_value), self.timeout)
             else:
                 (MotorDirection.Backward, Decimal(abs_value), self.timeout)
         else:
             if value > 0:
-                (MotorDirection.Backward, Decimal(abs_value) , self.timeout)
+                (MotorDirection.Backward, Decimal(abs_value), self.timeout)
             else:
                 (MotorDirection.Forward, Decimal(abs_value), self.timeout)
 
-    def move_relative_2(self,value):
+    def move_relative_2(self, value):
         curr_position = self.position
         target_position = curr_position + value
         if target_position < 0:
             logger.warning('Stage out of range')
         else:
-            self.position  = target_position
+            self.position = target_position
 
-    def home_device(self)
-       return self.device.Home(60000)
+    def home_device(self):
+        return self.device.Home(60000)
 
+    @property
+    def travel_range(self):
+        return (self.min_travel_range, self.max_travel_range)
 
+    @travel_range.setter
+    def travel_range(self, value):
+        self.max_travel_range = value[0]
+        self.min_travel_range = value[1]
