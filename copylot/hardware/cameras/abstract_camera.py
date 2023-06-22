@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import Tuple
 
 
 class AbstractCamera(metaclass=ABCMeta):
@@ -16,17 +17,31 @@ class AbstractCamera(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def exposure(self):
+    def exposure(self) -> float:
+        """Current exposure
+
+        Returns
+        -------
+        float
+
+        """
         raise NotImplementedError()
 
     @exposure.setter
     @abstractmethod
-    def exposure(self, value):
+    def exposure(self, value: float) -> None:
+        """Current exposure
+
+        Parameters
+        ----------
+        value : float
+
+        """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def exposure_limits(self):
+    def exposure_limits(self) -> Tuple[float, float]:
         """
         Valid minimum and maximum exposure values.
 
@@ -39,27 +54,55 @@ class AbstractCamera(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def bitdepth(self):
+    def bitdepth(self) -> int:
+        """Currently selected  bitdepth
+
+        Returns
+        -------
+        int
+
+        """
         raise NotImplementedError()
 
     @bitdepth.setter
     @abstractmethod
-    def bitdepth(self, value):
+    def bitdepth(self, value: int) -> None:
+        """Currently selected  bitdepth
+
+        Parameters
+        ----------
+        value : int
+
+        """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def image_size(self):
+    def image_size(self) -> Tuple[int, int]:
+        """Currently selected image size
+
+        Returns
+        -------
+        Tuple[int, int]
+
+        """
         raise NotImplementedError()
 
     @image_size.setter
     @abstractmethod
-    def image_size(self, value):
+    def image_size(self, value: Tuple[int, int]) -> None:
+        """Currently selected image size
+
+        Parameters
+        ----------
+        value : Tuple[int, int]
+
+        """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def image_size_limits(self):
+    def image_size_limits(self) -> Tuple[int, int, int, int]:
         """
         Valid minimum and maximum image_size values.
 
@@ -72,43 +115,87 @@ class AbstractCamera(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def binning(self):
+    def binning(self) -> Tuple[int, int]:
+        """Current binning
+
+        Returns
+        -------
+        Tuple[int, int]
+
+        """
         raise NotImplementedError()
 
     @binning.setter
     @abstractmethod
-    def binning(self, value):
+    def binning(self, value: Tuple[int, int]) -> None:
+        """Current binning
+
+        Parameters
+        ----------
+        value : Tuple[int, int]
+
+        """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def gain(self):
+    def gain(self) -> float:
+        """Implementations should normalize gain to range [0, 1]
+
+        Returns
+        -------
+        float
+            gain value
+
+        """
         raise NotImplementedError()
 
     @gain.setter
     @abstractmethod
-    def gain(self, value):
+    def gain(self, value: float) -> None:
+        """Implementations should normalize gain to range [0, 1]
+
+        Parameters
+        ----------
+        value : float
+            value to set as new gain
+
+        """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def gain_limits(self):
+    def gain_limits(self) -> Tuple[float, float]:
         """
         Valid minimum and maximum gain values.
 
         Returns
         -------
-        Tuple
+        Tuple[float, float]
             (min_valid_gain, max_valid_gain)
         """
         raise NotImplementedError()
 
     @property
     @abstractmethod
-    def shutter_mode(self):
+    def shutter_mode(self) -> str:
+        """Current shutter mode
+
+        Returns
+        -------
+        str
+
+        """
         raise NotImplementedError()
 
     @shutter_mode.setter
     @abstractmethod
-    def shutter_mode(self, mode):
+    def shutter_mode(self, mode: str) -> None:
+        """Current shutter mode
+
+        Parameters
+        ----------
+        mode : str
+
+        """
         raise NotImplementedError()
