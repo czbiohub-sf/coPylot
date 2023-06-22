@@ -12,35 +12,34 @@ class FlirCamera(AbstractCamera):
     Flir Camera BFS-U3-63S4M-C adapter.
     """
 
-    # Class to use decorators as exception handlers
-    class Decorators(AbstractCamera):
-        @classmethod
-        def handler(cls, func):
-            try:
-                return func
-            except PySpin.SpinnakerException as ex:
-                logger.error(ex)
-                return False
+    _cam = None  # input camera. Type: CameraPtr
 
     def __init__(self):
         self.system = PySpin.System.GetInstance()
         self.cam_list = self.system.GetCameras()
 
+    @property
+    def cam(self):
+        return self._cam
+
+    @cam.setter
+    def cam(self, index):
+        self._cam = self.cam_list[index]
+
     @Decorators.handler
-    def save_image(self, cam, n, serial_no, processor, wait_time):
+    def save_image(self, n, serial_no, processor, wait_time):
         """
         Save the nth image to take from a given, initialized camera
 
         Parameters
         ----------
-        cam: camera to run on. Type: CameraPtr type.
         n: number of images to take in that period of camera initialization. Type: int
         serial_no: serial number of camera. Type: string
         processor: image processor for post-processing. Type: ImageProcessor
         wait_time: wait time for camera to take one frame in microseconds.
         """
         #  Retrieve next received image.
-        image_result = cam.GetNextImage(wait_time)
+        image_result = self.cam.GetNextImage(wait_time)
         #  Ensure image completion
         if image_result.IsIncomplete():
             logger.warning(
@@ -70,20 +69,13 @@ class FlirCamera(AbstractCamera):
 
     @Decorators.handler
     def acquire_images(
-        self,
-        cam,
-        nodemap,
-        nodemap_tldevice,
-        mode='SingleFrame',
-        n_images=1,
-        wait_time=1000,
+        self, nodemap, nodemap_tldevice, mode='SingleFrame', n_images=1, wait_time=1000
     ):
         """
         Acquire a number of images from one camera and save as .jpg files
 
         Parameters
         ----------
-        cam: camera to run on. Type: CameraPtr type.
         nodemap: device nodemap. Type: INodeMap type.
         nodemap_tldevice: transport layer device nodemap. Type: INodeMap.
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
@@ -116,7 +108,7 @@ class FlirCamera(AbstractCamera):
         logger.info('Acquisition mode set to ' + mode)
 
         #  Start acquisition
-        cam.BeginAcquisition()
+        self.cam.BeginAcquisition()
 
         #  Retrieve device serial number to avoid overwriting filename
         serial_no = ''
@@ -135,58 +127,57 @@ class FlirCamera(AbstractCamera):
         )
 
         for i in range(n_images):
-            result &= self.save_image(cam, i, serial_no, processor, wait_time)
+            # insert try/except here - mention the index MAKE MORE SPECIFIC
+            result &= self.save_image(self.cam, i, serial_no, processor, wait_time)
 
         #  End acquisition
-        cam.EndAcquisition()
+        self.cam.EndAcquisition()
 
         return result
 
     @Decorators.handler
-    def run_single_camera(self, cam, mode='SingleFrame', n_images=1):
+    def run_single_camera(self, mode='SingleFrame', n_images=1):
         """ "
         (De)Initialize one camera (after) before acquisition
 
         Parameters
         ----------
-        cam: single input camera. Type: CameraPtr
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         """
         result = True
 
         # Retrieve TL device nodemap and print device information
-        nodemap_tldevice = cam.GetTLDeviceNodeMap()
+        nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
 
         # Initialize camera
-        cam.Init()
+        self.cam.Init()
 
         # Retrieve GenICam nodemap
-        nodemap = cam.GetNodeMap()
+        nodemap = self.cam.GetNodeMap()
 
         # Call method to acquire images
         result &= self.acquire_images(
-            cam, nodemap, nodemap_tldevice, mode, n_images=n_images
+            nodemap, nodemap_tldevice, mode, n_images=n_images
         )
 
         # Deinitialize camera
-        cam.DeInit()
+        self.cam.DeInit()
 
         return result
 
     def snap(self):
         """
-        Take and save a single frame at a time for 1+ cameras
+        Take and save a single frame at a time for a single camera
         """
         result = True
-        # num_cameras = self.cam_list.GetSize()
-        # print('Number of cameras detected: %d' % num_cameras)
+        # temporary pointer - POTENTIAL BUG - I AM UNABLE TO DELETE POINTER TO PROPERTY
+        # tempcam = self.cam
 
-        for i, cam in enumerate(self.cam_list):
-            result &= self.run_single_camera(cam)
+        result &= self.run_single_camera()
 
-        # clean up pointer object
-        del cam
+        # clean up pointer object - POTENTIAL BUG
+        # del tempcam
 
         # clear camera list
         self.cam_list.Clear()
@@ -197,19 +188,20 @@ class FlirCamera(AbstractCamera):
 
     def multiple(self, n_images):
         """
-        Take and save n_images frames for 1+ cameras.
+        Take and save n_images frames for a single camera
 
         Parameters
         ----------
         n_images: number of images to be taken >=1. Type: int
         """
         result = True
-        for i, cam in enumerate(self.cam_list):
-            result &= self.run_single_camera(cam, 'Continuous', n_images)
-            del cam
+        # temporary pointer
+        # tempcam = self.cam
+
+        result &= self.run_single_camera('Continuous', n_images)
 
         # clean up pointer object
-        # del cam
+        # del tempcam
 
         # clear camera list
         self.cam_list.Clear()
@@ -218,95 +210,109 @@ class FlirCamera(AbstractCamera):
 
         return result
 
-    # Not adding more decorators (at least not yet)
-    def get_min_exp(self, cam):
+    @property
+    def min_exp(self):
         """
-        Returns the minimum exposure of one camera (cam, type CameraPtr) in microseconds
+        Returns the minimum exposure in microseconds
         """
-        return cam.ExposureTime.GetMin()
+        return self.cam.ExposureTime.GetMin()
 
-    def get_max_exp(self, cam):
+    @property
+    def max_exp(self):
         """
-        Returns the maximum exposure of one camera (cam, type CameraPtr) in microseconds
+        Returns the maximum exposure in microseconds
         """
-        return cam.ExposureTime.GetMax()
+        return self.cam.ExposureTime.GetMax()
 
-    def get_exposure(self, cam):
+    @property
+    def exposure(self):
         """
-        Returns the most recent exposure setting of one camera (cam, type CameraPtr) in microseconds
+        Returns the most recent exposure setting in microseconds
         """
-        return cam.ExposureTime.GetValue()
+        return self.cam.ExposureTime.GetValue()
 
-    def set_exposure(self, cam, exp):
+    @exposure.setter
+    def exposure(self, exp):
         """
         Set exposure time of one camera (Default is 5 ms)
 
         Parameters
         ----------
-        cam: single input camera. Type: CameraPtr
         exp: exposure in microseconds. Type: int
         """
-        result = True
-
-        if cam.ExposureAuto.GetAccessMode() != PySpin.RW:
+        if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
-            return False
 
         # Disable automatic exposure
-        cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
-        if cam.ExposureTime.GetAccessMode() != PySpin.RW:
+        self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Off)
+        if self.cam.ExposureTime.GetAccessMode() != PySpin.RW:
             logger.error('Unable to set exposure time')
-            return False
 
         # Ensure desired exposure time does not exceed the max or min
-        exp = min(self.get_max_exp(cam), exp)
-        exp = max(self.get_min_exp(cam), exp)
-        cam.ExposureTime.SetValue(exp)
+        exp = min(self.max_exp, exp)
+        exp = max(self.min_exp, exp)
+        self.cam.ExposureTime.SetValue(exp)
 
-        return result
+    @property
+    def min_gain(self):
+        """
+        Returns the minimum gain in dB
+        """
+        return self.cam.Gain.GetMin()
 
-    def get_min_gain(self, cam):
+    @property
+    def max_gain(self):
         """
-        Returns the minimum gain of one camera (cam, type CameraPtr) in dB
+        Returns the maximum gain in dB
         """
-        return cam.Gain.GetMin()
+        return self.cam.Gain.GetMax()
 
-    def get_max_gain(self, cam):
+    @property
+    def gain(self):
         """
-        Returns the maximum gain of one camera (cam, type CameraPtr) in dB
+        Returns the most recent gain setting in dB
         """
-        return cam.Gain.GetMax()
+        return self.cam.Gain.GetValue()
 
-    def get_gain(self, cam):
-        """
-        Returns the most recent gain setting of one camera (cam, type CameraPtr) in dB
-        """
-        return cam.Gain.GetValue()
-
-    def set_gain(self, cam, gain):
+    @gain.setter
+    def gain(self, gain):
         """
         Set gain of one camera.
 
         Parameters
         ----------
-        cam: single input camera. Type: CameraPtr
         gain: gain in dB. Type: int
         """
-        result = True
-
-        if cam.GainAuto.GetAccessMode() != PySpin.RW:
+        if self.cam.GainAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic gain')
-            return False
 
         # Disable automatic gain
-        cam.GainAuto.SetValue(PySpin.GainAuto_Off)
-        if cam.Gain.GetAccessMode() != PySpin.RW:
+        self.cam.GainAuto.SetValue(PySpin.GainAuto_Off)
+        if self.cam.Gain.GetAccessMode() != PySpin.RW:
             logger.error('Unable to set gain')
-            return False
 
         # ensure gain is higher than min and lower than max
-        gain = min(self.get_max_gain(cam), gain)
-        gain = max(self.get_min_gain(cam), gain)
-        cam.Gain.SetValue(gain)
+        gain = min(self.max_gain, gain)
+        gain = max(self.min_gain, gain)
+        self.cam.Gain.SetValue(gain)
 
-        return result
+    @property
+    def framerate(self):
+        """
+        Returns the most recent frame rate setting in Hz
+        """
+        return self.cam.AcquisitionFrameRate.GetValue()
+
+    @framerate.setter
+    def framerate(self, rate):
+        """
+        Set frame rate of one camera
+
+        Parameters
+        ----------
+        rate: frame rate in Hz. Type: int
+        """
+        # Disable automatic frame rate
+        self.cam.AcquisitionFrameRateAuto = 'Off'
+        self.cam.AcquisitionFrameRateAutoEnabled = True
+        self.cam.AcquisitionFrame = rate
