@@ -19,7 +19,6 @@ import numpy as np
 from enum import Enum
 from time import perf_counter, sleep
 
-
 exitcode = 0
 
 # ---------------------------------------CONSTANTS-----------------------------------------------
@@ -76,7 +75,7 @@ class BaslerCamera(AbstractCamera):
         self.camera_index = camera_index
         # get transport layer and all attached devices
         self.camera = None
-        self.tl_factory = py.TlFactory.GetInstance()
+        self.tl_factory = pylon.TlFactory.GetInstance()
         self.devices = self.tl_factory.EnumerateDevices()
         self.triggertype = ['FREERUN', 'SOFTWARE', 'HARDWARE']
         if len(self.devices) == 0:
@@ -118,6 +117,7 @@ class BaslerCamera(AbstractCamera):
                 self.acquisition_mode_options = self.camera.AcquisitionMode.Symbolics
                 self.trigger_source_options = self.camera.TriggerSource.Symbolics
                 self.camera_pixel_bitdepth_options = self.camera.PixelFormat.Symbolics
+                self.trigger_type_options = ['FREERUN', 'SOFTWARE', 'HARDWARE']
         except genicam.GenericException as e:
             # Error handling
             logger.info("An exception occurred. {}".format(e))
@@ -127,20 +127,21 @@ class BaslerCamera(AbstractCamera):
         # Turn off auto exposure and gain
         try:
             self.camera.ExposureAuto.SetValue("Off")
-            logger.debug(f"{_IDENTITY} : Turned off autoexposure.")
+            logger.debug(f"{self.camera_index} : Turned off autoexposure.")
         except:
-            logger.info(f"{_IDENTITY} : Could not set autoexposure off.")
+            logger.info(f"{self.camera_index} : Could not set autoexposure off.")
         try:
             self.camera.GainAuto.SetValue("Off")
-            logger.debug(f"{_IDENTITY} : Turned off autogain.")
+            logger.debug(f"{self.camera_index} : Turned off autogain.")
         except:
-            logger.info(f"{_IDENTITY} : Could not set autogain off.")
+            logger.info(f"{self.camera_index} : Could not set autogain off.")
 
         # Set the default grab timeout
         self.grab_timeout_ms = _CAM_TIMEOUT_MS
 
         # Get the exposure time min/max bounds and set default exposure
-        self.minExposure_ms, self.maxExposure_ms = self.getExposureBoundsMilliseconds()
+        self.minExposure_ms = self.camera.ExposureTime.Min * 1000  # convert to us
+        self.maxExposure_ms = self.camera.ExposureTime.Max * 1000
 
         try:
             self.exposureTime_ms = _DEF_START_EXPOSURE_MS
@@ -153,7 +154,7 @@ class BaslerCamera(AbstractCamera):
         self.config_trigger()
 
         self._isActivated = True
-        logger.debug(f"{self.} : Camera activated!")
+        logger.debug(f"{self.camera_index} : Camera activated!")
 
     def deactivate_camera(self):
         if self._isRunning:
@@ -172,8 +173,8 @@ class BaslerCamera(AbstractCamera):
 
     @exposure.setter
     def exposure(self, value):
-        min = self.camera.ExposureTime.Min
-        max = self.camera.ExposureTime.Max
+        min = self.minExposure_ms
+        max = self.maxExposure_ms
         if min <= value <= max:
             self.camera.ExposureTime.SetValue(value)
         else:
@@ -357,8 +358,7 @@ class BaslerCamera(AbstractCamera):
     def software_trigger(self):
         self.camera.ExecuteSoftwareTrigger()
 
-
-    def config_trigger(self, triggertype: str = "FREERUN"):
+    def config_trigger(self, triggertype: str = 'FREERUN'):
         """
         Configures the camera trigger mode. For more info, refer to https://docs.baslerweb.com/triggered-image-acquisition.
 
@@ -379,33 +379,33 @@ class BaslerCamera(AbstractCamera):
                 f"triggerType not valid: needs to be one of FREERUN, SOFTWARE, HARDWARE, got {triggertype}"
             )
         else:
-            if triggertype == "FREERUN":
-                self.camera.acquisition_mode = "Continuous"
+            if triggertype == 'FREERUN':
+                self.camera.acquisition_mode = 'Continuous'
                 self.camera.acquisition_start()
                 self.camera.trigger_mode = 'Off'
             else:
-                self.camera.acquisition_mode = "Continuous"  # TO DO: Does this stay continuous for other modes?
-                if triggertype == "SOFTWARE":
+                self.camera.acquisition_mode = 'Continuous'  # TO DO: Does this stay continuous for other modes?
+                if triggertype == 'SOFTWARE':
                     # Pypylon recommends using Acquisition Status for monitoring Trigger Wait signals
                     self.camera.cquisition_start()
-                    self.camera.trigger_source = "Software"
+                    self.camera.trigger_source = 'Software'
                     self.camera.RegisterConfiguration(
                         pylon.SoftwareTriggerConfiguration(),
                         pylon.RegistrationMode_ReplaceAll,
                         pylon.Cleanup_Delete,
                     )
-                elif triggertype == "HARDWARE":
+                elif triggertype == 'HARDWARE':
                     self.camera.AcquisitionStart.Execute()
                     self.camera.TriggerSource.SetValue(
-                        "Line1"
+                        'Line1'
                     )  # TO DO: This may not be the right line, or may need to be configured if GPIO!
                     self.camera.RegisterConfiguration(
                         pylon.HardwareTriggerConfiguration(),
                         pylon.RegistrationMode_ReplaceAll,
                         pylon.Cleanup_Delete,
                     )
-                self.camera.TriggerMode.SetValue("On")
-            self.camera.TriggerSource.
+                self.camera.TriggerMode.SetValue('On')
+            self.camera.TriggerSource.SetValue('Line1')
             logger.debug(f"{self.camera.camera_index} : Trigger mode changed to {triggertype}")
 
     def convertTo_uint16(self, img):
@@ -418,6 +418,7 @@ class BaslerCamera(AbstractCamera):
         img = np.uint16(65535 * (img.astype("float") - minVal) / (maxVal - minVal))
 
         return img
+
     def snap(self):
         """
         If the camera is running, returns a numpy array containing the image data from the camera.
@@ -523,7 +524,6 @@ class BaslerCamera(AbstractCamera):
             logger.exception(
                 f"Cam {self.camera_index} : Error attempting to check AcquisitionStatus.GetValue()"
             )
-
 
     def get_img(self, grabStrategy: GrabStrategy):
         """Returns a generator of images as numpy arrays as the camera is grabbing images.
