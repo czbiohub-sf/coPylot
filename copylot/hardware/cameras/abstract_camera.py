@@ -3,6 +3,14 @@ from typing import Tuple
 
 
 class AbstractCamera(metaclass=ABCMeta):
+    """AbstractCamera
+
+    This class includes only the members that known to be common
+    across different camera adapters that we've implemented. By no
+    means this class in a final state. We will be making additions
+    as needs rise.
+
+    """
 
     @abstractmethod
     def snap(self):
