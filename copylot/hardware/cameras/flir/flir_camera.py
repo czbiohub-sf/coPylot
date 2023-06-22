@@ -26,7 +26,6 @@ class FlirCamera(AbstractCamera):
     def cam(self, index):
         self._cam = self.cam_list[index]
 
-    @Decorators.handler
     def save_image(self, n, serial_no, processor, wait_time):
         """
         Save the nth image to take from a given, initialized camera
@@ -67,7 +66,6 @@ class FlirCamera(AbstractCamera):
             image_result.Release()
             return True
 
-    @Decorators.handler
     def acquire_images(
         self, nodemap, nodemap_tldevice, mode='SingleFrame', n_images=1, wait_time=1000
     ):
@@ -127,15 +125,17 @@ class FlirCamera(AbstractCamera):
         )
 
         for i in range(n_images):
-            # insert try/except here - mention the index MAKE MORE SPECIFIC
-            result &= self.save_image(self.cam, i, serial_no, processor, wait_time)
+            try:
+                result &= self.save_image(i, serial_no, processor, wait_time)
+            except PySpin.SpinnakerException as ex:
+                logger.error('Error on image %i acquisition: %s' % (i, ex))
+                return False
 
         #  End acquisition
         self.cam.EndAcquisition()
 
         return result
 
-    @Decorators.handler
     def run_single_camera(self, mode='SingleFrame', n_images=1):
         """ "
         (De)Initialize one camera (after) before acquisition
@@ -145,26 +145,34 @@ class FlirCamera(AbstractCamera):
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         """
-        result = True
+        try:
+            result = True
 
-        # Retrieve TL device nodemap and print device information
-        nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
+            # Retrieve TL device nodemap and print device information
+            nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
 
-        # Initialize camera
-        self.cam.Init()
+            # Initialize camera
+            self.cam.Init()
 
-        # Retrieve GenICam nodemap
-        nodemap = self.cam.GetNodeMap()
+            # Retrieve GenICam nodemap
+            nodemap = self.cam.GetNodeMap()
 
-        # Call method to acquire images
-        result &= self.acquire_images(
-            nodemap, nodemap_tldevice, mode, n_images=n_images
-        )
+            # Call method to acquire images
+            try:
+                result &= self.acquire_images(
+                    nodemap, nodemap_tldevice, mode, n_images=n_images
+                )
+            except PySpin.SpinnakerException as ex:
+                logger.error('Error beginning image acquisition: %s' % ex)
+                return False
 
-        # Deinitialize camera
-        self.cam.DeInit()
+            # Deinitialize camera
+            self.cam.DeInit()
+            return result
 
-        return result
+        except PySpin.SpinnakerException as ex:
+            logger.error('Error running camera initialization: %s' % ex)
+            return False
 
     def snap(self):
         """
@@ -176,7 +184,7 @@ class FlirCamera(AbstractCamera):
 
         result &= self.run_single_camera()
 
-        # clean up pointer object - POTENTIAL BUG
+        # clean up pointer object
         # del tempcam
 
         # clear camera list
