@@ -12,11 +12,14 @@ class FlirCamera(AbstractCamera):
     Flir Camera BFS-U3-63S4M-C adapter.
     """
 
-    _cam = None  # input camera. Type: CameraPtr
-
-    def __init__(self):
-        self.system = PySpin.System.GetInstance()
+    def __init__(self, index=0):
+        self._system = PySpin.System.GetInstance()
         self.cam_list = self.system.GetCameras()
+        self._cam = self.cam_list[index]
+
+    @property
+    def system(self):
+        return self._system
 
     @property
     def cam(self):
@@ -26,12 +29,31 @@ class FlirCamera(AbstractCamera):
     def cam(self, index):
         self._cam = self.cam_list[index]
 
+    @cam.deleter
+    def cam(self):
+        del self._cam
+
+    def close(self):
+        """
+        Irreversibly close the system after imaging to avoid Spinnaker::Exception [-1004]
+
+        User should call close() *after* calling snap(), multiple() as many times as needed for the same
+        instance with custom settings. Further imaging requires creating a new instance.
+        """
+        # clean up camera pointer
+        del self.cam
+        # Clear camera list
+        self.cam_list.Clear()
+        # Release system
+        self.system.ReleaseInstance()
+
     def save_image(self, n, serial_no, processor, wait_time):
         """
         Save the nth image to take from a given, initialized camera
 
         Parameters
         ----------
+        self.cam:
         n: number of images to take in that period of camera initialization. Type: int
         serial_no: serial number of camera. Type: string
         processor: image processor for post-processing. Type: ImageProcessor
@@ -74,6 +96,7 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
+        self.cam:
         nodemap: device nodemap. Type: INodeMap type.
         nodemap_tldevice: transport layer device nodemap. Type: INodeMap.
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
@@ -142,9 +165,11 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
+        self.cam:
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         """
+
         try:
             result = True
 
@@ -176,21 +201,13 @@ class FlirCamera(AbstractCamera):
 
     def snap(self):
         """
-        Take and save a single frame at a time for a single camera
+        Take and save a single frame at a time for a single camera.
         """
         result = True
-        # temporary pointer - POTENTIAL BUG - I AM UNABLE TO DELETE POINTER TO PROPERTY
-        # tempcam = self.cam
 
+        # run
         result &= self.run_single_camera()
-
-        # clean up pointer object
-        # del tempcam
-
-        # clear camera list
-        self.cam_list.Clear()
-        # release system instance
-        self.system.ReleaseInstance()
+        # self.close()
 
         return result
 
@@ -203,18 +220,10 @@ class FlirCamera(AbstractCamera):
         n_images: number of images to be taken >=1. Type: int
         """
         result = True
-        # temporary pointer
-        # tempcam = self.cam
 
+        # run and close system
         result &= self.run_single_camera('Continuous', n_images)
-
-        # clean up pointer object
-        # del tempcam
-
-        # clear camera list
-        self.cam_list.Clear()
-        # release system instance
-        self.system.ReleaseInstance()
+        # self.close()
 
         return result
 
@@ -242,7 +251,7 @@ class FlirCamera(AbstractCamera):
     @exposure.setter
     def exposure(self, exp):
         """
-        Set exposure time of one camera (Default is 5 ms)
+        Set exposure time of one camera (Default is 7280.0 ms)
 
         Parameters
         ----------
@@ -285,7 +294,7 @@ class FlirCamera(AbstractCamera):
     @gain.setter
     def gain(self, gain):
         """
-        Set gain of one camera.
+        Set gain of one camera (default is 0.0)
 
         Parameters
         ----------
@@ -314,7 +323,7 @@ class FlirCamera(AbstractCamera):
     @framerate.setter
     def framerate(self, rate):
         """
-        Set frame rate of one camera
+        Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
 
         Parameters
         ----------
