@@ -15,16 +15,18 @@ if __name__ == '__main__':
     ob1 = FlirCamera()
 
     # Test gain methods
-    assert ob1.gain == 0.0  # default
-    assert ob1.min_gain == 0.0
-    assert ob1.max_gain == 18.0
-    ob1.gain(10.0)  # set gain
-    assert ob1.gain == 10.0
+    print('Default')
+    print(ob1.gain, ob1.min_gain, ob1.max_gain)
+    print('With custom gain')
+    ob1.gain = 10.0
+    print(ob1.gain)
 
     # Test frame rate methods
-    assert ob1.framerate == 59.65  # default could be 59.64
-    ob1.framerate(40.0)
-    assert ob1.framerate == 40.0
+    print('Default')
+    print(ob1.framerate)  # ~59.65 always, no auto functions
+    print('With custom frame rate')
+    ob1.framerate = 40.0
+    print(ob1.framerate)
 
     # Test exposure methods
     # 100.0 and 15000.0 are min and max for AUTO-EXPOSURE, but the total limits are further apart
