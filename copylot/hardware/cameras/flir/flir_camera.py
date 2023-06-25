@@ -33,6 +33,13 @@ class FlirCamera(AbstractCamera):
     def cam(self):
         del self._cam
 
+    def setting(self):
+        """
+        Initializes camera to access settings
+        """
+        if not self.cam.IsInitialized():
+            self.cam.Init()
+
     def close(self):
         """
         Irreversibly close the system after imaging to avoid Spinnaker::Exception [-1004]
@@ -207,8 +214,6 @@ class FlirCamera(AbstractCamera):
 
         # run
         result &= self.run_single_camera()
-        # self.close()
-
         return result
 
     def multiple(self, n_images):
@@ -223,8 +228,6 @@ class FlirCamera(AbstractCamera):
 
         # run and close system
         result &= self.run_single_camera('Continuous', n_images)
-        # self.close()
-
         return result
 
     @property
@@ -232,6 +235,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum exposure in microseconds
         """
+        self.setting()
         return self.cam.ExposureTime.GetMin()
 
     @property
@@ -239,6 +243,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the maximum exposure in microseconds
         """
+        self.setting()
         return self.cam.ExposureTime.GetMax()
 
     @property
@@ -246,17 +251,19 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent exposure setting in microseconds
         """
+        self.setting()
         return self.cam.ExposureTime.GetValue()
 
     @exposure.setter
     def exposure(self, exp):
         """
-        Set exposure time of one camera (Default is 7280.0 ms)
+        Set exposure time of one camera (Default is 7280.0 ms). Turns AutoExposure Off
 
         Parameters
         ----------
         exp: exposure in microseconds. Type: int
         """
+        self.setting()
         if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
 
@@ -269,6 +276,15 @@ class FlirCamera(AbstractCamera):
         exp = min(self.max_exp, exp)
         exp = max(self.min_exp, exp)
         self.cam.ExposureTime.SetValue(exp)
+
+    def auto_exp(self):
+        """
+        Return an initialized camera to AutoExposure settings
+        TODO revise this
+        """
+        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
+        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
+        pass
 
     @property
     def min_gain(self):
@@ -292,13 +308,13 @@ class FlirCamera(AbstractCamera):
         return self.cam.Gain.GetValue()
 
     @gain.setter
-    def gain(self, gain):
+    def gain(self, g):
         """
         Set gain of one camera (default is 0.0)
 
         Parameters
         ----------
-        gain: gain in dB. Type: int
+        g: gain in dB. Type: int
         """
         if self.cam.GainAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic gain')
@@ -309,9 +325,9 @@ class FlirCamera(AbstractCamera):
             logger.error('Unable to set gain')
 
         # ensure gain is higher than min and lower than max
-        gain = min(self.max_gain, gain)
-        gain = max(self.min_gain, gain)
-        self.cam.Gain.SetValue(gain)
+        gain = min(self.max_gain, g)
+        gain = max(self.min_gain, g)
+        self.cam.Gain.SetValue(g)
 
     @property
     def framerate(self):
