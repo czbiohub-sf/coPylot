@@ -33,6 +33,9 @@ class FlirCamera(AbstractCamera):
     def cam(self):
         del self._cam
 
+    def list_available_cameras(self):
+        return self.cam_list
+
     def setting(self):
         """
         Initializes camera to access settings
@@ -280,6 +283,7 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
+        TODO revise this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
@@ -290,6 +294,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum gain in dB
         """
+        self.setting()
         return self.cam.Gain.GetMin()
 
     @property
@@ -297,6 +302,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the maximum gain in dB
         """
+        self.setting()
         return self.cam.Gain.GetMax()
 
     @property
@@ -304,6 +310,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent gain setting in dB
         """
+        self.setting()
         return self.cam.Gain.GetValue()
 
     @gain.setter
@@ -333,12 +340,14 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent frame rate setting in Hz
         """
+        self.setting()
         return self.cam.AcquisitionFrameRate.GetValue()
 
     @framerate.setter
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
+        # Might remove
 
         Parameters
         ----------
@@ -348,3 +357,27 @@ class FlirCamera(AbstractCamera):
         self.cam.AcquisitionFrameRateAuto = 'Off'
         self.cam.AcquisitionFrameRateAutoEnabled = True
         self.cam.AcquisitionFrame = rate
+
+    def image_size(self):
+        pass
+
+    def bit_depth(self):
+        pass
+
+    def binning(self):
+        pass
+
+    def min_sensor_size(self):
+        pass
+
+    def max_sensor_size(self):
+        pass
+
+    def trigger_type(self):
+        pass
+
+    def output_signals(self):
+        pass
+
+    def shutter_mode(self):
+        pass
