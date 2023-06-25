@@ -23,13 +23,10 @@ if __name__ == '__main__':
 
     # Test frame rate methods
     print('Default')
-    print(ob1.framerate)  # ~59.65 always, no auto functions
-    print('With custom frame rate')
-    ob1.framerate = 40.0
     print(ob1.framerate)
+    # set method might be removed
 
     # Test exposure methods
-    # 100.0 and 15000.0 are min and max for AUTO-EXPOSURE, but the total limits are further apart
     print('Default')
     print(ob1.exposure, ob1.min_exp, ob1.max_exp)
     print('With custom exposure')
