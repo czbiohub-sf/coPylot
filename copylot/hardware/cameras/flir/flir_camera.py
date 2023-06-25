@@ -283,7 +283,6 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
-        TODO revise this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
