@@ -11,6 +11,18 @@ class AbstractCamera(metaclass=ABCMeta):
     as needs rise.
 
     """
+    _device_id = None
+
+    @property
+    def device_id(self):
+        """Returns device_id (serial number) of the current camera"""
+        return self._device_id
+
+    @device_id.setter
+    @abstractmethod
+    def device_id(self, serial_number):
+        """Sets the device_id (serial number) of the current camera"""
+        raise NotImplementedError()
 
     @abstractmethod
     def snap(self):
