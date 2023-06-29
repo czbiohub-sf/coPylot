@@ -1,39 +1,36 @@
 from copylot.hardware.cameras.flir.flir_camera import FlirCamera
 
 if __name__ == '__main__':
+    test = FlirCamera()
 
-    ob0 = FlirCamera()
+    # open the system
+    test.open()
 
-    # Return 1 saved image
-    ob0.snap()
-    ob0.close()
+    # list of cameras
+    print(test.list_available_cameras())
 
-    # Return 3 saved images
-    ob0.multiple(3)
-    ob0.close()
+    # Return saved images
+    test.snap()
+    test.snap()
 
-    ob1 = FlirCamera()
+    # close system
+    test.close()
+
+    # open again
+    test.open()
 
     # Test gain methods
-    print('Default')
-    print(ob1.gain, ob1.min_gain, ob1.max_gain)
-    print('With custom gain')
-    ob1.gain = 10.0
-    print(ob1.gain)
-
-    # Test frame rate methods
-    print('Default')
-    print(ob1.framerate)
-    # set method might be removed
+    print('Default AutoGain', test.gain, test.gain_limits)
+    test.gain = 20.0
+    print('Custom gain', test.gain)
 
     # Test exposure methods
-    print('Default')
-    print(ob1.exposure, ob1.min_exp, ob1.max_exp)
-    print('With custom exposure')
-    ob1.exposure = 100.0
-    print(ob1.exposure)
-    ob1.auto_exp()
-    print('Back to AutoExposure')
-    print(ob1.exposure)
+    print('Default AutoExposure', test.exposure, test.exposure_limits)
+    test.exposure = 100.0
+    print('Custom exposure', test.exposure)
 
-    ob1.close()
+    # Test frame rate methods
+    print('Default frame rate', test.framerate)
+    # set method might be removed
+
+    test.close()

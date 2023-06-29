@@ -1,6 +1,7 @@
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot import logger
 import PySpin
+import os.path
 
 
 class FlirCameraException(Exception):
@@ -12,50 +13,66 @@ class FlirCamera(AbstractCamera):
     Flir Camera BFS-U3-63S4M-C adapter.
     """
 
-    def __init__(self, index=0):
-        self._system = PySpin.System.GetInstance()
-        self.cam_list = self.system.GetCameras()
-        self._cam = self.cam_list[index]
-
-    @property
-    def system(self):
-        return self._system
+    def __init__(self):
+        self.system = None
+        self.cam_list = None
+        self._cam = None
 
     @property
     def cam(self):
+        """
+        Return the CameraPtr of the current camera
+        """
         return self._cam
 
     @cam.setter
-    def cam(self, index):
-        self._cam = self.cam_list[index]
-
-    @cam.deleter
-    def cam(self):
-        del self._cam
-
-    def list_available_cameras(self):
-        return self.cam_list
-
-    def setting(self):
+    def cam(self, val):
         """
-        Initializes camera to access settings
+        Set the CameraPtr of the current camera
+        """
+        self._cam = val
+
+    def open(self, index=0):
+        """
+        Open the system before any method can be used. Set a pointer CameraPtr to one camera.
+
+        Parameters
+        ----------
+        index: index of camera assigned to CameraPtr. Type: int
+        """
+        if self.system is None:
+            self.system = PySpin.System.GetInstance()
+            self.cam_list = self.system.GetCameras()
+        self.cam = self.cam_list[index]
+
+    def initialize(self):
+        """
+        Initialize the current camera. Used for settings or to start imaging.
         """
         if not self.cam.IsInitialized():
             self.cam.Init()
 
     def close(self):
         """
-        Irreversibly close the system after imaging to avoid Spinnaker::Exception [-1004]
-
-        User should call close() *after* calling snap(), multiple() as many times as needed for the same
-        instance with custom settings. Further imaging requires creating a new instance.
+        Close the system and delete pointer to current camera after imaging to avoid Spinnaker::Exception [-1004]
+        Call open() to image again with this instance
         """
-        # clean up camera pointer
-        del self.cam
+        # Clean CameraPtr
+        self.cam = None
         # Clear camera list
         self.cam_list.Clear()
         # Release system
         self.system.ReleaseInstance()
+
+        # set back to default
+        self.system = None
+        self.cam_list = None
+
+    def list_available_cameras(self):
+        """
+        Return the list (type CameraList) of all the cameras in the system
+        """
+        return self.cam_list
 
     def save_image(self, n, serial_no, processor, wait_time):
         """
@@ -63,7 +80,6 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        self.cam:
         n: number of images to take in that period of camera initialization. Type: int
         serial_no: serial number of camera. Type: string
         processor: image processor for post-processing. Type: ImageProcessor
@@ -71,7 +87,6 @@ class FlirCamera(AbstractCamera):
         """
         #  Retrieve next received image.
         image_result = self.cam.GetNextImage(wait_time)
-        #  Ensure image completion
         if image_result.IsIncomplete():
             logger.warning(
                 'Image incomplete with image status %d ...'
@@ -89,8 +104,16 @@ class FlirCamera(AbstractCamera):
             # Create a unique filename
             if serial_no:
                 filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
+                while os.path.isfile(
+                    './' + filename
+                ):  # avoids overwriting if calling snap() multiple times
+                    n = n + 1
+                    filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
             else:  # if serial number is empty
                 filename = 'Acquisition-%d.jpg' % n
+                while os.path.isfile('./' + filename):
+                    n = n + 1
+                    filename = 'Acquisition-%d.jpg' % (n + 1)
             #  Save image
             image_converted.Save(filename)
             logger.info('Image saved at %s' % filename)
@@ -106,7 +129,6 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        self.cam:
         nodemap: device nodemap. Type: INodeMap type.
         nodemap_tldevice: transport layer device nodemap. Type: INodeMap.
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
@@ -175,7 +197,6 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        self.cam:
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         """
@@ -187,7 +208,7 @@ class FlirCamera(AbstractCamera):
             nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
 
             # Initialize camera
-            self.cam.Init()
+            self.initialize()
 
             # Retrieve GenICam nodemap
             nodemap = self.cam.GetNodeMap()
@@ -202,7 +223,7 @@ class FlirCamera(AbstractCamera):
                 return False
 
             # Deinitialize camera
-            self.cam.DeInit()
+            self.cam.DeInit()  # THIS might set back the settings
             return result
 
         except PySpin.SpinnakerException as ex:
@@ -234,27 +255,19 @@ class FlirCamera(AbstractCamera):
         return result
 
     @property
-    def min_exp(self):
+    def exposure_limits(self):
         """
-        Returns the minimum exposure in microseconds
+        Returns the minimum and maximum exposure in microseconds (type: float)
         """
-        self.setting()
-        return self.cam.ExposureTime.GetMin()
-
-    @property
-    def max_exp(self):
-        """
-        Returns the maximum exposure in microseconds
-        """
-        self.setting()
-        return self.cam.ExposureTime.GetMax()
+        self.initialize()
+        return self.cam.ExposureTime.GetMin(), self.cam.ExposureTime.GetMax()
 
     @property
     def exposure(self):
         """
-        Returns the most recent exposure setting in microseconds
+        Returns the most recent exposure setting in microseconds (type: float)
         """
-        self.setting()
+        self.initialize()
         return self.cam.ExposureTime.GetValue()
 
     @exposure.setter
@@ -264,9 +277,9 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        exp: exposure in microseconds. Type: int
+        exp: exposure in microseconds. Type: float
         """
-        self.setting()
+        self.initialize()
         if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
 
@@ -276,51 +289,44 @@ class FlirCamera(AbstractCamera):
             logger.error('Unable to set exposure time')
 
         # Ensure desired exposure time does not exceed the max or min
-        exp = min(self.max_exp, exp)
-        exp = max(self.min_exp, exp)
+        exp = min(self.exposure_limits[1], exp)
+        exp = max(self.exposure_limits[0], exp)
         self.cam.ExposureTime.SetValue(exp)
 
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
         """
-        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
-        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Once)
+        # TO BE REVISED self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
 
     @property
-    def min_gain(self):
+    def gain_limits(self):
         """
-        Returns the minimum gain in dB
+        Returns the minimum and maximum gain in dB, normalized to range [0,1] (type: float)
         """
-        self.setting()
-        return self.cam.Gain.GetMin()
-
-    @property
-    def max_gain(self):
-        """
-        Returns the maximum gain in dB
-        """
-        self.setting()
-        return self.cam.Gain.GetMax()
+        self.initialize()
+        return self.cam.Gain.GetMin() / 18.0, self.cam.Gain.GetMax() / 18.0
 
     @property
     def gain(self):
         """
-        Returns the most recent gain setting in dB
+        Returns the most recent gain setting in dB (type: float)
         """
-        self.setting()
-        return self.cam.Gain.GetValue()
+        self.initialize()
+        return self.cam.Gain.GetValue() / 18.0
 
     @gain.setter
     def gain(self, g):
         """
-        Set gain of one camera (default is 0.0)
+        Set gain of one camera (type: float)
 
         Parameters
         ----------
-        g: gain in dB. Type: int
+        g: gain in dB within range [0.0,1.0]. Type: float
         """
+        g = g * 18.0
+        self.initialize()
         if self.cam.GainAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic gain')
 
@@ -330,16 +336,16 @@ class FlirCamera(AbstractCamera):
             logger.error('Unable to set gain')
 
         # ensure gain is higher than min and lower than max
-        gain = min(self.max_gain, g)
-        gain = max(self.min_gain, g)
+        g = min(self.gain_limits[1], g)
+        g = max(self.gain_limits[0], g)
         self.cam.Gain.SetValue(g)
 
     @property
     def framerate(self):
         """
-        Returns the most recent frame rate setting in Hz
+        Returns the most recent frame rate setting in Hz (type: float)
         """
-        self.setting()
+        self.initialize()
         return self.cam.AcquisitionFrameRate.GetValue()
 
     @framerate.setter
@@ -350,33 +356,9 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        rate: frame rate in Hz. Type: int
+        rate: frame rate in Hz. Type: float
         """
         # Disable automatic frame rate
         self.cam.AcquisitionFrameRateAuto = 'Off'
         self.cam.AcquisitionFrameRateAutoEnabled = True
         self.cam.AcquisitionFrame = rate
-
-    def image_size(self):
-        pass
-
-    def bit_depth(self):
-        pass
-
-    def binning(self):
-        pass
-
-    def min_sensor_size(self):
-        pass
-
-    def max_sensor_size(self):
-        pass
-
-    def trigger_type(self):
-        pass
-
-    def output_signals(self):
-        pass
-
-    def shutter_mode(self):
-        pass
