@@ -6,6 +6,8 @@ if __name__ == '__main__':
     # open the system
     test.open()
 
+    # serial number
+    print(test.device_id)
     # list of cameras
     print(test.list_available_cameras())
 
@@ -21,7 +23,7 @@ if __name__ == '__main__':
 
     # Test gain methods
     print('Default AutoGain', test.gain, test.gain_limits)
-    test.gain = 20.0
+    test.gain = 0.8
     print('Custom gain', test.gain)
 
     # Test exposure methods

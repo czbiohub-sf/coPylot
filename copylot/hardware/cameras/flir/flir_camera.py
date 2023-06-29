@@ -17,6 +17,8 @@ class FlirCamera(AbstractCamera):
         self.system = None
         self.cam_list = None
         self._cam = None
+        self._device_id = None
+        self._nodemap_tldevice = None
 
     @property
     def cam(self):
@@ -32,6 +34,34 @@ class FlirCamera(AbstractCamera):
         """
         self._cam = val
 
+    @property
+    def nodemap_tldevice(self):
+        """
+        Return transport layer device nodemap
+        """
+        return self._nodemap_tldevice
+
+    @nodemap_tldevice.setter
+    def nodemap_tldevice(self, val):
+        """
+        Set the transport layer device
+        """
+        self._nodemap_tldevice = val
+
+    @property
+    def device_id(self):
+        """
+        Return the serial number of the current camera (type: String)
+        """
+        return self._device_id
+
+    @device_id.setter
+    def device_id(self, val):
+        """
+        Set the serial number of the current camera
+        """
+        self._device_id = val
+
     def open(self, index=0):
         """
         Open the system before any method can be used. Set a pointer CameraPtr to one camera.
@@ -44,6 +74,18 @@ class FlirCamera(AbstractCamera):
             self.system = PySpin.System.GetInstance()
             self.cam_list = self.system.GetCameras()
         self.cam = self.cam_list[index]
+        self.nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
+
+        # assign serial number
+        serial_no = ''
+        node_serial_no = PySpin.CStringPtr(
+            self.nodemap_tldevice.GetNode('DeviceSerialNumber')
+        )
+        if PySpin.IsReadable(node_serial_no):
+            serial_no = node_serial_no.GetValue()
+        else:
+            logger.error('Node serial number is not readable')
+        self._device_id = serial_no
 
     def initialize(self):
         """
@@ -67,6 +109,8 @@ class FlirCamera(AbstractCamera):
         # set back to default
         self.system = None
         self.cam_list = None
+        self.device_id = None
+        self.nodemap_tldevice = None
 
     def list_available_cameras(self):
         """
@@ -121,21 +165,20 @@ class FlirCamera(AbstractCamera):
             image_result.Release()
             return True
 
-    def acquire_images(
-        self, nodemap, nodemap_tldevice, mode='SingleFrame', n_images=1, wait_time=1000
-    ):
+    def acquire_images(self, mode='SingleFrame', n_images=1, wait_time=1000):
         """
         Acquire a number of images from one camera and save as .jpg files
 
         Parameters
         ----------
-        nodemap: device nodemap. Type: INodeMap type.
-        nodemap_tldevice: transport layer device nodemap. Type: INodeMap.
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
         """
         result = True
+
+        # Retrieve nodemap
+        nodemap = self.cam.GetNodeMap()
 
         # Cast node entries to CEnumerationPtr
         node_acmod = PySpin.CEnumerationPtr(nodemap.GetNode('AcquisitionMode'))
@@ -144,10 +187,7 @@ class FlirCamera(AbstractCamera):
             return False
 
         # Retrieve entry node from enumeration node with each mode
-        if n_images != 1:
-            node_acmod_con = node_acmod.GetEntryByName(mode)
-        else:
-            node_acmod_con = node_acmod.GetEntryByName(mode)
+        node_acmod_con = node_acmod.GetEntryByName(mode)
 
         if not PySpin.IsReadable(node_acmod_con):
             logger.error('Unable to set acquisition mode to ' + mode)
@@ -163,15 +203,6 @@ class FlirCamera(AbstractCamera):
         #  Start acquisition
         self.cam.BeginAcquisition()
 
-        #  Retrieve device serial number to avoid overwriting filename
-        serial_no = ''
-        node_serial_no = PySpin.CStringPtr(
-            nodemap_tldevice.GetNode('DeviceSerialNumber')
-        )
-        if PySpin.IsReadable(node_serial_no):
-            serial_no = node_serial_no.GetValue()
-            logger.info('Device serial number retrieved as %s...' % serial_no)
-
         # Create ImageProcessor instance for post-processing images
         processor = PySpin.ImageProcessor()
         # Set default image processor color processing method
@@ -179,9 +210,10 @@ class FlirCamera(AbstractCamera):
             PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR
         )
 
+        #  Save with device serial number to avoid overwriting filename
         for i in range(n_images):
             try:
-                result &= self.save_image(i, serial_no, processor, wait_time)
+                result &= self.save_image(i, self.device_id, processor, wait_time)
             except PySpin.SpinnakerException as ex:
                 logger.error('Error on image %i acquisition: %s' % (i, ex))
                 return False
@@ -204,20 +236,12 @@ class FlirCamera(AbstractCamera):
         try:
             result = True
 
-            # Retrieve TL device nodemap and print device information
-            nodemap_tldevice = self.cam.GetTLDeviceNodeMap()
-
             # Initialize camera
             self.initialize()
 
-            # Retrieve GenICam nodemap
-            nodemap = self.cam.GetNodeMap()
-
             # Call method to acquire images
             try:
-                result &= self.acquire_images(
-                    nodemap, nodemap_tldevice, mode, n_images=n_images
-                )
+                result &= self.acquire_images(mode, n_images=n_images)
             except PySpin.SpinnakerException as ex:
                 logger.error('Error beginning image acquisition: %s' % ex)
                 return False
