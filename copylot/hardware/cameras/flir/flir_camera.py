@@ -174,6 +174,7 @@ class FlirCamera(AbstractCamera):
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
+        TODO new buffer allocation
         """
         result = True
 
@@ -320,8 +321,9 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
+        TODO: complete this
         """
-        # TO BE REVISED self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
+        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
 
     @property
@@ -376,7 +378,7 @@ class FlirCamera(AbstractCamera):
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
-        # Might remove
+        TODO: complete this
 
         Parameters
         ----------
@@ -386,3 +388,75 @@ class FlirCamera(AbstractCamera):
         self.cam.AcquisitionFrameRateAuto = 'Off'
         self.cam.AcquisitionFrameRateAutoEnabled = True
         self.cam.AcquisitionFrame = rate
+
+    @property
+    def bitdepth(self):
+        pass
+
+    @bitdepth.setter
+    def bitdepth(self, bit):
+        pass
+
+    def image_nodes(self):
+        """
+        Get the image size nodes for the current camera
+        """
+        self.initialize()
+        nodemap = self.cam.GetNodeMap()
+        node_width = PySpin.CIntegerPtr(nodemap.GetNode('Width'))
+        node_height = PySpin.CIntegerPtr(nodemap.GetNode('Height'))
+        if not PySpin.IsReadable(node_width) and PySpin.IsWritable(node_width):
+            logger.error('Width node is not accessible')
+        if not PySpin.IsReadable(node_height) and PySpin.IsWritable(node_height):
+            logger.error('Height node is not accessible')
+        return node_width, node_height
+
+    @property
+    def image_size(self):
+        """
+        Return the (width, height) of the most recent image size setting in pixels (type: int)
+        """
+        node_width, node_height = self.image_nodes()
+        return node_width.GetValue(), node_height.GetValue()
+
+    @image_size.setter
+    def image_size(self, size):
+        """
+        Set the image size of the current camera
+
+        Parameters
+        ----------
+        size: tuple for image dimensions in pixels (width, height). Type: int
+        """
+        node_width, node_height = self.image_nodes()
+        node_width.SetValue(size[0])
+        node_height.SetValue(size[1])
+
+    @property
+    def image_size_limits(self):
+        """
+        Return the image size limits. Type: int
+        """
+        node_width, node_height = self.image_nodes()
+        return (
+            node_width.GetMin(),
+            node_width.GetMax(),
+            node_height.GetMin(),
+            node_height.GetMax(),
+        )
+
+    @property
+    def binning(self):
+        pass
+
+    @binning.setter
+    def binning(self, val):
+        pass
+
+    @property
+    def shutter_mode(self):
+        pass
+
+    @shutter_mode.setter
+    def shutter_mode(self, mode):
+        pass
