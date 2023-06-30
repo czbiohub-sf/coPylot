@@ -176,7 +176,6 @@ class KCube_PiezoInertia(AbstractStage):
             if value < self.min_travel_range:
                 value = self.min_travel_range
         self.device.MoveTo(self.channel, value, self.timeout)
-        time.sleep(1)
         logger.info(f'Stage< {self.device_name} > reached position: {value}')
 
     @property
