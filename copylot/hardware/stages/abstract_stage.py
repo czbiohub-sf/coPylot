@@ -51,7 +51,7 @@ class AbstractStage(metaclass=ABCMeta):
     @abstractmethod
     def move_absolute(self, value):
         "Move to an absolute position"
-        self.position = value
+        raise NotImplementedError()
 
     @abstractmethod
     def zero_position(self):

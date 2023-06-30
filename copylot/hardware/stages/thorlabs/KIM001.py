@@ -203,6 +203,9 @@ class KCube_PiezoInertia(AbstractStage):
         target_position = self.position + offset
         self.position = target_position
 
+    def move_absolute(self, value: np.int32):
+        self.position = value
+
     def home_device(self):
         return self.device.SetPositionAs(self.channel, 0)
 

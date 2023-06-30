@@ -173,6 +173,9 @@ class KCube_DCServo(AbstractStage):
         target_position = self.position + value
         self.position = target_position
 
+    def move_absolute(self, value):
+        self.position = value
+
     def home_device(self):
         return self.device.Home(60000)
 
