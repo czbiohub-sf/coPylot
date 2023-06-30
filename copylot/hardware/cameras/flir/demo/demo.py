@@ -21,6 +21,11 @@ if __name__ == '__main__':
     # open again
     test.open()
 
+    # Test binning - THERE ARE SOME SPECIFIC MULTIPLES
+    print('Default binsize', test.binning)
+    test.binning = (2, 2)
+    print('Custom binsize', test.binning)
+
     # Test gain methods
     print('Default AutoGain', test.gain, test.gain_limits)
     test.gain = 0.8

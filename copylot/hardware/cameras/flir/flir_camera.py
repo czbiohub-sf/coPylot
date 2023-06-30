@@ -174,7 +174,6 @@ class FlirCamera(AbstractCamera):
         mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
-        TODO new buffer allocation
         """
         result = True
 
@@ -313,15 +312,15 @@ class FlirCamera(AbstractCamera):
         if self.cam.ExposureTime.GetAccessMode() != PySpin.RW:
             logger.error('Unable to set exposure time')
 
-        # Ensure desired exposure time does not exceed the max or min
-        exp = min(self.exposure_limits[1], exp)
-        exp = max(self.exposure_limits[0], exp)
-        self.cam.ExposureTime.SetValue(exp)
+        # ensure exposure is within bounds
+        if self.exposure_limits[0] <= exp <= self.exposure_limits[1]:
+            self.cam.ExposureTime.SetValue(exp)
+        else:
+            logger.error('Input exposure is out of bounds. Cannot change settings')
 
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
-        TODO: complete this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
@@ -361,10 +360,11 @@ class FlirCamera(AbstractCamera):
         if self.cam.Gain.GetAccessMode() != PySpin.RW:
             logger.error('Unable to set gain')
 
-        # ensure gain is higher than min and lower than max
-        g = min(self.gain_limits[1], g)
-        g = max(self.gain_limits[0], g)
-        self.cam.Gain.SetValue(g)
+        # ensure gain is within bounds
+        if self.gain_limits[0] <= g <= self.gain_limits[1]:
+            self.cam.Gain.SetValue(g)
+        else:
+            logger.error('Input gain is out of bounds. Cannot change settings')
 
     @property
     def framerate(self):
@@ -378,7 +378,6 @@ class FlirCamera(AbstractCamera):
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
-        TODO: complete this
 
         Parameters
         ----------
@@ -388,14 +387,6 @@ class FlirCamera(AbstractCamera):
         self.cam.AcquisitionFrameRateAuto = 'Off'
         self.cam.AcquisitionFrameRateAutoEnabled = True
         self.cam.AcquisitionFrame = rate
-
-    @property
-    def bitdepth(self):
-        pass
-
-    @bitdepth.setter
-    def bitdepth(self, bit):
-        pass
 
     def image_nodes(self):
         """
@@ -429,8 +420,14 @@ class FlirCamera(AbstractCamera):
         size: tuple for image dimensions in pixels (width, height). Type: int
         """
         node_width, node_height = self.image_nodes()
-        node_width.SetValue(size[0])
-        node_height.SetValue(size[1])
+
+        # ensure input is within bounds
+        minw, maxw, minh, maxh = self.image_size_limits
+        if minw <= size[0] <= maxw and minh <= size[1] <= maxh:
+            node_width.SetValue(size[0])
+            node_height.SetValue(size[1])
+        else:
+            logger.error('Input image size is out of bounds. Cannot change settings.')
 
     @property
     def image_size_limits(self):
@@ -447,11 +444,28 @@ class FlirCamera(AbstractCamera):
 
     @property
     def binning(self):
-        pass
+        self.initialize()
+        return (
+            self.cam.BinningHorizontal.GetValue(),
+            self.cam.BinningVertical.GetValue(),
+        )
 
     @binning.setter
     def binning(self, val):
-        pass
+        """
+        Assumes (x,y) binning input
+        """
+        # CHECK FOR ACCESS ERRORS
+        xmin = self.cam.BinningHorizontal.GetMin()
+        xmax = self.cam.BinningHorizontal.GetMax()
+        ymin = self.cam.BinningVertical.GetMin()
+        ymax = self.cam.BinningVertical.GetMax()
+
+        if xmin <= val[0] <= xmax and ymin <= val[1] <= ymax:
+            self.cam.BinningHorizontal.SetValue(val[0])
+            self.cam.BinningVertical.SetValue(val[1])
+        else:
+            logger.error('Input binning is out of bounds. Cannot change settings.')
 
     @property
     def shutter_mode(self):
@@ -459,4 +473,12 @@ class FlirCamera(AbstractCamera):
 
     @shutter_mode.setter
     def shutter_mode(self, mode):
+        pass
+
+    @property
+    def bitdepth(self):
+        pass
+
+    @bitdepth.setter
+    def bitdepth(self, bit):
         pass
