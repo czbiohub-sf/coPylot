@@ -112,7 +112,6 @@ class KCube_PiezoInertia(AbstractStage):
                     self.serial_number
                 )
                 self.device.Connect(self.serial_number)
-                # self.device_name = self.device
                 time.sleep(0.25)
                 if self.polling:
                     # Start polling and enable channel
@@ -123,7 +122,9 @@ class KCube_PiezoInertia(AbstractStage):
                 time.sleep(0.25)  # Wait for device to enable
 
                 self.device_info()
-                self._is_initialized()
+                device_name = str(self.device_info.Name).strip()
+                self.device_name = f'{device_name}: {self.serial_number}'
+                self._is_initialized()         
                 self.load_configuration()
 
     def _is_initialized(self):
@@ -175,11 +176,11 @@ class KCube_PiezoInertia(AbstractStage):
             if not self.min_travel_range <= value <= self.max_travel_range:
                 raise RuntimeError('Position is outside of the stage travel range')
             
-        # convert input to int32
-        value = np.in32(value)
+        # convert input to int
+        value = int(value)
 
         self.device.MoveTo(self.channel, value, self.timeout)
-        logger.info(f'Stage< {self.device_name} > reached position: {value}')
+        logger.info(f'Stage {self.device_name} reached position: {value}')
 
     @property
     def step_rate(self):
