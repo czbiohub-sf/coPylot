@@ -45,8 +45,13 @@ class AbstractStage(metaclass=ABCMeta):
 
     @abstractmethod
     def move_relative(self, value):
-        "Move the relative distance from current position"
+        "Move a relative distance from current position"
         raise NotImplementedError()
+    
+    @abstractmethod
+    def move_absolute(self, value):
+        "Move to an absolute position"
+        self.position = value
 
     @abstractmethod
     def zero_position(self):
