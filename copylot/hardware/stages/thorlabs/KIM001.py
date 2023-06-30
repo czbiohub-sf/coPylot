@@ -81,8 +81,9 @@ class KCube_PiezoInertia(AbstractStage):
     def list_available_stages(self):
         DeviceManagerCLI.BuildDeviceList()
         dev_list = DeviceManagerCLI.GetDeviceList()
-        logger.info(f"Device List {dev_list}")
-        return DeviceManagerCLI.GetDeviceList()
+        available_stages = [dev_list.get_Item(i) for i in range(dev_list.get_Count())]
+        logger.info(f"Available stages: {available_stages}")
+        return available_stages
 
     def load_configuration(self):
         self.device_config = self.device.GetInertialMotorConfiguration(
