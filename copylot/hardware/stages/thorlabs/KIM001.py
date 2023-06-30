@@ -174,6 +174,9 @@ class KCube_PiezoInertia(AbstractStage):
         if all((self.min_travel_range, self.max_travel_range)):
             if not self.min_travel_range <= value <= self.max_travel_range:
                 raise RuntimeError('Position is outside of the stage travel range')
+            
+        # convert input to int32
+        value = np.in32(value)
 
         self.device.MoveTo(self.channel, value, self.timeout)
         logger.info(f'Stage< {self.device_name} > reached position: {value}')
