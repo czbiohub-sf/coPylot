@@ -4,7 +4,7 @@ Thorlabs KDC101 K-Cube for DC Motors wrapper
 The user must install Thorlabs Kinesis and reference the appropriate paths below
 
 For more details:
-https://github.com/Thorlabs/Motion_Control_Examples/blob/main/Python/KCube/KDC101/kdc101_pythonnet.py
+https://github.com/Thorlabs/Motion_Control_Examples/blob/main/Python/KCube/KIM101/kim101_pythonnet.py
 
 """
 import os
