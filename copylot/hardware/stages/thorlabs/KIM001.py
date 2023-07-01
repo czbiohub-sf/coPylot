@@ -167,10 +167,10 @@ class KCube_PiezoInertia(AbstractStage):
 
     @property
     def position(self):
-        return self.device.GetPosition(self.channel)
+        return int(self.device.GetPosition(self.channel))
 
     @position.setter
-    def position(self, value: np.int32):
+    def position(self, value: int):
         # Check if position is within the set travel range
         if all((self.min_travel_range, self.max_travel_range)):
             if not self.min_travel_range <= value <= self.max_travel_range:
@@ -203,6 +203,9 @@ class KCube_PiezoInertia(AbstractStage):
         self.update_configuration()
 
     def move_relative(self, offset):
+        # convert input to int
+        offset = int(offset)
+        
         target_position = self.position + offset
         self.position = target_position
 
