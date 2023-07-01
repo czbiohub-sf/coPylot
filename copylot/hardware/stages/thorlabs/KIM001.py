@@ -205,7 +205,11 @@ class KCube_PiezoInertia(AbstractStage):
     def move_relative(self, offset):
         # convert input to int
         offset = int(offset)
-        
+
+        # Stage errors out for 0 relative moves
+        if offset == 0:
+            return
+
         target_position = self.position + offset
         self.position = target_position
 
