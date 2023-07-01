@@ -179,6 +179,10 @@ class KCube_PiezoInertia(AbstractStage):
         # convert input to int
         value = int(value)
 
+        # Stage errors out for 0 relative moves
+        if self.position == value:
+            return
+
         self.device.MoveTo(self.channel, value, self.timeout)
         logger.info(f'Stage {self.device_name} reached position: {value}')
 
@@ -205,10 +209,6 @@ class KCube_PiezoInertia(AbstractStage):
     def move_relative(self, offset):
         # convert input to int
         offset = int(offset)
-
-        # Stage errors out for 0 relative moves
-        if offset == 0:
-            return
 
         target_position = self.position + offset
         self.position = target_position
