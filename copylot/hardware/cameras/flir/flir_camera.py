@@ -87,18 +87,27 @@ class FlirCamera(AbstractCamera):
             logger.error('Node serial number is not readable')
         self._device_id = serial_no
 
+        # initialize camera
+        self.initialize()
+
     def initialize(self):
         """
         Initialize the current camera. Used for settings or to start imaging.
         """
-        if not self.cam.IsInitialized():
-            self.cam.Init()
+        try:
+            if not self.cam.IsInitialized():
+                self.cam.Init()
+        except PySpin.SpinnakerException as ex:
+            logger.error('Error running camera initialization: %s' % ex)
 
     def close(self):
         """
         Close the system and delete pointer to current camera after imaging to avoid Spinnaker::Exception [-1004]
         Call open() to image again with this instance
         """
+        # Deinitialize camera
+        self.cam.DeInit()
+
         # Clean CameraPtr
         self.cam = None
         # Clear camera list
@@ -165,13 +174,13 @@ class FlirCamera(AbstractCamera):
             image_result.Release()
             return True
 
-    def acquire_images(self, mode='SingleFrame', n_images=1, wait_time=1000):
+    def acquire_images(self, mode, n_images, wait_time):
         """
         Acquire a number of images from one camera and save as .jpg files
 
         Parameters
         ----------
-        mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
+        mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
         """
@@ -223,59 +232,39 @@ class FlirCamera(AbstractCamera):
 
         return result
 
-    def run_single_camera(self, mode='SingleFrame', n_images=1):
-        """ "
-        (De)Initialize one camera (after) before acquisition
+    def run_single_camera(self, mode, n_images, wait_time):
+        """
+        Run camera for image acquisition
 
         Parameters
         ----------
-        mode: acquisition mode: 'Continuous' or 'SingleFrame' by default. Type: string.
+        wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
+        mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
         """
+        result = True
 
+        # Call method to acquire images
         try:
-            result = True
-
-            # Initialize camera
-            self.initialize()
-
-            # Call method to acquire images
-            try:
-                result &= self.acquire_images(mode, n_images=n_images)
-            except PySpin.SpinnakerException as ex:
-                logger.error('Error beginning image acquisition: %s' % ex)
-                return False
-
-            # Deinitialize camera
-            self.cam.DeInit()  # THIS might set back the settings
-            return result
-
+            result &= self.acquire_images(mode, n_images, wait_time)
         except PySpin.SpinnakerException as ex:
-            logger.error('Error running camera initialization: %s' % ex)
+            logger.error('Error beginning image acquisition: %s' % ex)
             return False
+        return result
 
-    def snap(self):
+    def snap(self, n_images=1, wait_time=1000):
         """
-        Take and save a single frame at a time for a single camera.
+        Take and save n_images at a time for a single camera.
+        Repeatedly calling snap() with begin and end acquisition repeatedly.
         """
         result = True
 
         # run
-        result &= self.run_single_camera()
-        return result
-
-    def multiple(self, n_images):
-        """
-        Take and save n_images frames for a single camera
-
-        Parameters
-        ----------
-        n_images: number of images to be taken >=1. Type: int
-        """
-        result = True
-
-        # run and close system
-        result &= self.run_single_camera('Continuous', n_images)
+        if n_images == 1:
+            mode = 'SingleFrame'
+        else:
+            mode = 'Continuous'
+        result &= self.run_single_camera(mode, n_images, wait_time)
         return result
 
     @property
@@ -283,7 +272,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum and maximum exposure in microseconds (type: float)
         """
-        self.initialize()
+
         return self.cam.ExposureTime.GetMin(), self.cam.ExposureTime.GetMax()
 
     @property
@@ -291,7 +280,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent exposure setting in microseconds (type: float)
         """
-        self.initialize()
+
         return self.cam.ExposureTime.GetValue()
 
     @exposure.setter
@@ -303,7 +292,7 @@ class FlirCamera(AbstractCamera):
         ----------
         exp: exposure in microseconds. Type: float
         """
-        self.initialize()
+
         if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
 
@@ -321,6 +310,7 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
+        TODO: complete this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
@@ -330,7 +320,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum and maximum gain in dB, normalized to range [0,1] (type: float)
         """
-        self.initialize()
+
         return self.cam.Gain.GetMin() / 18.0, self.cam.Gain.GetMax() / 18.0
 
     @property
@@ -338,7 +328,7 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent gain setting in dB (type: float)
         """
-        self.initialize()
+
         return self.cam.Gain.GetValue() / 18.0
 
     @gain.setter
@@ -351,7 +341,7 @@ class FlirCamera(AbstractCamera):
         g: gain in dB within range [0.0,1.0]. Type: float
         """
         g = g * 18.0
-        self.initialize()
+
         if self.cam.GainAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic gain')
 
@@ -371,13 +361,14 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent frame rate setting in Hz (type: float)
         """
-        self.initialize()
+
         return self.cam.AcquisitionFrameRate.GetValue()
 
     @framerate.setter
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
+        TODO: complete this
 
         Parameters
         ----------
@@ -388,11 +379,27 @@ class FlirCamera(AbstractCamera):
         self.cam.AcquisitionFrameRateAutoEnabled = True
         self.cam.AcquisitionFrame = rate
 
+    @property
+    def bitdepth(self):
+        """
+        Return the bit depth of the current camera
+        """
+        return self.cam.AdcBitDepth.GetValue()
+
+    @bitdepth.setter
+    def bitdepth(self, bit):
+        """
+        Set the bit depth of the current camera to 1, 1.5, or 2. Enter bit = 1,2, or 3, respectively.
+        """
+        if not PySpin.IsWritable(self.cam.AdcBitDepth()):
+            logger.error('Bit depth node is not writable. Try unplugging the camera.')
+        self.cam.AdcBitDepth.SetValue(bit)
+
     def image_nodes(self):
         """
         Get the image size nodes for the current camera
         """
-        self.initialize()
+
         nodemap = self.cam.GetNodeMap()
         node_width = PySpin.CIntegerPtr(nodemap.GetNode('Width'))
         node_height = PySpin.CIntegerPtr(nodemap.GetNode('Height'))
@@ -444,7 +451,7 @@ class FlirCamera(AbstractCamera):
 
     @property
     def binning(self):
-        self.initialize()
+
         return (
             self.cam.BinningHorizontal.GetValue(),
             self.cam.BinningVertical.GetValue(),
@@ -469,16 +476,27 @@ class FlirCamera(AbstractCamera):
 
     @property
     def shutter_mode(self):
-        pass
+        """
+        Return the shutter mode of the current camera. 1 = global, 2 = rolling. Type: int
+        """
+
+        return self.cam.SensorShutterMode.GetValue()
 
     @shutter_mode.setter
-    def shutter_mode(self, mode):
-        pass
+    def shutter_mode(self, mode='global'):
+        """
+        Set the shutter mode of the current camera.
+        Enter mode = 'global' or 'rolling'
+        """
 
-    @property
-    def bitdepth(self):
-        pass
-
-    @bitdepth.setter
-    def bitdepth(self, bit):
+        if mode == 'global':
+            if not self.cam.SensorShutterMode.GetValue() == 1:
+                self.cam.SensorShutterMode.SetValue(1)
+        elif mode == 'rolling':
+            if not self.cam.SensorShutterMode.GetValue() == 2:
+                self.cam.SensorShutterMode.SetValue(2)
+        else:
+            logger.error(
+                'Mode input: ', mode, ' is not valid. Enter global or rolling mode'
+            )
         pass
