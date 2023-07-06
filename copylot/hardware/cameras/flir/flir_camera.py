@@ -272,7 +272,6 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum and maximum exposure in microseconds (type: float)
         """
-
         return self.cam.ExposureTime.GetMin(), self.cam.ExposureTime.GetMax()
 
     @property
@@ -280,7 +279,6 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent exposure setting in microseconds (type: float)
         """
-
         return self.cam.ExposureTime.GetValue()
 
     @exposure.setter
@@ -292,7 +290,6 @@ class FlirCamera(AbstractCamera):
         ----------
         exp: exposure in microseconds. Type: float
         """
-
         if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
 
@@ -320,7 +317,6 @@ class FlirCamera(AbstractCamera):
         """
         Returns the minimum and maximum gain in dB, normalized to range [0,1] (type: float)
         """
-
         return self.cam.Gain.GetMin() / 18.0, self.cam.Gain.GetMax() / 18.0
 
     @property
@@ -328,7 +324,6 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent gain setting in dB (type: float)
         """
-
         return self.cam.Gain.GetValue() / 18.0
 
     @gain.setter
@@ -361,7 +356,6 @@ class FlirCamera(AbstractCamera):
         """
         Returns the most recent frame rate setting in Hz (type: float)
         """
-
         return self.cam.AcquisitionFrameRate.GetValue()
 
     @framerate.setter
@@ -399,7 +393,6 @@ class FlirCamera(AbstractCamera):
         """
         Get the image size nodes for the current camera
         """
-
         nodemap = self.cam.GetNodeMap()
         node_width = PySpin.CIntegerPtr(nodemap.GetNode('Width'))
         node_height = PySpin.CIntegerPtr(nodemap.GetNode('Height'))
@@ -451,7 +444,6 @@ class FlirCamera(AbstractCamera):
 
     @property
     def binning(self):
-
         return (
             self.cam.BinningHorizontal.GetValue(),
             self.cam.BinningVertical.GetValue(),
@@ -479,7 +471,6 @@ class FlirCamera(AbstractCamera):
         """
         Return the shutter mode of the current camera. 1 = global, 2 = rolling. Type: int
         """
-
         return self.cam.SensorShutterMode.GetValue()
 
     @shutter_mode.setter
@@ -488,7 +479,6 @@ class FlirCamera(AbstractCamera):
         Set the shutter mode of the current camera.
         Enter mode = 'global' or 'rolling'
         """
-
         if mode == 'global':
             if not self.cam.SensorShutterMode.GetValue() == 1:
                 self.cam.SensorShutterMode.SetValue(1)
