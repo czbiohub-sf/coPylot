@@ -341,7 +341,6 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
-        TODO: complete this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
@@ -396,7 +395,6 @@ class FlirCamera(AbstractCamera):
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
-        TODO: complete this
 
         Parameters
         ----------
