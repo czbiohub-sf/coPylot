@@ -1,6 +1,7 @@
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot import logger
 import PySpin
+import numpy as np
 import os.path
 
 
@@ -127,16 +128,44 @@ class FlirCamera(AbstractCamera):
         """
         return self.cam_list
 
-    def save_image(self, n, serial_no, processor, wait_time):
+    def save_image(self, array, n, serial_no):
         """
-        Save the nth image to take from a given, initialized camera
+        Return the nth image data array from an initialized camera.
 
         Parameters
         ----------
         n: number of images to take in that period of camera initialization. Type: int
         serial_no: serial number of camera. Type: string
+        """
+        pass
+        # get width height info
+        # get info of pixel format too?
+
+        # if serial_no:
+        #     filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
+        #     while os.path.isfile(
+        #             './' + filename
+        #     ):  # avoids overwriting if calling snap() multiple times
+        #         n = n + 1
+        #         filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
+        # else:  # if serial number is empty
+        #     filename = 'Acquisition-%d.jpg' % n
+        #     while os.path.isfile('./' + filename):
+        #         n = n + 1
+        #         filename = 'Acquisition-%d.jpg' % (n + 1)
+        # #  Save image
+        # image_converted.Save(filename)
+        # logger.info('Image saved at %s' % filename)
+
+    def return_image(self, processor, processing_type, wait_time):
+        """
+        Return the nth image data array from an initialized camera.
+
+        Parameters
+        ----------
         processor: image processor for post-processing. Type: ImageProcessor
         wait_time: wait time for camera to take one frame in microseconds.
+        processing_type:
         """
         #  Retrieve next received image.
         image_result = self.cam.GetNextImage(wait_time)
@@ -145,36 +174,27 @@ class FlirCamera(AbstractCamera):
                 'Image incomplete with image status %d ...'
                 % image_result.GetImageStatus()
             )
-            return False
+            return None
         else:
-            #  some image information
             width = image_result.GetWidth()
             height = image_result.GetHeight()
             logger.info(f"Image width, height: {width} {height}")
 
-            #  Convert image to mono 8. Converted has no need to be released. Optional color processing.
-            image_converted = processor.Convert(image_result, PySpin.PixelFormat_Mono8)
-            # Create a unique filename
-            if serial_no:
-                filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
-                while os.path.isfile(
-                    './' + filename
-                ):  # avoids overwriting if calling snap() multiple times
-                    n = n + 1
-                    filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
-            else:  # if serial number is empty
-                filename = 'Acquisition-%d.jpg' % n
-                while os.path.isfile('./' + filename):
-                    n = n + 1
-                    filename = 'Acquisition-%d.jpg' % (n + 1)
-            #  Save image
-            image_converted.Save(filename)
-            logger.info('Image saved at %s' % filename)
-            #  Release image
-            image_result.Release()
-            return True
+            # Optional color processing. Ex processing_type = PySpin.PixelFormat_Mono8
+            if processor is not None:
+                image_converted = processor.Convert(image_result, processing_type)
+            else:
+                image_converted = image_result
 
-    def acquire_images(self, mode, n_images, wait_time):
+            # get 1D numpy array with image data - NOTE that dimensions might vary after processing
+            image_array = image_converted.GetNDArray()
+
+            # release image from buffer
+            image_result.Release()
+
+            return image_array
+
+    def acquire_images(self, mode, n_images, wait_time, processing, processing_type):
         """
         Acquire a number of images from one camera and save as .jpg files
 
@@ -183,9 +203,9 @@ class FlirCamera(AbstractCamera):
         mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
+        processing:
+        processing_type:
         """
-        result = True
-
         # Retrieve nodemap
         nodemap = self.cam.GetNodeMap()
 
@@ -193,14 +213,14 @@ class FlirCamera(AbstractCamera):
         node_acmod = PySpin.CEnumerationPtr(nodemap.GetNode('AcquisitionMode'))
         if not PySpin.IsReadable(node_acmod) or not PySpin.IsWritable(node_acmod):
             logger.error('Unable to set acquisition mode')
-            return False
+            return None
 
         # Retrieve entry node from enumeration node with each mode
         node_acmod_con = node_acmod.GetEntryByName(mode)
 
         if not PySpin.IsReadable(node_acmod_con):
             logger.error('Unable to set acquisition mode to ' + mode)
-            return False
+            return None
 
         # Retrieve integer value from entry node
         acmod_con = node_acmod_con.GetValue()
@@ -212,27 +232,33 @@ class FlirCamera(AbstractCamera):
         #  Start acquisition
         self.cam.BeginAcquisition()
 
+        processor = None
         # Create ImageProcessor instance for post-processing images
-        processor = PySpin.ImageProcessor()
-        # Set default image processor color processing method
-        processor.SetColorProcessing(
-            PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR
-        )
+        if processing:
+            processor = PySpin.ImageProcessor()
+            # Set default image processor color processing method
+            processor.SetColorProcessing(
+                PySpin.SPINNAKER_COLOR_PROCESSING_ALGORITHM_HQ_LINEAR
+            )
 
-        #  Save with device serial number to avoid overwriting filename
+        # List to store multiple arrays
+        all_arrays = []
         for i in range(n_images):
             try:
-                result &= self.save_image(i, self.device_id, processor, wait_time)
+                a = self.return_image(processor, processing_type, wait_time)
+                all_arrays.append(a[None, :])
             except PySpin.SpinnakerException as ex:
                 logger.error('Error on image %i acquisition: %s' % (i, ex))
-                return False
+                return None
 
         #  End acquisition
         self.cam.EndAcquisition()
+        # stack all arrays
+        array = np.vstack(all_arrays)
 
-        return result
+        return array
 
-    def run_single_camera(self, mode, n_images, wait_time):
+    def run_single_camera(self, mode, n_images, wait_time, processing, processing_type):
         """
         Run camera for image acquisition
 
@@ -241,31 +267,39 @@ class FlirCamera(AbstractCamera):
         wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
         mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
+        processing:
+        processing_type:
         """
-        result = True
-
         # Call method to acquire images
         try:
-            result &= self.acquire_images(mode, n_images, wait_time)
+            result_array = self.acquire_images(
+                mode, n_images, wait_time, processing, processing_type
+            )
         except PySpin.SpinnakerException as ex:
             logger.error('Error beginning image acquisition: %s' % ex)
-            return False
-        return result
+            return None
+        return result_array
 
-    def snap(self, n_images=1, wait_time=1000):
+    def snap(self, n_images=1, wait_time=1000, processing=None, processing_type=None):
         """
-        Take and save n_images at a time for a single camera.
+        Take and return image arrays of n_images at a time for a single camera.
         Repeatedly calling snap() with begin and end acquisition repeatedly.
-        """
-        result = True
 
+        Parameters
+        ----------
+        wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
+        n_images: number of images to be taken >=1. Type: int
+        processing:
+        processing_type:
+        """
         # run
         if n_images == 1:
             mode = 'SingleFrame'
         else:
             mode = 'Continuous'
-        result &= self.run_single_camera(mode, n_images, wait_time)
-        return result
+        return self.run_single_camera(
+            mode, n_images, wait_time, processing, processing_type
+        )
 
     @property
     def exposure_limits(self):
