@@ -128,44 +128,48 @@ class FlirCamera(AbstractCamera):
         """
         return self.cam_list
 
-    def save_image(self, array, n, serial_no):
+    def save_image(self, all_arrays):
         """
-        Return the nth image data array from an initialized camera.
+        Save individual image arrays to disk as csv (text) files
 
         Parameters
         ----------
-        n: number of images to take in that period of camera initialization. Type: int
-        serial_no: serial number of camera. Type: string
+        all_arrays: image array list or single array returned by return_image()
         """
-        pass
-        # get width height info
-        # get info of pixel format too?
+        if type(all_arrays) is list:
+            n = len(all_arrays)
+        else:
+            n = 1
+        add = 0
+        # assign unique filename to each array
+        for i in range(n):
+            filename = 'Acquisition-%s-%d.csv' % (self.device_id, i + add)
+            if i == 0:
+                while os.path.isfile('./' + filename):
+                    add += 1
+                    filename = 'Acquisition-%s-%d.csv' % (self.device_id, i + add)
 
-        # if serial_no:
-        #     filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
-        #     while os.path.isfile(
-        #             './' + filename
-        #     ):  # avoids overwriting if calling snap() multiple times
-        #         n = n + 1
-        #         filename = 'Acquisition-%s-%d.jpg' % (serial_no, n)
-        # else:  # if serial number is empty
-        #     filename = 'Acquisition-%d.jpg' % n
-        #     while os.path.isfile('./' + filename):
-        #         n = n + 1
-        #         filename = 'Acquisition-%d.jpg' % (n + 1)
-        # #  Save image
-        # image_converted.Save(filename)
-        # logger.info('Image saved at %s' % filename)
+            # get from list of arrays if n > 1
+            if n > 1:
+                to_save = all_arrays[i]
+            else:
+                to_save = all_arrays
+
+            to_save = np.asarray(to_save)
+            # save to csv file
+            np.savetxt(filename, to_save)
+
+            logger.info('Saved at %s' % filename)
 
     def return_image(self, processor, processing_type, wait_time):
         """
-        Return the nth image data array from an initialized camera.
+        Retrieve an image from camera buffer and return the image numpy array
 
         Parameters
         ----------
         processor: image processor for post-processing. Type: ImageProcessor
-        wait_time: wait time for camera to take one frame in microseconds.
-        processing_type:
+        wait_time: wait time for camera to take one frame in microseconds. Type: int
+        processing_type: PySpin.PixelFormat color processor. Type: string
         """
         #  Retrieve next received image.
         image_result = self.cam.GetNextImage(wait_time)
@@ -186,7 +190,7 @@ class FlirCamera(AbstractCamera):
             else:
                 image_converted = image_result
 
-            # get 1D numpy array with image data - NOTE that dimensions might vary after processing
+            # get 2D numpy array with image data - dimensions might vary if processing
             image_array = image_converted.GetNDArray()
 
             # release image from buffer
@@ -196,15 +200,15 @@ class FlirCamera(AbstractCamera):
 
     def acquire_images(self, mode, n_images, wait_time, processing, processing_type):
         """
-        Acquire a number of images from one camera and save as .jpg files
+        Begin/end camera acquisition and grab n_images
 
         Parameters
         ----------
         mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
         wait_time: timeout to grab images in milliseconds. Type: int
-        processing:
-        processing_type:
+        processing: True for color processing and converting image array format. Type: bool
+        processing_type: PySpin.PixelFormat color processor. Type: string
         """
         # Retrieve nodemap
         nodemap = self.cam.GetNodeMap()
@@ -246,17 +250,18 @@ class FlirCamera(AbstractCamera):
         for i in range(n_images):
             try:
                 a = self.return_image(processor, processing_type, wait_time)
-                all_arrays.append(a[None, :])
+                all_arrays.append(a)
             except PySpin.SpinnakerException as ex:
                 logger.error('Error on image %i acquisition: %s' % (i, ex))
                 return None
 
         #  End acquisition
         self.cam.EndAcquisition()
-        # stack all arrays
-        array = np.vstack(all_arrays)
 
-        return array
+        if n_images == 1:
+            return all_arrays[0]  # return the array itself
+        else:
+            return all_arrays  # return a list of arrays
 
     def run_single_camera(self, mode, n_images, wait_time, processing, processing_type):
         """
@@ -267,8 +272,8 @@ class FlirCamera(AbstractCamera):
         wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
         mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
         n_images: number of images to be taken >=1. Type: int
-        processing:
-        processing_type:
+        processing: True for color processing and converting image array format. Type: bool
+        processing_type: PySpin.PixelFormat color processor. Type: string
         """
         # Call method to acquire images
         try:
@@ -289,8 +294,8 @@ class FlirCamera(AbstractCamera):
         ----------
         wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
         n_images: number of images to be taken >=1. Type: int
-        processing:
-        processing_type:
+        processing: True for color processing and converting image array format. Type: bool
+        processing_type: PySpin.PixelFormat color processor. Type: string
         """
         # run
         if n_images == 1:
@@ -341,6 +346,7 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
+        TODO: complete this
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
@@ -395,6 +401,7 @@ class FlirCamera(AbstractCamera):
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
+        TODO: complete this
 
         Parameters
         ----------

@@ -6,18 +6,24 @@ if __name__ == '__main__':
     # open the system
     test.open()
 
-    # Return 10 frames either taking multiple frames in a single acquisition period or iterating over snap().
-
-    # This is faster, and can control timeout for grabbing images from the camera buffer
-    test.snap(n_images=10, wait_time=1000)
-    # This is slower, but can introduce delays between beginning/ending camera acquisition
-    for i in range(0, 10):
-        test.snap()
-
     # serial number
     print(test.device_id)
     # list of cameras
     print(test.list_available_cameras())
+
+    # Return 10 frames and save output arrays as .csv files (this can be changed)
+
+    # Option 1: take multiple frames in a single acquisition
+    # Can control timeout (wait_time) for grabbing images from the camera buffer
+    snap1 = test.snap(n_images=5, wait_time=1000)
+    test.save_image(snap1)
+    # Option 2: iterate over snap()
+    # Saving in each iteration causes a delay between beginning/ending camera acquisition
+    # Could also collect the snap2 outputs and then save outside the loop to avoid delays
+    # (which is just what Option 1 does implicitly)
+    for i in range(0, 5):
+        snap2 = test.snap()
+        test.save_image(snap2)
 
     # open again
     test.open()
