@@ -32,6 +32,11 @@ class FlirCamera(AbstractCamera):
     def cam(self, val):
         """
         Set the CameraPtr of the current camera
+
+        Parameters
+        __________
+        val : CameraPtr
+            Camera pointer object connected to this instance.
         """
         self._cam = val
 
@@ -46,6 +51,11 @@ class FlirCamera(AbstractCamera):
     def nodemap_tldevice(self, val):
         """
         Set the transport layer device
+
+        Parameters
+        __________
+        val : CNodePtr
+            Nodemap pointer object that gives access to the nodes of the current camera.
         """
         self._nodemap_tldevice = val
 
@@ -60,6 +70,11 @@ class FlirCamera(AbstractCamera):
     def device_id(self, val):
         """
         Set the serial number of the current camera
+
+        Parameters
+        __________
+        val : string
+            Unique serial number of the current camera
         """
         self._device_id = val
 
@@ -69,7 +84,8 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        index: index of camera assigned to CameraPtr. Type: int
+        index : int
+            Index of camera assigned to CameraPtr.
         """
         if self.system is None:
             self.system = PySpin.System.GetInstance()
@@ -104,7 +120,8 @@ class FlirCamera(AbstractCamera):
     def close(self):
         """
         Close the system and delete pointer to current camera after imaging to avoid Spinnaker::Exception [-1004]
-        Call open() to image again with this instance
+        Call close() once finished using the current camera instance
+        Call open() to image again with the same instance
         """
         # Deinitialize camera
         self.cam.DeInit()
@@ -128,13 +145,16 @@ class FlirCamera(AbstractCamera):
         """
         return self.cam_list
 
+    # TODO: method to get actual images - from array to image object
+
     def save_image(self, all_arrays):
         """
         Save individual image arrays to disk as csv (text) files
 
         Parameters
         ----------
-        all_arrays: image array list or single array returned by return_image()
+        all_arrays: Numpy ndarray
+            Image array list or single array returned by return_image()
         """
         if type(all_arrays) is list:
             n = len(all_arrays)
@@ -167,9 +187,12 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        processor: image processor for post-processing. Type: ImageProcessor
-        wait_time: wait time for camera to take one frame in microseconds. Type: int
-        processing_type: PySpin.PixelFormat color processor. Type: string
+        processor : ImageProcessor
+            Image processor for post-processing.
+        wait_time : int
+            Wait time for camera to take one frame in microseconds.
+        processing_type : string
+            PySpin.PixelFormat color processor.
         """
         #  Retrieve next received image.
         image_result = self.cam.GetNextImage(wait_time)
@@ -204,11 +227,16 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
-        n_images: number of images to be taken >=1. Type: int
-        wait_time: timeout to grab images in milliseconds. Type: int
-        processing: True for color processing and converting image array format. Type: bool
-        processing_type: PySpin.PixelFormat color processor. Type: string
+        mode : string
+            Acquisition mode: 'Continuous' or 'SingleFrame'.
+        n_images :
+            Number of images to be taken >=1.
+        wait_time : int
+            Timeout to grab images in milliseconds.
+        processing : bool
+            True for color processing and converting image array format.
+        processing_type : string
+            PySpin.PixelFormat color processor.
         """
         # Retrieve nodemap
         nodemap = self.cam.GetNodeMap()
@@ -263,17 +291,31 @@ class FlirCamera(AbstractCamera):
         else:
             return all_arrays  # return a list of arrays
 
-    def run_single_camera(self, mode, n_images, wait_time, processing, processing_type):
+    def snap(
+        self,
+        n_images=1,
+        mode='Continuous',
+        wait_time=1000,
+        processing=False,
+        processing_type=None,
+    ):
         """
-        Run camera for image acquisition
+        Take and return image ndarray of n_images at a time for a single camera.
+        Returns ndarray of shape (width, height, 1)
+        Repeatedly calling snap() with begin and end acquisition repeatedly.
 
         Parameters
         ----------
-        wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
-        mode: acquisition mode: 'Continuous' or 'SingleFrame'. Type: string.
-        n_images: number of images to be taken >=1. Type: int
-        processing: True for color processing and converting image array format. Type: bool
-        processing_type: PySpin.PixelFormat color processor. Type: string
+        wait_time: int
+            Timeout to grab the next image in the camera buffer in milliseconds.
+        mode : string
+            Acquisition mode: 'Continuous' or 'SingleFrame'.
+        n_images : bool
+            Number of images to be taken >=1.
+        processing : bool
+            True for color processing and converting image array format.
+        processing_type : string
+            PySpin.PixelFormat color processor.
         """
         # Call method to acquire images
         try:
@@ -284,27 +326,6 @@ class FlirCamera(AbstractCamera):
             logger.error('Error beginning image acquisition: %s' % ex)
             return None
         return result_array
-
-    def snap(self, n_images=1, wait_time=1000, processing=None, processing_type=None):
-        """
-        Take and return image arrays of n_images at a time for a single camera.
-        Repeatedly calling snap() with begin and end acquisition repeatedly.
-
-        Parameters
-        ----------
-        wait_time: timeout to grab the next image in the camera buffer in milliseconds. Type: int
-        n_images: number of images to be taken >=1. Type: int
-        processing: True for color processing and converting image array format. Type: bool
-        processing_type: PySpin.PixelFormat color processor. Type: string
-        """
-        # run
-        if n_images == 1:
-            mode = 'SingleFrame'
-        else:
-            mode = 'Continuous'
-        return self.run_single_camera(
-            mode, n_images, wait_time, processing, processing_type
-        )
 
     @property
     def exposure_limits(self):
@@ -327,7 +348,8 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        exp: exposure in microseconds. Type: float
+        exp: float
+            Exposure in microseconds.
         """
         if self.cam.ExposureAuto.GetAccessMode() != PySpin.RW:
             logger.error('Unable to disable automatic exposure. Aborting...')
@@ -368,11 +390,12 @@ class FlirCamera(AbstractCamera):
     @gain.setter
     def gain(self, g):
         """
-        Set gain of one camera (type: float)
+        Set gain of one camera
 
         Parameters
         ----------
-        g: gain in dB within range [0.0,1.0]. Type: float
+        g: float
+            Gain in dB within range [0.0,1.0].
         """
         g = g * 18.0
 
@@ -405,7 +428,8 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        rate: frame rate in Hz. Type: float
+        rate: float
+            Frame rate in Hz.
         """
         # Disable automatic frame rate
         self.cam.AcquisitionFrameRateAuto = 'Off'
@@ -423,6 +447,11 @@ class FlirCamera(AbstractCamera):
     def bitdepth(self, bit):
         """
         Set the bit depth of the current camera to 1, 1.5, or 2. Enter bit = 1,2, or 3, respectively.
+
+        Parameters
+        ----------
+        bit : int
+            Bit depth to set according to the convention above.
         """
         if not PySpin.IsWritable(self.cam.AdcBitDepth()):
             logger.error('Bit depth node is not writable. Try unplugging the camera.')
@@ -456,7 +485,8 @@ class FlirCamera(AbstractCamera):
 
         Parameters
         ----------
-        size: tuple for image dimensions in pixels (width, height). Type: int
+        size : tuple
+            Tuple for image dimensions in pixels (width : int, height : int).
         """
         node_width, node_height = self.image_nodes()
 
@@ -471,7 +501,7 @@ class FlirCamera(AbstractCamera):
     @property
     def image_size_limits(self):
         """
-        Return the image size limits. Type: int
+        Return a tuple of the image size limits.
         """
         node_width, node_height = self.image_nodes()
         return (
@@ -491,9 +521,13 @@ class FlirCamera(AbstractCamera):
     @binning.setter
     def binning(self, val):
         """
-        Assumes (x,y) binning input
+        Set the binning of the current camera.
+
+        Parameters
+        ----------
+        val : tuple
+            Binning input (x : int, y : int)
         """
-        # CHECK FOR ACCESS ERRORS
         xmin = self.cam.BinningHorizontal.GetMin()
         xmax = self.cam.BinningHorizontal.GetMax()
         ymin = self.cam.BinningVertical.GetMin()
@@ -508,7 +542,7 @@ class FlirCamera(AbstractCamera):
     @property
     def shutter_mode(self):
         """
-        Return the shutter mode of the current camera. 1 = global, 2 = rolling. Type: int
+        Return the shutter mode (type: int) of the current camera. 1 = global, 2 = rolling.
         """
         return self.cam.SensorShutterMode.GetValue()
 
@@ -516,7 +550,11 @@ class FlirCamera(AbstractCamera):
     def shutter_mode(self, mode='global'):
         """
         Set the shutter mode of the current camera.
-        Enter mode = 'global' or 'rolling'
+
+        Parameters
+        ----------
+        mode : string
+            Shutter mode keyword ('global' or 'rolling')
         """
         if mode == 'global':
             if not self.cam.SensorShutterMode.GetValue() == 1:
