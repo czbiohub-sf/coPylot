@@ -1,66 +1,66 @@
 from copylot.hardware.cameras.flir.flir_camera import FlirCamera
 
 if __name__ == '__main__':
-    test = FlirCamera()
+    cam = FlirCamera()
 
     # open the system
-    test.open()
+    cam.open()
 
     # serial number
-    print(test.device_id)
+    print(cam.device_id)
     # list of cameras
-    print(test.list_available_cameras())
+    print(cam.list_available_cameras())
 
     # Return 10 frames and save output arrays as .csv files (this can be changed)
 
     # Option 1: take multiple frames in a single acquisition
     # Can control timeout (wait_time) for grabbing images from the camera buffer
-    snap1 = test.snap(n_images=5, wait_time=1000)
-    test.save_image(snap1)
+    snap1 = cam.snap(n_images=5, wait_time=1000)
+    cam.save_image(snap1)
     # Option 2: iterate over snap()
     # Saving in each iteration causes a delay between beginning/ending camera acquisition
     # Could also collect the snap2 outputs and then save outside the loop to avoid delays
     # (which is just what Option 1 does implicitly)
     for i in range(0, 5):
-        snap2 = test.snap()
-        test.save_image(snap2)
+        snap2 = cam.snap()
+        cam.save_image(snap2)
 
     # open again
-    test.open()
+    cam.open()
 
-    # Test bit depth
-    print('Default bit depth', test.bitdepth)
-    test.bitdepth = 3
-    print('Custom bitdepth', test.bitdepth)
+    # cam bit depth
+    print('Default bit depth', cam.bitdepth)
+    cam.bitdepth = 3
+    assert cam.bitdepth == 3
 
-    # Test shutter mode
-    print('Default shutter mode', test.shutter_mode)
-    test.shutter_mode = 'rolling'
-    print('Custom shutter mode', test.shutter_mode)
+    # cam shutter mode
+    print('Default shutter mode', cam.shutter_mode)
+    cam.shutter_mode = 'rolling'
+    assert cam.shutter_mode == 'rolling'
 
-    # Test binning - THERE ARE SOME SPECIFIC MULTIPLES
-    print('Default binsize', test.binning)
-    test.binning = (2, 2)
-    print('Custom binsize', test.binning)
+    # cam binning - THERE ARE SOME SPECIFIC MULTIPLES
+    print('Default binsize', cam.binning)
+    cam.binning = (2, 2)
+    assert cam.binning == (2, 2)
 
-    # Test image size
-    print('Default image size', test.image_size)  # set to the max by default
-    print('Limit image size', test.image_size_limits)
-    test.image_size = (1000, 2000)
-    print('Custom image size', test.image_size)
+    # cam image size
+    print('Default image size', cam.image_size)  # set to the max by default
+    print('Limit image size', cam.image_size_limits)
+    cam.image_size = (1000, 2000)
+    assert cam.image_size == (1000, 2000)
 
-    # Test gain methods
-    print('Default AutoGain', test.gain, test.gain_limits)
-    test.gain = 0.8
-    print('Custom gain', test.gain)
+    # cam gain methods
+    print('Default AutoGain', cam.gain, cam.gain_limits)
+    cam.gain = 0.8
+    assert cam.gain == 0.8
 
-    # Test exposure methods
-    print('Default AutoExposure', test.exposure, test.exposure_limits)
-    test.exposure = 100.0
-    print('Custom exposure', test.exposure)
+    # cam exposure methods
+    print('Default AutoExposure', cam.exposure, cam.exposure_limits)
+    cam.exposure = 100.0
+    assert cam.exposure == 100.0
 
-    # Test frame rate methods
-    print('Default frame rate', test.framerate)
+    # cam frame rate methods
+    print('Default frame rate', cam.framerate)
     # set method might be removed
 
-    test.close()
+    cam.close()
