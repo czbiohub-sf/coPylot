@@ -3,6 +3,7 @@ from copylot import logger
 import PySpin
 import numpy as np
 import os.path
+import cv2
 
 
 class FlirCameraException(Exception):
@@ -145,16 +146,16 @@ class FlirCamera(AbstractCamera):
         """
         return self.cam_list
 
-    # TODO: method to get actual images - from array to image object
-
-    def save_image(self, all_arrays):
+    def save_image(self, all_arrays, image_format='tiff'):
         """
         Save individual image arrays to disk as csv (text) files
 
         Parameters
         ----------
-        all_arrays: Numpy ndarray
-            Image array list or single array returned by return_image()
+        all_arrays : Numpy ndarray
+            Intensity array list or single array of the image(s) returned by return_image()
+        image_format : string
+            File format to save the image: 'csv', 'png', 'tiff', 'ome-zarr'
         """
         if type(all_arrays) is list:
             n = len(all_arrays)
@@ -163,11 +164,15 @@ class FlirCamera(AbstractCamera):
         add = 0
         # assign unique filename to each array
         for i in range(n):
-            filename = 'Acquisition-%s-%d.csv' % (self.device_id, i + add)
+            filename = 'Acquisition-%s-%d.%s' % (self.device_id, i + add, image_format)
             if i == 0:
                 while os.path.isfile('./' + filename):
                     add += 1
-                    filename = 'Acquisition-%s-%d.csv' % (self.device_id, i + add)
+                    filename = 'Acquisition-%s-%d.%s' % (
+                        self.device_id,
+                        i + add,
+                        image_format,
+                    )
 
             # get from list of arrays if n > 1
             if n > 1:
@@ -175,9 +180,11 @@ class FlirCamera(AbstractCamera):
             else:
                 to_save = all_arrays
 
-            to_save = np.asarray(to_save)
-            # save to csv file
-            np.savetxt(filename, to_save)
+            # save to disk
+            if image_format == 'ome-zarr':
+                pass  # iohub does not work with python 3.8
+            else:
+                cv2.imwrite(filename, to_save)
 
             logger.info('Saved at %s' % filename)
 
@@ -212,6 +219,8 @@ class FlirCamera(AbstractCamera):
                 image_converted = processor.Convert(image_result, processing_type)
             else:
                 image_converted = image_result
+
+                # could get the IMAGE OBJECT FROM HERE
 
             # get 2D numpy array with image data - dimensions might vary if processing
             image_array = image_converted.GetNDArray()
@@ -310,7 +319,7 @@ class FlirCamera(AbstractCamera):
             Timeout to grab the next image in the camera buffer in milliseconds.
         mode : string
             Acquisition mode: 'Continuous' or 'SingleFrame'.
-        n_images : bool
+        n_images : int
             Number of images to be taken >=1.
         processing : bool
             True for color processing and converting image array format.
@@ -368,7 +377,7 @@ class FlirCamera(AbstractCamera):
     def auto_exp(self):
         """
         Return an initialized camera to AutoExposure settings
-        TODO: complete this
+
         """
         # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
         pass
@@ -424,7 +433,7 @@ class FlirCamera(AbstractCamera):
     def framerate(self, rate):
         """
         Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
-        TODO: complete this
+
 
         Parameters
         ----------
