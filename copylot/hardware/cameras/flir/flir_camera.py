@@ -3,7 +3,7 @@ from copylot import logger
 import PySpin
 import numpy as np
 import os.path
-import cv2
+from skimage.io import imsave, imread
 
 
 class FlirCameraException(Exception):
@@ -148,14 +148,14 @@ class FlirCamera(AbstractCamera):
 
     def save_image(self, all_arrays, image_format='tiff'):
         """
-        Save individual image arrays to disk as csv (text) files
+        Save individual image arrays to disk in a specific format
 
         Parameters
         ----------
         all_arrays : Numpy ndarray
             Intensity array list or single array of the image(s) returned by return_image()
         image_format : string
-            File format to save the image: 'csv', 'png', 'tiff', 'ome-zarr'
+            File format to save the image: 'csv', 'png', 'tiff'
         """
         if type(all_arrays) is list:
             n = len(all_arrays)
@@ -180,11 +180,7 @@ class FlirCamera(AbstractCamera):
             else:
                 to_save = all_arrays
 
-            # save to disk
-            if image_format == 'ome-zarr':
-                pass  # iohub does not work with python 3.8
-            else:
-                cv2.imwrite(filename, to_save)
+            imsave(filename, to_save)
 
             logger.info('Saved at %s' % filename)
 
@@ -219,8 +215,6 @@ class FlirCamera(AbstractCamera):
                 image_converted = processor.Convert(image_result, processing_type)
             else:
                 image_converted = image_result
-
-                # could get the IMAGE OBJECT FROM HERE
 
             # get 2D numpy array with image data - dimensions might vary if processing
             image_array = image_converted.GetNDArray()
@@ -374,14 +368,6 @@ class FlirCamera(AbstractCamera):
         else:
             logger.error('Input exposure is out of bounds. Cannot change settings')
 
-    def auto_exp(self):
-        """
-        Return an initialized camera to AutoExposure settings
-
-        """
-        # self.cam.ExposureAuto.SetValue(PySpin.ExposureAuto_Continuous)
-        pass
-
     @property
     def gain_limits(self):
         """
@@ -428,22 +414,6 @@ class FlirCamera(AbstractCamera):
         Returns the most recent frame rate setting in Hz (type: float)
         """
         return self.cam.AcquisitionFrameRate.GetValue()
-
-    @framerate.setter
-    def framerate(self, rate):
-        """
-        Set frame rate of one camera (default in SpinView 59.65 Hz - the processed FPS differs)
-
-
-        Parameters
-        ----------
-        rate: float
-            Frame rate in Hz.
-        """
-        # Disable automatic frame rate
-        self.cam.AcquisitionFrameRateAuto = 'Off'
-        self.cam.AcquisitionFrameRateAutoEnabled = True
-        self.cam.AcquisitionFrame = rate
 
     @property
     def bitdepth(self):
