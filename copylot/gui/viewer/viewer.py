@@ -1,3 +1,4 @@
+import numpy as np
 from vispy import scene
 from vispy import app
 
@@ -28,8 +29,43 @@ class Viewer:
         self.view.camera.set_range()
         self.view.camera.zoom(1, (250, 200))
 
-    def run(self):
+        # set parameters for contrast
+        self.img_data = img_data
+        self._contrast_limits = None
+        self.update_freq = 0
+
+    @staticmethod
+    def run():
+        """
+        Start the vispy event loop
+        """
         app.run()
 
+    @staticmethod
+    def process():
+        """
+        Update the vispy event loop
+        """
+        app.process_events()
+
     def update(self, data):
+        """
+        Update the data layer of the image in the current viewbox
+
+        Parameters
+        ----------
+        data: ndarray of the new image to be shown
+        """
+        # input new image data
+        self.image.set_data(data)
+        # update the SceneCanvas object
+        self.canvas.update()
+
+    @property
+    def contrast_limits(self):
+        return self._contrast_limits
+
+    @contrast_limits.setter
+    def contrast_limits(self, factor):
+        # TODO: get tuple as argument, use vispy clim
         pass
