@@ -3,10 +3,12 @@ from serial import SerialException
 from copylot import logger
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
 import serial
+
 '''
 This code build based on a copy of the coherent.py file form Dr. Peter Kner at the University of Georgia.
 @author: Yang Liu
 '''
+
 
 # -*- coding: utf-8 -*-
 
@@ -14,6 +16,7 @@ This code build based on a copy of the coherent.py file form Dr. Peter Kner at t
 class CoherentLaser(AbstractLaser):
 
     def __init__(self, portS='COM4'):
+        ''' initialize the laser '''
         try:
             self.ser = serial.Serial(
                 port=portS,
@@ -40,66 +43,82 @@ class CoherentLaser(AbstractLaser):
         self.num_wavelength = int(self.RW('SYSTem:INFormation:PORTs?'))
         print('Number of Wavelength: %d' % self.num_wavelength)
         for i in range(self.num_wavelength):
-            print('Wavelength %d: ' % (i+1))
-            print(self.GetWaveLength(i+1))
+            print('Wavelength %d: ' % (i + 1))
+            print(self.GetWaveLength(i + 1))
             print('Operating Hours: ')
-            print(self.RW('SYSTem%d:HOURs?' % (i+1)))
+            print(self.RW('SYSTem%d:HOURs?' % (i + 1)))
             print('Maximum Power: ')
-            print(self.RW('SOURce%d:POWer:LIMit:HIGH?' % (i+1)))
+            print(self.RW('SOURce%d:POWer:LIMit:HIGH?' % (i + 1)))
             print(self.IsLaserOn())
-        self.maxpower = self.RW('SOURce1:POWer:LIMit:HIGH?')
+        self.max_power = self.RW('SOURce1:POWer:LIMit:HIGH?')
         time.sleep(0.1)
 
     def __del__(self):
+        ''''close the laser'''
         print('closing laser')
         self.SetLaserOff()
         self.ser.close()
 
-    def GetPower(self):
-        output = self.RW('SOURce:POWer:LEVel?')
+    def GetPower(self, channel=1):
+        '''get the power of the laser
+        :param channel: the channel of the laser
+        --
+        :return: the power of the laser
+        '''
+        cmd = 'SOURce%d:POWer:LEVel?' % channel
+        output = self.RW(cmd)
         self.power = float(output)
         return output
 
-    def SetPowerLevel(self, power):
+    def SetPowerLevel(self, power,channel=1)
         if power > self.maxpower:
             raise Exception('Max power is %f!' % self.maxpower)
         else:
-            self.RW('SOURce:POWer:LEVel:IMMediate:AMPLitude %3.3f' % power)
+            cmd = 'SOURce%d:POWer:LEVel:IMMediate:AMPLitude %3.3f' % (channel, power)
+            self.RW(cmd)
             return self.err
-    def GetWaveLength(self,channel=1):
+
+    def GetWaveLength(self, channel=1):
         cmd = 'SYSTem%d:INFormation:WAVelength?' % channel
         output = self.RW(cmd)
         return output
-    def IsLaserOn(self,channel=1):
-        state = self.RW('SOURce%d:AM:STATe?' % channel)
+
+    def IsLaserOn(self, channel=1):
+        cmd = 'SOURce%d:AM:STATe?' % channel
+        state = self.RW(cmd)
         if state == 'OFF':
             self.laser_on = False
         else:
             self.laser_on = True
         return state
 
-    def SetLaserOn(self):
-        if not self.laseron:
-            self.RW('SOUR:AM:STAT ON')
-            self.laseron = True
+    def SetLaserOn(self, channel=1):
+        cmd = 'SOURce%d:AM:STATe ON' % channel
+        if not self.laser_on:
+            self.RW(cmd)
+            self.laser_on = True
         return True
 
-    def SetLaserOff(self):
-        if self.laseron:
-            self.RW('SOUR:AM:STAT OFF')
-            self.laseron = False
+    def SetLaserOff(self, channel=1):
+        cmd = 'SOURce%d:AM:STATe OFF' % channel
+        if self.laser_on:
+            self.RW(cmd)
+            self.laser_on = False
         return True
 
-    def SetCWPowerMode(self):
-        self.RW('SOURce:AM:INTernal CWP')
+    def SetCWPowerMode(self, channel=1):
+        cmd = 'SOURce%d:AM:INTernal CWP' % channel
+        self.RW('cmd')
         return self.err
 
-    def SetDigitalModMode(self):
-        self.RW('SOURce:AM:EXTernal DIGital')
+    def SetDigitalModMode(self, channel=1):
+        cmd = 'SOURce%d:AM:INTernal DIGital' % channel
+        self.RW(cmd)
         return self.err
 
-    def QueryLaserMode(self):
-        out = self.RW('SOURce:AM:SOURce?')
+    def QueryLaserMode(self, channel=1):
+        cmd = 'SOURce%d:AM:SOURce?' % channel
+        out = self.RW(cmd)
         return out
 
     def GetLaserStatus(self):
@@ -111,6 +130,20 @@ class CoherentLaser(AbstractLaser):
         return (stat)
 
     def RW(self, command):
+        ''''
+        Read and write the command to the laser
+        all commands transmitted must terminate with a
+        carriage return “\r” or 0x0D to be processed.
+
+        Parameters
+        ----------
+        cmd : 'str'
+            coherent Stadus command
+        value : (str)
+        Returns
+        -------
+        a parsed response from the device to the given command
+        '''
         self.ser.flushInput()
         ser_command = '%s\r' % command
         self.ser.write(ser_command.encode())
@@ -122,7 +155,7 @@ class CoherentLaser(AbstractLaser):
         result = res[n1 + 1:n2]
         return result
 
-    def dec2bin(self,number: int):
+    def dec2bin(self, number: int):
         ans = ""
         if (number == 0):
             return 0
