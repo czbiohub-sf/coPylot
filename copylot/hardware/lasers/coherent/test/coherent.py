@@ -16,7 +16,15 @@ This code build based on a copy of the coherent.py file form Dr. Peter Kner at t
 class CoherentLaser(AbstractLaser):
 
     def __init__(self, portS='COM4'):
-        ''' initialize the laser '''
+        '''
+        Initialize the laser.
+
+        Parameters
+        ----------
+        portS
+        The port number of the laser. Default is COM4.
+
+        '''
         try:
             self.ser = serial.Serial(
                 port=portS,
@@ -260,8 +268,16 @@ class CoherentLaser(AbstractLaser):
         return out
 
     def GetLaserStatus(self):
-        ''' 'C8001088'
-            '80000000' '''
+        '''
+        Check the status of channels
+
+        orders in 640, 561, 488, 405 [4,3,2,1]
+
+
+        Returns
+        -------
+
+        '''
         stat = self.RW('SYSTem:INFormation:ENUMeration?')
         stat = self.dec2bin(stat)
         # fault = self.RW('SYST:FAUL?')
@@ -314,3 +330,5 @@ class CoherentLaser(AbstractLaser):
             number = number >> 1
         ans = ans[::-1]
         return ans
+
+
