@@ -54,23 +54,55 @@ class CoherentLaser(AbstractLaser):
         time.sleep(0.1)
 
     def __del__(self):
-        ''''close the laser'''
+        ''''
+        close the laser
+        '''
         print('closing laser')
         self.SetLaserOff()
         self.ser.close()
 
     def GetPower(self, channel=1):
-        '''get the power of the laser
-        :param channel: the channel of the laser
-        --
-        :return: the power of the laser
+        '''
+        Get the power of the laser
+
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+        Returns
+        -------
+        output : float
+        The power of the laser
         '''
         cmd = 'SOURce%d:POWer:LEVel?' % channel
         output = self.RW(cmd)
         self.power = float(output)
         return output
 
-    def SetPowerLevel(self, power,channel=1)
+    def SetPowerLevel(self, power,channel=1):
+        '''
+        Set the power of the laser
+        Parameters
+        ----------
+        power
+        The power of the laser
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+
+        Returns
+        -------
+
+        '''
         if power > self.maxpower:
             raise Exception('Max power is %f!' % self.maxpower)
         else:
@@ -79,11 +111,45 @@ class CoherentLaser(AbstractLaser):
             return self.err
 
     def GetWaveLength(self, channel=1):
+        '''
+        Get the wavelength of the laser
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+        Returns
+        -------
+        output : float
+        The wavelength of the laser
+        '''
         cmd = 'SYSTem%d:INFormation:WAVelength?' % channel
         output = self.RW(cmd)
         return output
 
     def IsLaserOn(self, channel=1):
+        '''
+        Check if the laser is on
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+
+        Returns
+        -------
+        state : string
+        The state of the laser
+
+        '''
         cmd = 'SOURce%d:AM:STATe?' % channel
         state = self.RW(cmd)
         if state == 'OFF':
@@ -93,6 +159,23 @@ class CoherentLaser(AbstractLaser):
         return state
 
     def SetLaserOn(self, channel=1):
+        '''
+        Turn on the laser
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+
+        Returns
+        -------
+        error code
+
+        '''
         cmd = 'SOURce%d:AM:STATe ON' % channel
         if not self.laser_on:
             self.RW(cmd)
@@ -100,6 +183,22 @@ class CoherentLaser(AbstractLaser):
         return True
 
     def SetLaserOff(self, channel=1):
+        '''
+        Turn off the laser
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+        Returns
+        -------
+        error code
+
+        '''
         cmd = 'SOURce%d:AM:STATe OFF' % channel
         if self.laser_on:
             self.RW(cmd)
@@ -107,16 +206,55 @@ class CoherentLaser(AbstractLaser):
         return True
 
     def SetCWPowerMode(self, channel=1):
+        '''
+         Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+        Returns
+        -------
+        error code
+        '''
         cmd = 'SOURce%d:AM:INTernal CWP' % channel
         self.RW('cmd')
         return self.err
 
     def SetDigitalModMode(self, channel=1):
+        '''
+
+        Parameters
+        ----------
+        channel
+        The channel of the laser
+        1: 405nm
+        2: 488nm
+        3: 561nm
+        4: 640nm
+
+        Returns
+        -------
+        error code
+        '''
         cmd = 'SOURce%d:AM:INTernal DIGital' % channel
         self.RW(cmd)
         return self.err
 
     def QueryLaserMode(self, channel=1):
+        '''
+
+        Parameters
+        ----------
+        channel
+
+        Returns
+        -------
+        'CWP' or 'DIGITAL' or 'ANALOG' or 'MIXED'
+        '''
         cmd = 'SOURce%d:AM:SOURce?' % channel
         out = self.RW(cmd)
         return out
@@ -127,7 +265,7 @@ class CoherentLaser(AbstractLaser):
         stat = self.RW('SYSTem:INFormation:ENUMeration?')
         stat = self.dec2bin(stat)
         # fault = self.RW('SYST:FAUL?')
-        return (stat)
+        return stat
 
     def RW(self, command):
         ''''
@@ -137,9 +275,9 @@ class CoherentLaser(AbstractLaser):
 
         Parameters
         ----------
-        cmd : 'str'
-            coherent Stadus command
-        value : (str)
+        command :
+            'str'
+            coherent command to be sent to the laser
         Returns
         -------
         a parsed response from the device to the given command
@@ -156,6 +294,18 @@ class CoherentLaser(AbstractLaser):
         return result
 
     def dec2bin(self, number: int):
+        '''
+        Convert decimal number to binary number
+        Parameters
+        ----------
+        number
+        The decimal number
+
+        Returns
+        -------
+        ans : string
+
+        '''
         ans = ""
         if (number == 0):
             return 0
