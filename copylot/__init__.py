@@ -5,13 +5,23 @@ except ImportError:
 
 import logging
 
-def enable_debug_logging(log_filepath = 'copylot_debug_log.txt'):
+
+def enable_debug_logging(log_filepath: str = 'copylot_debug_log.txt'):
+    """
+    Enable debug logging to a text file
+
+    Parameters
+    ----------
+    log_filepath : str
+        Path to log file, by default 'copylot_debug_log.txt'
+    """
     # create file handler which logs debug messages
     fh = logging.FileHandler(log_filepath)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
 
     logger.addHandler(fh)
+
 
 logger = logging.getLogger('copylot')
 logger.setLevel(logging.DEBUG)
