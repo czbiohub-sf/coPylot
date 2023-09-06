@@ -7,12 +7,13 @@ For more details regarding operation,
 refer to the manuals in https://www.vortranlaser.com/
 
 """
-from copylot import logger
-from copylot.hardware.lasers.abstract_laser import AbstractLaser
-import serial
-from serial.tools import list_ports
 import time
 from typing import Tuple
+
+import serial
+from copylot import logger
+from copylot.hardware.lasers.abstract_laser import AbstractLaser
+from serial.tools import list_ports
 
 
 class VortranLaser(AbstractLaser):
