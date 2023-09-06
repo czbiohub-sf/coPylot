@@ -12,6 +12,7 @@ from copylot.hardware.lasers.abstract_laser import AbstractLaser
 import serial
 from serial.tools import list_ports
 import time
+from typing import Tuple
 
 
 class VortranLaser(AbstractLaser):
@@ -417,6 +418,28 @@ class VortranLaser(AbstractLaser):
     def _echo_off(self):
         self._write_cmd('ECHO', 0)
         logger.debug('Echo Off')
+
+    def _extract_string(vortran_response):
+        """
+        Parse the vortran_response and return the response after '='
+        """
+        parts = vortran_response.split('=')
+        if len(parts) >= 2:
+            return parts[1]
+        else:
+            raise ValueError("Invalid input format. No response found")
+
+    @property
+    def status(self) -> Tuple:
+        """
+        Request the laser's status and return a tuple with the fault code and description
+
+        """
+        fault_code = self._write_cmd('?FC')
+        fault_code = self._extract_string(fault_code)
+        fault_description = self._write_cmd('?FD')
+        fault_description = self._extract_string(fault_description)
+        return (fault_code, fault_description)
 
     @staticmethod
     def get_lasers():
