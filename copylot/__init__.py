@@ -17,6 +17,8 @@ def enable_logging(
     ----------
     log_filepath : str
         Path to log file, by default 'copylot_debug_log.txt'
+    level : int
+        Logging level, by default logging.DEBUG
     """
     # create file handler which logs debug messages
     fh = logging.FileHandler(log_filepath)
