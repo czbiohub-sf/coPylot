@@ -14,6 +14,8 @@ import serial
 from copylot import logger
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
 from serial.tools import list_ports
+import time
+from typing import Tuple
 
 
 class VortranLaser(AbstractLaser):
