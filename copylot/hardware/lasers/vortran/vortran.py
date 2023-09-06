@@ -18,7 +18,7 @@ class VortranLaser(AbstractLaser):
     # TODO: this probably is better if it's a dictionary and make
     GLOBAL_CMD = ['ECHO', 'PROMPT']
     GLOBAL_QUERY = ['?BPT', '?H', '?IL', '?SFV', '?SPV']
-    LASER_CMD = ['C', 'DELAY', 'EPC', 'LC', 'LE', 'LP', 'PP', 'PUP']
+    LASER_CMD = ['C', 'DELAY', 'EPC', 'LC', 'LE', 'LP', 'PP', 'PUL']
     LASER_QUERY = [
         '?C',
         '?CC',
