@@ -39,6 +39,7 @@ def demo_toggle_emission():
     laser.laser_power = 2.0
     laser.toggle_emission = 1
     time.sleep(3)
+    assert laser.status == (0, "LASER EMISSION ACTIVE")
     laser.toggle_emission = 0
     laser.disconnect()
 
