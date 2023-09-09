@@ -259,7 +259,7 @@ class VortranLaser(AbstractLaser):
         return self._ctrl_mode
 
     @drive_control_mode.setter
-    def set_control_mode(self, mode):
+    def control_mode(self, mode):
         """
         Laser Drive Control Mode
         Sets Power or Current Control
@@ -279,7 +279,7 @@ class VortranLaser(AbstractLaser):
         return self._delay
 
     @emission_delay.setter
-    def set_emission_delay(self, mode):
+    def emission_delay(self, mode):
         """
         Toggle 5 Second Laser Emission Delay On and Off
         (1 = On, 0 = Off)
@@ -296,7 +296,7 @@ class VortranLaser(AbstractLaser):
         return self._ext_power_ctrl
 
     @external_power_control.setter
-    def set_external_power_control(self, control):
+    def external_power_control(self, control):
         """
         Enables External Power Control
         (1= External Control, 0 = Off)
@@ -384,7 +384,7 @@ class VortranLaser(AbstractLaser):
         return self._pulse_power
 
     @pulse_power.setter
-    def set_pulse_power(self, power):
+    def pulse_power(self, power):
         """
         Pulse Power configuration
         """
@@ -400,7 +400,7 @@ class VortranLaser(AbstractLaser):
         return self._pulse_mode
 
     @pulse_mode.setter
-    def set_pulse_mode(self, mode=0):
+    def pulse_mode(self, mode=0):
         """
         Toggle Pulse Mode On and Off (1=On)
         """
