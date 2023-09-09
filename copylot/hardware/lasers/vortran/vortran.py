@@ -136,7 +136,9 @@ class VortranLaser(AbstractLaser):
             # then we accept the connection *unless* the user specified a serial number,
             # in which case we first check that the laser matches it
             if self._in_serial_num is None or self._in_serial_num == self.serial_number:
-                logger.info(f"Connected {self.port}: Laser: {self.serial_number}")
+                logger.info(
+                    f"Connected to Vortran laser {self.serial_number} on serial port {self.port}"
+                )
                 laser_found = True
                 break
             else:
