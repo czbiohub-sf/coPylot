@@ -7,9 +7,6 @@ For more details regarding operation,
 refer to the manuals in https://www.vortranlaser.com/
 
 """
-import time
-from typing import Tuple
-
 import serial
 from copylot import logger
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
