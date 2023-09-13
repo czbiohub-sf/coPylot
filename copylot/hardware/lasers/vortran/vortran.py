@@ -78,7 +78,6 @@ class VortranLaser(AbstractLaser):
         self.part_number: int = None
         self.wavelength: int = None
         self.laser_shape: str = None
-        self.status = None
         self._in_serial_num = serial_number
 
         # Properties
@@ -92,6 +91,7 @@ class VortranLaser(AbstractLaser):
         self._pulse_mode = None
         self._max_power = None
         self._is_connected = False
+        self._status = None
 
         self.connect()
 
@@ -433,8 +433,8 @@ class VortranLaser(AbstractLaser):
         """
         fault_code = self._write_cmd('?FC')
         fault_description = self._write_cmd('?FD')
-        self.status = (int(fault_code[0]), str(fault_description[0]))
-        return self.status
+        self._status = (int(fault_code[0]), str(fault_description[0]))
+        return self._status
 
     @staticmethod
     def get_lasers():
