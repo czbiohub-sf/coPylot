@@ -35,7 +35,7 @@ def demo_toggle_emission():
     """
     laser_list = VortranLaser.get_lasers()
     laser = VortranLaser(port=laser_list[0][0])
-    laser.set_emission_delay = 0
+    laser.emission_delay = 0
     laser.laser_power = 2.0
     laser.toggle_emission = 1
     time.sleep(3)
