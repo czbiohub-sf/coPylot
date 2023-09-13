@@ -7,11 +7,12 @@ For more details regarding operation,
 refer to the manuals in https://www.vortranlaser.com/
 
 """
+import serial
 from copylot import logger
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
-import serial
 from serial.tools import list_ports
 import time
+from typing import Tuple
 
 
 class VortranLaser(AbstractLaser):
@@ -87,6 +88,7 @@ class VortranLaser(AbstractLaser):
         self._pulse_mode = None
         self._max_power = None
         self._is_connected = False
+        self._status = None
 
         self.connect()
 
@@ -419,6 +421,17 @@ class VortranLaser(AbstractLaser):
     def _echo_off(self):
         self._write_cmd('ECHO', 0)
         logger.debug('Echo Off')
+
+    @property
+    def status(self) -> Tuple:
+        """
+        Request the laser's status and return a tuple with the fault code and description
+
+        """
+        fault_code = self._write_cmd('?FC')
+        fault_description = self._write_cmd('?FD')
+        self._status = (int(fault_code[0]), str(fault_description[0]))
+        return self._status
 
     @staticmethod
     def get_lasers():
