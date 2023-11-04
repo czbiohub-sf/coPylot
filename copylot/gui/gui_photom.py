@@ -14,16 +14,15 @@ from qtpy.QtWidgets import (
 )
 
 from copylot.gui._qt.custom_widgets.dock_placeholder import DockPlaceholder
-from copylot import __version__, logger
-
+from copylot import __version__
+from copylot import logger
 
 class MainWindow(QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.threadpool = QThreadPool()
 
-        self.title = "Pisces Parameter Controller"
+        self.title = "Photom Controller"
         self.version = __version__
 
         self.desktop = QApplication.desktop()
@@ -39,23 +38,11 @@ class MainWindow(QMainWindow):
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setDockOptions(QMainWindow.AnimatedDocks | QMainWindow.AllowNestedDocks)
 
+        #TODO: keep only the necessary
         self.init_defaults = [
-            ["exposure", 0.001, 1, 0.02],
-            ["nb_timepoints", 1, 10000, 600],
-            ["scan_step", 0.01, 1, 0.1],
+            ["registration_points", 0.001, 1, 0.02],
             ["stage_scan_range", 0, 10000, 1000],
-            ["vertical_pixels", 0, 4000, 2048],
-            ["num_samples", 0, 100, 20],
-            ["offset_view1", 0, 3180, 1550],
-            ["offset_view2", 0, 3180, 1650],
-            ["view1_galvo1", -10, 10, 4.2],
-            ["view1_galvo2", -10, 10, -4.08],
-            ["view2_galvo1", -10, 10, -4.37],
-            ["view2_galvo2", -10, 10, 3.66],
-            ["stripe_reduction_range", 0, 10, 0.1],
-            ["stripe_reduction_offset", -10, 10, 0.58],
         ]
-
         try:
             with open(
                 os.path.join(str(Path.home()), ".coPylot", "coPylot_parameters.txt"),
@@ -71,16 +58,7 @@ class MainWindow(QMainWindow):
 
             self.defaults = {
                 "parameters": {},
-                "live": {"view": 0, "laser": 0},
                 "timelapse": {"view": 0, "laser": 0},
-                "water": {
-                    "interval": 3,
-                    "duration": 6,
-                    "freq": 25,
-                    "amp": 100,
-                    "serial port": 0,
-                    "baudrate": 0,
-                },
             }
             for i in range(0, len(self.init_defaults)):
                 obj = self.init_defaults[i]
@@ -97,12 +75,8 @@ class MainWindow(QMainWindow):
 
         # initialize docks
         self.dock_widgets_to_initialize = [
-            ("live_control", [self, self.threadpool]),
-            ("timelapse_control", [self, self.threadpool]),
-            ("water_dispenser", [self, self.threadpool]),
-            ("laser", [self]),
-            ("parameters", [self]),
             ("photom_control", [self, self.threadpool]),
+            ("laser", [self]),
         ]
 
         for name, args in self.dock_widgets_to_initialize:
@@ -135,7 +109,7 @@ class MainWindow(QMainWindow):
         self.setupMenubar()
 
     def closeEvent(self, event):
-        logger.info("closeEvent of mainwindow is called")
+        print("closeEvent of mainwindow is called")
         app = QApplication.instance()
         app.quit()
 

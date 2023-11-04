@@ -1,0 +1,12 @@
+name: photom
+hardware:
+  - lasers:
+      name: vortran
+      wavelength_0: 405
+      waelength_1: 1300
+  - mirrors:
+      name: optotune
+  - stage:
+      name: thorlabs
+      
+
