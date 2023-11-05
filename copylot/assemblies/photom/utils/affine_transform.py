@@ -3,8 +3,9 @@ from warnings import warn
 
 from skimage import transform
 import numpy as np
-from copylot.assemblies.photom.utils.io import yaml_to_model
+from copylot.assemblies.photom.utils.io import yaml_to_model, model_to_yaml
 from copylot.assemblies.photom.utils.settings import AffineTransformationSettings
+from pathlib import Path
 
 
 class AffineTransform:
@@ -13,11 +14,15 @@ class AffineTransform:
     """
 
     def __init__(self, config_file='affine_transform.yml'):
-        settings = yaml_to_model(config_file, AffineTransformationSettings)
+        self.config_file = config_file
+        settings = yaml_to_model(self.config_file, AffineTransformationSettings)
         self.T_affine = np.array(settings.affine_transform_yx)
 
     def reset_T_affine(self):
-        self.T_affine = None
+        """
+        Reset affine matrix to identity matrix.
+        """
+        self.T_affine = np.eye(3)
 
     def get_affine_matrix(self, origin, dest):
         """
@@ -78,29 +83,35 @@ class AffineTransform:
         chwise2 = list(map(lambda x: x[1], cord_list))
         return [chwise1, chwise2]
 
-    def save_matrix(self, matrix=None, filename='affinematrix.txt'):
-        raise NotImplementedError("save_matrix not implemented")
-        # Save affine matrix as txt.
-        # :param matrix: affine matrix
-        # :param filename: filename
-        # """
-        # if matrix is None:
-        #     if self.T_affine is None:
-        #         raise ValueError('matrix is not defined for affineTrans.')
-        #     else:
-        #         matrix = self.T_affine
-        # with open(filename, 'w') as file:
-        #     for row in matrix:
-        #         for element in row:
-        #             file.write('%s\n' % element)
+    def save_matrix(self, matrix: np.array = None, config_file: Path = None) -> None:
+        """
+        Save affine matrix to a YAML file.
 
-    # def load_matrix(self, filename='affinematrix.yml'):
-    #     """
-    #     Save affine matrix as txt.
-    #     :param filename: filename
-    #     """
-    #     try:
-    #
-    #         self.T_affine =
-    #     except Exception as e:
-    #         raise ValueError(f'Error in loading affine matrix: {e}')
+        Parameters
+        ----------
+        matrix :np.array, optional
+            3x3 affine_transformation, by default None will save the current matrix
+        config_file : str, optional
+            path to the YAML file, by default None will save to the current config_file.
+            This updates the config_file attribute.
+        Raises
+        ------
+        ValueError
+            matrix is not defined
+        """
+
+        if matrix is None:
+            if self.T_affine is None:
+                raise ValueError('provided matrix is not defined')
+            else:
+                matrix = self.T_affine
+        else:
+            assert matrix.shape == (3, 3)
+
+        if config_file is not None:
+            self.config_file = config_file
+
+        model = AffineTransformationSettings(
+            affine_transform_yx=np.array(matrix).tolist(),
+        )
+        model_to_yaml(model, self.config_file)
