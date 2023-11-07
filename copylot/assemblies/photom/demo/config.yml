@@ -1,0 +1,5 @@
+lasers:
+  - name: laser_1
+    power: 50
+  - name: laser_2
+    power: 30
