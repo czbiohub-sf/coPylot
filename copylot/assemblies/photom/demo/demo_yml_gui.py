@@ -56,6 +56,10 @@ class LaserWidget(QWidget):
         laser_power_slider.valueChanged.connect(self.update_power)
         layout.addWidget(laser_power_slider)
 
+        # Add a QLabel to display the power value
+        self.power_label = QLabel(f'Power: {self.laser.power}')
+        layout.addWidget(self.power_label)
+
         laser_toggle_button = QPushButton('Toggle')
         laser_toggle_button.clicked.connect(self.toggle_laser)
         layout.addWidget(laser_toggle_button)
@@ -67,6 +71,8 @@ class LaserWidget(QWidget):
 
     def update_power(self, value):
         self.laser.set_power(value)
+        # Update the QLabel with the new power value
+        self.power_label.setText(f'Power: {value}')
 
 
 class MirrorWidget(QWidget):
@@ -87,6 +93,10 @@ class MirrorWidget(QWidget):
         self.mirror_x_slider.valueChanged.connect(self.update_mirror_x)
         layout.addWidget(self.mirror_x_slider)
 
+        # Add a QLabel to display the mirror X value
+        self.mirror_x_label = QLabel(f'X: {self.mirror.x}')
+        layout.addWidget(self.mirror_x_label)
+
         mirror_y_label = QLabel('Mirror Y Position')
         layout.addWidget(mirror_y_label)
 
@@ -96,18 +106,27 @@ class MirrorWidget(QWidget):
         self.mirror_y_slider.valueChanged.connect(self.update_mirror_y)
         layout.addWidget(self.mirror_y_slider)
 
+        # Add a QLabel to display the mirror Y value
+        self.mirror_y_label = QLabel(f'Y: {self.mirror.y}')
+        layout.addWidget(self.mirror_y_label)
+
         self.setLayout(layout)
 
     def update_mirror_x(self, value):
         self.mirror.x = value
+        # Update the QLabel with the new X value
+        self.mirror_x_label.setText(f'X: {value}')
 
     def update_mirror_y(self, value):
         self.mirror.y = value
+        # Update the QLabel with the new Y value
+        self.mirror_y_label.setText(f'Y: {value}')
 
 
 class LaserApp(QMainWindow):
-    def __init__(self, lasers, mirror):
+    def __init__(self, lasers, mirror, photom_window):
         super().__init__()
+        self.photom_window = photom_window
         self.lasers = lasers
         self.mirror = mirror
         self.initUI()
@@ -116,6 +135,23 @@ class LaserApp(QMainWindow):
         self.setGeometry(100, 100, 400, 500)
         self.setWindowTitle('Laser and Mirror Control App')
 
+        # Adding slider to adjust transparency
+        transparency_group = QGroupBox('Photom Transparency')
+        transparency_layout = QVBoxLayout()
+        # Create a slider to adjust the transparency
+        self.transparency_slider = QSlider(Qt.Horizontal)
+        self.transparency_slider.setMinimum(0)
+        self.transparency_slider.setMaximum(100)
+        self.transparency_slider.setValue(100)  # Initial value is fully opaque
+        self.transparency_slider.valueChanged.connect(self.update_transparency)
+        transparency_layout.addWidget(self.transparency_slider)
+
+        # Add a QLabel to display the current percent transparency value
+        self.transparency_label = QLabel(f'Transparency: 100%')
+        transparency_layout.addWidget(self.transparency_label)
+
+        transparency_group.setLayout(transparency_layout)
+        # Adding a group box for the lasers
         laser_group = QGroupBox('Lasers')
         laser_layout = QVBoxLayout()
         for laser in self.lasers:
@@ -129,10 +165,13 @@ class LaserApp(QMainWindow):
         mirror_layout.addWidget(mirror_widget)
         mirror_group.setLayout(mirror_layout)
 
+        # Add the laser and mirror group boxes to the main layout
         main_layout = QVBoxLayout()
+        main_layout.addWidget(transparency_group)
         main_layout.addWidget(laser_group)
         main_layout.addWidget(mirror_group)
 
+        # Add a button to calibrate the mirror
         self.calibrate_button = QPushButton('Calibrate')
         self.calibrate_button.clicked.connect(self.calibrate)
         main_layout.addWidget(self.calibrate_button)
@@ -146,6 +185,12 @@ class LaserApp(QMainWindow):
     def calibrate(self):
         # Implement your calibration function here
         print("Calibration function executed")
+
+    def update_transparency(self, value):
+        transparency_percent = value
+        self.transparency_label.setText(f'Transparency: {transparency_percent}%')
+        opacity = 1.0 - (transparency_percent / 100.0)  # Calculate opacity (0.0 to 1.0)
+        self.photom_window.setWindowOpacity(opacity)  # Update photom_window opacity
 
 
 class LaserMarkerWindow(QMainWindow):
@@ -218,7 +263,25 @@ if __name__ == '__main__':
         mirror = Mirror(initial_x=0, initial_y=0)  # Initial mirror position
 
     app = QApplication(sys.argv)
-    ctrl_window = LaserApp(lasers, mirror)
+
+    # Define the positions and sizes for the windows
+    screen_width = app.desktop().screenGeometry().width()
+    screen_height = app.desktop().screenGeometry().height()
+
+    ctrl_window_width = screen_width // 3  # Adjust the width as needed
+    ctrl_window_height = screen_height // 3  # Use the full screen height
+
+    # Making the photom_window a square
+    photom_window_width = screen_width // 3  # Adjust the width as needed
+    photom_window_height = screen_width // 3  # Adjust the width as needed
+
     photom_window = LaserMarkerWindow()
-    # ctrl_window.show()
+    photom_window.setGeometry(
+        ctrl_window_width, 0, photom_window_width, photom_window_height
+    )
+
+    # Set the positions of the windows
+    ctrl_window = LaserApp(lasers, mirror, photom_window)
+    ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
+
     sys.exit(app.exec_())
