@@ -32,9 +32,9 @@ class Laser:
 
 
 class Mirror:
-    def __init__(self, initial_x=0, initial_y=0):
-        self.x = initial_x
-        self.y = initial_y
+    def __init__(self, x_position=0, y_position=0):
+        self.x = x_position
+        self.y = y_position
 
 
 class LaserWidget(QWidget):
@@ -149,8 +149,8 @@ class LaserApp(QMainWindow):
         # Add a QLabel to display the current percent transparency value
         self.transparency_label = QLabel(f'Transparency: 100%')
         transparency_layout.addWidget(self.transparency_label)
-
         transparency_group.setLayout(transparency_layout)
+
         # Adding a group box for the lasers
         laser_group = QGroupBox('Lasers')
         laser_layout = QVBoxLayout()
@@ -159,10 +159,12 @@ class LaserApp(QMainWindow):
             laser_layout.addWidget(laser_widget)
         laser_group.setLayout(laser_layout)
 
+        # Adding a group box for the mirror
         mirror_group = QGroupBox('Mirror')
         mirror_layout = QVBoxLayout()
-        mirror_widget = MirrorWidget(self.mirror)
-        mirror_layout.addWidget(mirror_widget)
+        for mirror in self.mirror:
+            mirror_widget = MirrorWidget(mirror)
+            mirror_layout.addWidget(mirror_widget)
         mirror_group.setLayout(mirror_layout)
 
         # Add the laser and mirror group boxes to the main layout
@@ -249,7 +251,7 @@ class LaserMarkerWindow(QMainWindow):
     def mouseReleaseEvent(self, event):
         print('Mouse release coords: ( %f : %f )' % (self.mouseX, self.mouseY))
 
-
+class Laser
 if __name__ == '__main__':
     import os
 
@@ -260,7 +262,13 @@ if __name__ == '__main__':
     with open(config_path, 'r') as config_file:
         config = yaml.load(config_file, Loader=yaml.FullLoader)
         lasers = [Laser(**laser_data) for laser_data in config['lasers']]
-        mirror = Mirror(initial_x=0, initial_y=0)  # Initial mirror position
+        mirror = [
+            Mirror(
+                x_position=mirror_data['x_position'],
+                y_position=mirror_data['y_position'],
+            )
+            for mirror_data in config['mirrors']
+        ]  # Initial mirror position
 
     app = QApplication(sys.argv)
 
