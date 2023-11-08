@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
 )
 from PyQt5.QtGui import QColor, QPen
+from copylot.assemblies.photom.utils.affine_transform import AffineTransform
+import numpy as np
 
 DEMO_MODE = True
 
@@ -128,11 +130,17 @@ class MirrorWidget(QWidget):
 
 
 class LaserApp(QMainWindow):
-    def __init__(self, lasers, mirror, photom_window):
+    def __init__(
+        self, lasers, mirror, photom_window, affine_trans_obj, demo_window=None
+    ):
         super().__init__()
         self.photom_window = photom_window
         self.lasers = lasers
         self.mirror = mirror
+        self.affine_trans_obj = affine_trans_obj
+        if DEMO_MODE:
+            self.demo_window = demo_window
+
         self.initUI()
 
     def initUI(self):
@@ -200,17 +208,36 @@ class LaserApp(QMainWindow):
         # Hide the 'X' marker in photom_window
         # self.photom_window.marker.hide()
         self.display_rectangle()
+        self.source_pts = self.photom_window.get_coordinates()
         # Show the "Done Calibration" button
         self.done_calibration_button.show()
 
     def done_calibration(self):
         # Perform any necessary actions after calibration is done
-        print("Calibration done")
         self.photom_window.switch_to_shooting_scene()
         self.photom_window.marker.show()
+        self.target_pts = self.photom_window.get_coordinates()
+        origin = np.array(
+            [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
+        )
+        dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
+        T_affine = self.affine_trans_obj.get_affine_matrix(dest, origin)
+        self.affine_trans_obj.save_matrix()
+        print(T_affine)
 
         # Hide the "Done Calibration" button
         self.done_calibration_button.hide()
+
+        if DEMO_MODE:
+            print(origin)
+            print(dest)
+            transformed_coords = self.affine_trans_obj.apply_affine(dest)
+            print(transformed_coords)
+            coords_list = self.affine_trans_obj.trans_pointwise(transformed_coords)
+            print(coords_list)
+            self.demo_window.updateVertices(coords_list)
+
+        print("Calibration done")
 
     def update_transparency(self, value):
         transparency_percent = value
@@ -240,7 +267,6 @@ class LaserApp(QMainWindow):
             (window_size[1] * rectangle_scaling),
         )
         rectangle_coords = self.calculate_rectangle_corners(rectangle_size)
-        print(rectangle_coords)
         self.photom_window.updateVertices(rectangle_coords)
         self.photom_window.switch_to_calibration_scene()
 
@@ -323,7 +349,7 @@ class LaserMarkerWindow(QMainWindow):
     def switch_to_calibration_scene(self):
         self.stacked_widget.setCurrentWidget(self.calibration_view)
 
-    def getCoordinates(self):
+    def get_coordinates(self):
         return [vertex.pos() for vertex in self.vertices]
 
     def updateVertices(self, new_coordinates):
@@ -387,16 +413,19 @@ if __name__ == '__main__':
     )
     photom_window = LaserMarkerWindow(window_size=photom_window_size)
 
-    # Set the positions of the windows
-    ctrl_window = LaserApp(lasers, mirror, photom_window)
-    ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
+    # TODO: expose this path to user?
+    affine_trans_obj = AffineTransform(config_file='./affine_transform.yml')
 
     if DEMO_MODE:
         camera_window = LaserMarkerWindow(
             name='Mock laser dots', window_size=photom_window_size
+        )  # Set the positions of the windows
+        ctrl_window = LaserApp(
+            lasers, mirror, photom_window, affine_trans_obj, camera_window
         )
+        ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
         camera_window.switch_to_calibration_scene()
-        rectangle_scaling = 0.5
+        rectangle_scaling = 0.2
         window_size = (camera_window.width(), camera_window.height())
         rectangle_size = (
             (window_size[0] * rectangle_scaling),
@@ -406,5 +435,14 @@ if __name__ == '__main__':
         # translate each coordinate by the offset
         rectangle_coords = [(x + 30, y) for x, y in rectangle_coords]
         camera_window.updateVertices(rectangle_coords)
+    else:
+        # Set the positions of the windows
+        ctrl_window = LaserApp(
+            lasers,
+            mirror,
+            photom_window,
+            affine_trans_obj,
+        )
+        ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
 
     sys.exit(app.exec_())
