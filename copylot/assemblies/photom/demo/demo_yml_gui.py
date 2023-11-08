@@ -19,6 +19,8 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QColor, QPen
 
+DEMO_MODE = True
+
 
 class Laser:
     def __init__(self, name, power=0):
@@ -244,9 +246,10 @@ class LaserApp(QMainWindow):
 
 
 class LaserMarkerWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, name='Laser Marker', window_size=(100, 100, 100, 100)):
         super().__init__()
-        self.windowGeo = (300, 300, 1000, 1000)
+        self.window_name = name
+        self.windowGeo = window_size
         self.setMouseTracking(True)
         self.mouseX = None
         self.mouseY = None
@@ -272,11 +275,13 @@ class LaserMarkerWindow(QMainWindow):
             self.windowGeo[2],
             self.windowGeo[3],
         )
-        self.setWindowTitle('Mouse Tracker')
-        # self.setFixedSize(
-        #     self.windowGeo[2],
-        #     self.windowGeo[3],
-        # )
+        self.setWindowTitle(self.window_name)
+
+        # Fix the size of the window
+        self.setFixedSize(
+            self.windowGeo[2],
+            self.windowGeo[3],
+        )
         self.switch_to_shooting_scene()
         self.show()
 
@@ -374,13 +379,32 @@ if __name__ == '__main__':
     photom_window_width = screen_width // 3  # Adjust the width as needed
     photom_window_height = screen_width // 3  # Adjust the width as needed
 
-    photom_window = LaserMarkerWindow()
-    photom_window.setGeometry(
-        ctrl_window_width, 0, photom_window_width, photom_window_height
+    photom_window_size = (
+        ctrl_window_width,
+        0,
+        photom_window_width,
+        photom_window_height,
     )
+    photom_window = LaserMarkerWindow(window_size=photom_window_size)
 
     # Set the positions of the windows
     ctrl_window = LaserApp(lasers, mirror, photom_window)
     ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
+
+    if DEMO_MODE:
+        camera_window = LaserMarkerWindow(
+            name='Mock laser dots', window_size=photom_window_size
+        )
+        camera_window.switch_to_calibration_scene()
+        rectangle_scaling = 0.5
+        window_size = (camera_window.width(), camera_window.height())
+        rectangle_size = (
+            (window_size[0] * rectangle_scaling),
+            (window_size[1] * rectangle_scaling),
+        )
+        rectangle_coords = ctrl_window.calculate_rectangle_corners(rectangle_size)
+        # translate each coordinate by the offset
+        rectangle_coords = [(x + 30, y) for x, y in rectangle_coords]
+        camera_window.updateVertices(rectangle_coords)
 
     sys.exit(app.exec_())
