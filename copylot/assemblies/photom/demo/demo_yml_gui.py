@@ -14,6 +14,8 @@ from PyQt5.QtWidgets import (
     QGraphicsScene,
     QGraphicsSimpleTextItem,
     QGraphicsItem,
+    QGraphicsEllipseItem,
+    QStackedWidget,
 )
 from PyQt5.QtGui import QColor, QPen
 
@@ -178,6 +180,12 @@ class LaserApp(QMainWindow):
         self.calibrate_button.clicked.connect(self.calibrate)
         main_layout.addWidget(self.calibrate_button)
 
+        # Add a "Done Calibration" button (initially hidden)
+        self.done_calibration_button = QPushButton('Done Calibration')
+        self.done_calibration_button.clicked.connect(self.done_calibration)
+        self.done_calibration_button.hide()
+        main_layout.addWidget(self.done_calibration_button)
+
         main_widget = QWidget(self)
         main_widget.setLayout(main_layout)
 
@@ -187,12 +195,52 @@ class LaserApp(QMainWindow):
     def calibrate(self):
         # Implement your calibration function here
         print("Calibration function executed")
+        # Hide the 'X' marker in photom_window
+        # self.photom_window.marker.hide()
+        self.display_rectangle()
+        # Show the "Done Calibration" button
+        self.done_calibration_button.show()
+
+    def done_calibration(self):
+        # Perform any necessary actions after calibration is done
+        print("Calibration done")
+        self.photom_window.switch_to_shooting_scene()
+        self.photom_window.marker.show()
+
+        # Hide the "Done Calibration" button
+        self.done_calibration_button.hide()
 
     def update_transparency(self, value):
         transparency_percent = value
         self.transparency_label.setText(f'Transparency: {transparency_percent}%')
         opacity = 1.0 - (transparency_percent / 100.0)  # Calculate opacity (0.0 to 1.0)
         self.photom_window.setWindowOpacity(opacity)  # Update photom_window opacity
+
+    def calculate_rectangle_corners(self, window_size):
+        # window_size is a tuple of (width, height)
+
+        # Calculate the coordinates of the rectangle corners
+        x0y0 = (
+            -window_size[0] / 2,
+            -window_size[1] / 2,
+        )
+        x1y0 = (x0y0[0] + window_size[0], x0y0[1])
+        x1y1 = (x0y0[0] + window_size[0], x0y0[1] + window_size[1])
+        x0y1 = (x0y0[0], x0y0[1] + window_size[1])
+        return x0y0, x1y0, x1y1, x0y1
+
+    def display_rectangle(self):
+        # Calculate the coordinates of the rectangle corners
+        rectangle_scaling = 0.5
+        window_size = (self.photom_window.width(), self.photom_window.height())
+        rectangle_size = (
+            (window_size[0] * rectangle_scaling),
+            (window_size[1] * rectangle_scaling),
+        )
+        rectangle_coords = self.calculate_rectangle_corners(rectangle_size)
+        print(rectangle_coords)
+        self.photom_window.updateVertices(rectangle_coords)
+        self.photom_window.switch_to_calibration_scene()
 
 
 class LaserMarkerWindow(QMainWindow):
@@ -202,13 +250,20 @@ class LaserMarkerWindow(QMainWindow):
         self.setMouseTracking(True)
         self.mouseX = None
         self.mouseY = None
-        self.board_num = 0
         self.setWindowOpacity(0.7)
         self.scale = 0.025
-        self.offset = (-0.032000, -0.046200)
+        # self.offset = (-0.032000, -0.046200)
+
+        # Create a QStackedWidget
+        self.stacked_widget = QStackedWidget()
+        # Set the QStackedWidget as the central widget
 
         self.initMarker()
+        self.init_tetragon()
+
         self.initUI()
+
+        self.setCentralWidget(self.stacked_widget)
 
     def initUI(self):
         self.setGeometry(
@@ -222,17 +277,53 @@ class LaserMarkerWindow(QMainWindow):
         #     self.windowGeo[2],
         #     self.windowGeo[3],
         # )
+        self.switch_to_shooting_scene()
         self.show()
 
     def initMarker(self):
-        scene = QGraphicsScene(self)
-        view = QGraphicsView(scene)
-        view.setMouseTracking(True)
-        self.setCentralWidget(view)
+        self.shooting_scene = QGraphicsScene(self)
+        self.shooting_view = QGraphicsView(self.shooting_scene)
+        self.shooting_view.setMouseTracking(True)
+        self.setCentralWidget(self.shooting_view)
         self.setMouseTracking(True)
         self.marker = QGraphicsSimpleTextItem('X')
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
-        scene.addItem(self.marker)
+        self.shooting_scene.addItem(self.marker)
+
+        # Add the view to the QStackedWidget
+        self.stacked_widget.addWidget(self.shooting_view)
+
+    def init_tetragon(
+        self, tetragon_coords: list = [(100, 100), (200, 100), (200, 200), (100, 200)]
+    ):
+        self.calibration_scene = QGraphicsScene(self)
+        self.calibration_view = QGraphicsView(self.calibration_scene)
+        self.calibration_view.setMouseTracking(True)
+        self.setCentralWidget(self.calibration_view)
+        self.setMouseTracking(True)
+        self.vertices = []
+        for x, y in tetragon_coords:
+            vertex = QGraphicsEllipseItem(x - 5, y - 5, 10, 10)
+            vertex.setBrush(Qt.red)
+            vertex.setFlag(QGraphicsEllipseItem.ItemIsMovable)
+            self.vertices.append(vertex)
+            self.calibration_scene.addItem(vertex)
+
+        # Add the view to the QStackedWidget
+        self.stacked_widget.addWidget(self.calibration_view)
+
+    def switch_to_shooting_scene(self):
+        self.stacked_widget.setCurrentWidget(self.shooting_view)
+
+    def switch_to_calibration_scene(self):
+        self.stacked_widget.setCurrentWidget(self.calibration_view)
+
+    def getCoordinates(self):
+        return [vertex.pos() for vertex in self.vertices]
+
+    def updateVertices(self, new_coordinates):
+        for vertex, (x, y) in zip(self.vertices, new_coordinates):
+            vertex.setPos(x, y)
 
     def recordinate(self, rawcord):
         return -self.scale * (rawcord - (self.windowGeo[2] / 2)) / 50
@@ -251,7 +342,7 @@ class LaserMarkerWindow(QMainWindow):
     def mouseReleaseEvent(self, event):
         print('Mouse release coords: ( %f : %f )' % (self.mouseX, self.mouseY))
 
-class Laser
+
 if __name__ == '__main__':
     import os
 
