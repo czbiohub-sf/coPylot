@@ -8,14 +8,8 @@ mirrors:
   - name: mirror_1_VIS
     x_position: 0
     y_position: 0
-    affine_matrix:
-      - [1, 0, 0]
-      - [0, 1, 0]
-      - [0, 0, 1]
+    affine_matrix_path: /home/eduardo.hirata/repos/coPylot/copylot/assemblies/photom/demo/affine_T.yml
   - name: mirror_2_IR
     x_position: 0
     y_position: 0
-    affine_matrix:
-      - [1, 0, 0]
-      - [0, 1, 0]
-      - [0, 0, 1]
+    affine_matrix_path: /home/eduardo.hirata/repos/coPylot/copylot/assemblies/photom/demo/affine_T_2.yml

@@ -13,18 +13,46 @@ class AffineTransform:
     A class object for handling affine transformation.
     """
 
-    def __init__(self, config_file='./affine_transform.yml'):
+    def __init__(self, tx_matrix: np.array = None, config_file: Path = None):
+        """
+        Initialize the affine transformation object.
+        :param tx_matrix: affine transformation matrix
+        """
+        self.T_affine = tx_matrix
         self.config_file = config_file
-        if not Path(self.config_file).exists():
-            Path(self.config_file).touch()
+
+        if self.T_affine is None:
             self.reset_T_affine()
+        else:
+            tx_matrix = np.array(tx_matrix)
+            assert tx_matrix.shape == (3, 3)
+            self.T_affine = tx_matrix
+
+        if self.config_file is None:
+            self.make_config()
+        else:
+            settings = yaml_to_model(self.config_file, AffineTransformationSettings)
+            self.T_affine = np.array(settings.affine_transform_yx)
+
+    def make_config(self, config_file="./affine_transform.yml"):
+        if not Path(self.config_file).exists():
+            i = 1
+            # Generate the first filename
+            filename = Path(self.config_file)
+            # While a file with the current filename exists, increment the number
+            while Path(filename).exists():
+                i += 1
+                self.config_file = f"{filename.parent}_{i}{filename.suffix}"
+            self.config_file.mkdir(parents=True, exist_ok=True)
+            # Make model and save to file
             model = AffineTransformationSettings(
                 affine_transform_yx=self.T_affine.tolist()
             )
             model_to_yaml(model, self.config_file)
 
-        settings = yaml_to_model(self.config_file, AffineTransformationSettings)
-        self.T_affine = np.array(settings.affine_transform_yx)
+        # # Load the config file
+        # settings = yaml_to_model(self.config_file, AffineTransformationSettings)
+        # self.T_affine = np.array(settings.affine_transform_yx)
 
     def reset_T_affine(self):
         """
@@ -40,15 +68,15 @@ class AffineTransform:
         :return: affine matrix
         """
         if not (isinstance(origin, Iterable) and len(origin) >= 3):
-            raise ValueError('origin needs 3 coordinates.')
+            raise ValueError("origin needs 3 coordinates.")
         if not (isinstance(dest, Iterable) and len(dest) >= 3):
-            raise ValueError('dest needs 3 coordinates.')
+            raise ValueError("dest needs 3 coordinates.")
         self.T_affine = transform.estimate_transform(
-            'affine', np.float32(origin), np.float32(dest)
+            "affine", np.float32(origin), np.float32(dest)
         )
         return self.T_affine
 
-    def apply_affine(self, coord_list):
+    def apply_affine(self, coord_list: list):
         """
         Perform affine transformation.
         :param coord_list: a list of origin coordinate (e.g. [[x,y], ...] or [[list for ch0], [list for ch1]])
@@ -61,7 +89,7 @@ class AffineTransform:
             coord_array = coord_array.T
         if self.T_affine is None:
             warn(
-                'Affine matrix has not been determined yet. \ncoord_list is returned without transformation.'
+                "Affine matrix has not been determined yet. \ncoord_list is returned without transformation."
             )
             dest_list = coord_array
         else:
@@ -110,16 +138,17 @@ class AffineTransform:
 
         if matrix is None:
             if self.T_affine is None:
-                raise ValueError('provided matrix is not defined')
+                raise ValueError("provided matrix is not defined")
             else:
                 matrix = self.T_affine
         else:
+            matrix = np.array(matrix)
             assert matrix.shape == (3, 3)
 
         if config_file is not None:
             self.config_file = config_file
 
         model = AffineTransformationSettings(
-            affine_transform_yx=np.array(matrix).tolist(),
+            affine_transform_yx=matrix.tolist(),
         )
         model_to_yaml(model, self.config_file)

@@ -19,3 +19,4 @@ class MyBaseModel(BaseModel, extra=Extra.forbid):
 
 class AffineTransformationSettings(MyBaseModel):
     affine_transform_yx: list[list[float]]
+    # TODO: validations for the affine transform matrix

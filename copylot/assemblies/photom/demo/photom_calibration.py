@@ -16,31 +16,20 @@ from PyQt5.QtWidgets import (
     QGraphicsItem,
     QGraphicsEllipseItem,
     QStackedWidget,
+    QComboBox,
+    QFileDialog,
 )
 from PyQt5.QtGui import QColor, QPen
 from copylot.assemblies.photom.utils.affine_transform import AffineTransform
 import numpy as np
+from copylot.assemblies.photom.photom import PhotomAssembly
+from pathlib import Path
 
 DEMO_MODE = True
 
-
-class Laser:
-    def __init__(self, name, power=0):
-        self.name = name
-        self.power = power
-        self.laser_on = False
-
-    def toggle(self):
-        self.laser_on = not self.laser_on
-
-    def set_power(self, power):
-        self.power = power
-
-
-class Mirror:
-    def __init__(self, x_position=0, y_position=0):
-        self.x = x_position
-        self.y = y_position
+# TODO: deal with the logic when clicking calibrate. Mirror dropdown
+# TODO: check that the calibration step is implemented properly.
+# TODO: remove the self.affine_transform_obj from this file. This is now part of photom-assembly
 
 
 class LaserWidget(QWidget):
@@ -81,6 +70,7 @@ class LaserWidget(QWidget):
         self.power_label.setText(f"Power: {value}")
 
 
+# TODO: connect widget to actual abstract mirror calls
 class MirrorWidget(QWidget):
     def __init__(self, mirror):
         super().__init__()
@@ -131,19 +121,31 @@ class MirrorWidget(QWidget):
 
 class PhotomApp(QMainWindow):
     def __init__(
-        self, lasers, mirror, photom_window, affine_trans_obj, demo_window=None
+        self,
+        photom_assembly: PhotomAssembly,
+        photom_window: QMainWindow,
+        config_file: Path = None,
+        demo_window=None,
     ):
         super().__init__()
+
         self.photom_window = photom_window
-        self.lasers = lasers
-        self.mirror = mirror
-        self.affine_trans_obj = affine_trans_obj
+        self.photom_assembly = photom_assembly
+        self.lasers = self.photom_assembly.laser
+        self.mirrors = self.photom_assembly.mirror
+
+        self._calibrating_mirror_idx = None
+
         if DEMO_MODE:
             self.demo_window = demo_window
 
         self.initUI()
 
     def initUI(self):
+        """
+        Initialize the UI.
+
+        """
         self.setGeometry(100, 100, 400, 500)
         self.setWindowTitle("Laser and Mirror Control App")
 
@@ -174,7 +176,7 @@ class PhotomApp(QMainWindow):
         # Adding a group box for the mirror
         mirror_group = QGroupBox("Mirror")
         mirror_layout = QVBoxLayout()
-        for mirror in self.mirror:
+        for mirror in self.mirrors:
             mirror_widget = MirrorWidget(mirror)
             mirror_layout.addWidget(mirror_widget)
         mirror_group.setLayout(mirror_layout)
@@ -185,7 +187,10 @@ class PhotomApp(QMainWindow):
         main_layout.addWidget(laser_group)
         main_layout.addWidget(mirror_group)
 
-        # Add a button to calibrate the mirror
+        self.mirror_dropdown = QComboBox()
+        self.mirror_dropdown.addItems([mirror.name for mirror in self.mirrors])
+        main_layout.addWidget(self.mirror_dropdown)
+
         self.calibrate_button = QPushButton("Calibrate")
         self.calibrate_button.clicked.connect(self.calibrate)
         main_layout.addWidget(self.calibrate_button)
@@ -204,13 +209,25 @@ class PhotomApp(QMainWindow):
 
     def calibrate(self):
         # Implement your calibration function here
-        print("Calibration function executed")
+        print("Calibrating...")
         # Hide the 'X' marker in photom_window
         # self.photom_window.marker.hide()
         self.display_rectangle()
         self.source_pts = self.photom_window.get_coordinates()
         # Show the "Done Calibration" button
         self.done_calibration_button.show()
+
+        selected_mirror_name = self.mirror_dropdown.currentText()
+        self._calibrating_mirror_idx = next(
+            i
+            for i, mirror in enumerate(self.mirrors)
+            if mirror.name == selected_mirror_name
+        )
+        if not DEMO_MODE:
+            # TODO: move in the pattern for calibration
+            self.photom_assembly.calibrate(self._calibrating_mirror_idx)
+        else:
+            print(f'Calibrating mirror: {self._calibrating_mirror_idx}')
 
     def done_calibration(self):
         # Perform any necessary actions after calibration is done
@@ -221,19 +238,40 @@ class PhotomApp(QMainWindow):
             [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
         )
         dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
-        T_affine = self.affine_trans_obj.get_affine_matrix(dest, origin)
-        self.affine_trans_obj.save_matrix()
-        print(T_affine)
+
+        T_affine = self.photom_assembly.mirror[
+            self._calibrating_mirror_idx
+        ].affine_transform_obj.get_affine_matrix(dest, origin)
+        # logger.debug(f"Affine matrix: {T_affine}")
+        print(f"Affine matrix: {T_affine}")
+
+        typed_filename, _ = QFileDialog.getSaveFileName(
+            self, "Save File", "", "YAML Files (*.yml)"
+        )
+        if typed_filename:
+            if not typed_filename.endswith(".yml"):
+                typed_filename += ".yml"
+            print("Selected file:", typed_filename)
+
+        # Save the matrix
+        self.photom_assembly.mirror[
+            self._calibrating_mirror_idx
+        ].affine_transform_obj.save_matrix(matrix=T_affine, config_file=typed_filename)
 
         # Hide the "Done Calibration" button
         self.done_calibration_button.hide()
 
         if DEMO_MODE:
-            print(origin)
-            print(dest)
-            transformed_coords = self.affine_trans_obj.apply_affine(dest)
+            print(f'origin: {origin}')
+            print(f'dest: {dest}')
+            # transformed_coords = self.affine_trans_obj.apply_affine(dest)
+            transformed_coords = self.photom_assembly.mirror[
+                self._calibrating_mirror_idx
+            ].affine_transform_obj.apply_affine(dest)
             print(transformed_coords)
-            coords_list = self.affine_trans_obj.trans_pointwise(transformed_coords)
+            coords_list = self.photom_assembly.mirror[
+                self._calibrating_mirror_idx
+            ].affine_transform_obj.trans_pointwise(transformed_coords)
             print(coords_list)
             self.demo_window.updateVertices(coords_list)
 
@@ -377,21 +415,74 @@ class LaserMarkerWindow(QMainWindow):
 if __name__ == "__main__":
     import os
 
-    os.environ["DISPLAY"] = ":1005"
+    if DEMO_MODE:
+
+        class MockLaser:
+            def __init__(self, name, power=0, **kwargs):
+                # Initialize the mock laser
+                self.name = name
+                self.power = power
+                self.laser_on = False
+
+            def toggle(self):
+                self.laser_on = not self.laser_on
+
+            def set_power(self, power):
+                self.power = power
+
+        class MockMirror:
+            def __init__(self, name, x_position=0, y_position=0, **kwargs):
+                # Initialize the mock mirror with the given x and y positions
+                self.name = name
+                self.x = x_position
+                self.y = y_position
+
+            def move(self, x_position, y_position):
+                # Move the mock mirror to the specified x and y positions
+                pass
+
+        Laser = MockLaser
+        Mirror = MockMirror
+
+    else:
+        # NOTE: These are the actual classes that will be used in the photom assembly
+        from copylot.hardware.lasers.vortran import VortranLaser as Laser
+        from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
+
+    try:
+        os.environ["DISPLAY"] = ":1003"
+    except:
+        raise Exception("DISPLAY environment variable not set")
+
     config_path = (
         "/home/eduardo.hirata/repos/coPylot/copylot/assemblies/photom/demo/config.yml"
     )
+
+    # TODO: this should be a function that parses the config_file and returns the photom_assembly
+    # Load the config file and parse it
     with open(config_path, "r") as config_file:
         config = yaml.load(config_file, Loader=yaml.FullLoader)
         lasers = [Laser(**laser_data) for laser_data in config["lasers"]]
-        mirror = [
+        mirrors = [
             Mirror(
+                name=mirror_data["name"],
                 x_position=mirror_data["x_position"],
                 y_position=mirror_data["y_position"],
             )
             for mirror_data in config["mirrors"]
         ]  # Initial mirror position
+        affine_matrix_paths = [
+            mirror['affine_matrix_path'] for mirror in config['mirrors']
+        ]
+        # Check that the number of mirrors and affine matrices match
+        assert len(mirrors) == len(affine_matrix_paths)
 
+    # Load photom assembly
+    photom_assembly = PhotomAssembly(
+        laser=lasers, mirror=mirrors, affine_matrix_path=affine_matrix_paths
+    )
+
+    # QT APP
     app = QApplication(sys.argv)
 
     # Define the positions and sizes for the windows
@@ -413,17 +504,18 @@ if __name__ == "__main__":
     )
     photom_window = LaserMarkerWindow(window_size=photom_window_size)
 
-    # TODO: expose this path to user?
-    affine_trans_obj = AffineTransform(config_file="./affine_transform.yml")
-
     if DEMO_MODE:
         camera_window = LaserMarkerWindow(
             name="Mock laser dots", window_size=photom_window_size
         )  # Set the positions of the windows
         ctrl_window = PhotomApp(
-            lasers, mirror, photom_window, affine_trans_obj, camera_window
+            photom_assembly=photom_assembly,
+            photom_window=photom_window,
+            demo_window=camera_window,
         )
         ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
+
+        # Set the camera window to the calibration scene
         camera_window.switch_to_calibration_scene()
         rectangle_scaling = 0.2
         window_size = (camera_window.width(), camera_window.height())
@@ -438,10 +530,7 @@ if __name__ == "__main__":
     else:
         # Set the positions of the windows
         ctrl_window = PhotomApp(
-            lasers,
-            mirror,
-            photom_window,
-            affine_trans_obj,
+            photom_assembly=photom_assembly, photom_window=photom_window
         )
         ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
 

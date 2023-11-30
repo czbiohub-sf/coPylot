@@ -8,9 +8,10 @@ For more details regarding operation, refer to the manuals in https://www.optotu
 """
 from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
+from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 
 
-class OptoMirror:
+class OptoMirror(AbstractMirror):
     def __init__(self, com_port: str = None):
         """
         Wrapper for Optotune mirror controller MR-E-2.
