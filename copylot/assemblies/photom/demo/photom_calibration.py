@@ -37,36 +37,51 @@ class LaserWidget(QWidget):
     def __init__(self, laser):
         super().__init__()
         self.laser = laser
+
+        self.emission_state = 0  # 0 = off, 1 = on
+
+        self.initializer_laser
         self.initialize_UI()
+
+    def initializer_laser(self):
+        self.laser.toggle_emission = self.emission_state
 
     def initialize_UI(self):
         layout = QVBoxLayout()
 
-        laser_label = QLabel(self.laser.name)
-        layout.addWidget(laser_label)
+        self.laser_label = QLabel(self.laser.name)
+        layout.addWidget(self.laser_label)
 
-        laser_power_slider = QSlider(Qt.Horizontal)
-        laser_power_slider.setMinimum(0)
-        laser_power_slider.setMaximum(100)
-        laser_power_slider.setValue(self.laser.power)
-        laser_power_slider.valueChanged.connect(self.update_power)
-        layout.addWidget(laser_power_slider)
+        self.laser_power_slider = QSlider(Qt.Horizontal)
+        self.laser_power_slider.setMinimum(0)
+        self.laser_power_slider.setMaximum(100)
+        self.laser_power_slider.setValue(self.laser.power)
+        self.laser_power_slider.valueChanged.connect(self.update_power)
+        layout.addWidget(self.laser_power_slider)
 
         # Add a QLabel to display the power value
         self.power_label = QLabel(f"Power: {self.laser.power}")
         layout.addWidget(self.power_label)
 
-        laser_toggle_button = QPushButton("Toggle")
-        laser_toggle_button.clicked.connect(self.toggle_laser)
-        layout.addWidget(laser_toggle_button)
+        self.laser_toggle_button = QPushButton("Toggle")
+        self.laser_toggle_button.clicked.connect(self.toggle_laser)
+        # make it background red if laser is off
+        if self.emission_state == 0:
+            self.laser_toggle_button.setStyleSheet("background-color: magenta")
+        layout.addWidget(self.laser_toggle_button)
 
         self.setLayout(layout)
 
     def toggle_laser(self):
-        self.laser.toggle()
+        self.emission_state = self.emission_state ^ 1
+        self.laser.toggle_emission = self.emission_state
+        if self.emission_state == 0:
+            self.laser_toggle_button.setStyleSheet("background-color: magenta")
+        else:
+            self.laser_toggle_button.setStyleSheet("background-color: green")
 
     def update_power(self, value):
-        self.laser.set_power(value)
+        self.laser.laser_power = value
         # Update the QLabel with the new power value
         self.power_label.setText(f"Power: {value}")
 
@@ -109,7 +124,7 @@ class MirrorWidget(QWidget):
         layout.addWidget(self.mirror_x_slider)
 
         # Add a QLabel to display the mirror X value
-        self.mirror_x_label = QLabel(f"X: {self.mirror.x}")
+        self.mirror_x_label = QLabel(f"X: {self.mirror.position_x}")
         layout.addWidget(self.mirror_x_label)
 
         mirror_y_label = QLabel("Mirror Y Position")
@@ -122,18 +137,18 @@ class MirrorWidget(QWidget):
         layout.addWidget(self.mirror_y_slider)
 
         # Add a QLabel to display the mirror Y value
-        self.mirror_y_label = QLabel(f"Y: {self.mirror.y}")
+        self.mirror_y_label = QLabel(f"Y: {self.mirror.position_y}")
         layout.addWidget(self.mirror_y_label)
 
         self.setLayout(layout)
 
     def update_mirror_x(self, value):
-        self.mirror.x = value
+        self.mirror.position_x = value
         # Update the QLabel with the new X value
         self.mirror_x_label.setText(f"X: {value}")
 
     def update_mirror_y(self, value):
-        self.mirror.y = value
+        self.mirror.position_y = value
         # Update the QLabel with the new Y value
         self.mirror_y_label.setText(f"Y: {value}")
 
@@ -519,22 +534,76 @@ if __name__ == "__main__":
                 self.power = power
                 self.laser_on = False
 
-            def toggle(self):
-                self.laser_on = not self.laser_on
+            @property
+            def toggle_emission(self):
+                """
+                Toggles Laser Emission On and Off
+                (1 = On, 0 = Off)
+                """
+                print('Toggling laser emission')
+                return self._toggle_emission
 
-            def set_power(self, power):
+            @toggle_emission.setter
+            def toggle_emission(self, value):
+                """
+                Toggles Laser Emission On and Off
+                (1 = On, 0 = Off)
+                """
+                self._toggle_emission = value
+                print(f'Laser emission set to {value}')
+
+            @property
+            def laser_power(self):
+                return self.power
+
+            @laser_power.setter
+            def laser_power(self, power):
                 self.power = power
+                print(f'Laser power set to {power}')
 
         class MockMirror:
-            def __init__(self, name, x_position=0, y_position=0, **kwargs):
+            def __init__(self, name, pos_x=0, pos_y=0, **kwargs):
                 # Initialize the mock mirror with the given x and y positions
                 self.name = name
-                self.x = x_position
-                self.y = y_position
 
-            def move(self, x_position, y_position):
-                # Move the mock mirror to the specified x and y positions
-                pass
+                self.pos_x = pos_x
+                self.pos_y = pos_y
+
+                self.position = (self.pos_x, self.pos_y)
+
+            @property
+            def position(self):
+                print(f'Getting mirror position ({self.pos_x}, {self.pos_y})')
+                return self.position_x, self.position_y
+
+            @position.setter
+            def position(self, value: Tuple[float, float]):
+                self.position_x = value[0]
+                self.position_y = value[1]
+                print(f'Mirror position set to {value}')
+
+            @property
+            def position_x(self) -> float:
+                """Get the current mirror position X"""
+                print(f'Position_X {self.pos_x}')
+                return self.pos_x
+
+            @position_x.setter
+            def position_x(self, value: float):
+                """Set the mirror position X"""
+                self.pos_x = value
+                print(f'Position_X {self.pos_x}')
+
+            @property
+            def position_y(self) -> float:
+                """Get the current mirror position Y"""
+                return self.pos_y
+
+            @position_y.setter
+            def position_y(self, value: float):
+                """Set the mirror position Y"""
+                self.pos_y = value
+                print(f'Position_Y {self.pos_y}')
 
         Laser = MockLaser
         Mirror = MockMirror
@@ -561,8 +630,8 @@ if __name__ == "__main__":
         mirrors = [
             Mirror(
                 name=mirror_data["name"],
-                x_position=mirror_data["x_position"],
-                y_position=mirror_data["y_position"],
+                pos_x=mirror_data["x_position"],
+                pos_y=mirror_data["y_position"],
             )
             for mirror_data in config["mirrors"]
         ]  # Initial mirror position

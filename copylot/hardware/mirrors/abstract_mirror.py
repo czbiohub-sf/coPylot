@@ -18,13 +18,37 @@ class AbstractMirror(metaclass=ABCMeta):
     @property
     @abstractmethod
     def position(self) -> Tuple[float, float]:
-        """Get the current mirror position"""
+        """Get the current mirror position XY"""
         pass
 
     @position.setter
     @abstractmethod
     def position(self, value: Tuple[float, float]):
-        """Set the mirror position"""
+        """Set the mirror position XY"""
+        pass
+
+    @property
+    @abstractmethod
+    def position_x(self) -> float:
+        """Get the current mirror position X"""
+        pass
+
+    @position_x.setter
+    @abstractmethod
+    def position_x(self, value: float):
+        """Set the mirror position X"""
+        pass
+
+    @property
+    @abstractmethod
+    def position_y(self) -> float:
+        """Get the current mirror position Y"""
+        pass
+
+    @position_y.setter
+    @abstractmethod
+    def position_y(self, value: float):
+        """Set the mirror position Y"""
         pass
 
     @property

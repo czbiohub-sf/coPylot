@@ -9,6 +9,7 @@ For more details regarding operation, refer to the manuals in https://www.optotu
 from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
+from typing import Tuple
 
 
 class OptoMirror(AbstractMirror):
@@ -40,7 +41,7 @@ class OptoMirror(AbstractMirror):
         logger.info("mirror disconnected")
 
     @property
-    def positions(self):
+    def position(self):
         """
         Returns
         -------
@@ -50,6 +51,23 @@ class OptoMirror(AbstractMirror):
             50 degree is the maximum optical deflection angle for each direction.
         """
         return self.position_x, self.position_y
+
+    @position.setter
+    def position(self, value: Tuple[float, float]):
+        """
+        Parameters
+        ----------
+        value:Tuple[float,float]
+            The normalized angular value, value = theta/tan(50degree)
+            50 degree is the maximum optical deflection angle for each direction.
+            Here x has a range limits of [-1,1] , The combination of value for x-axis and y-axis should be less than 1
+            (ex. x^2+y^1<1)
+            when |x|<0.7 and |y| <0.7 any combination works. otherwise, one will be reduced to value to
+            nearest edge of the unit circle
+        """
+        self.position_x = value[0]
+        self.position_y = value[1]
+        logger.info(f"Position set to: {value}")
 
     @property
     def position_x(self):
