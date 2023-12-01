@@ -31,9 +31,11 @@ class PhotomAssembly:
 
     def calibrate(self, mirror_index: int):
         if mirror_index < len(self.mirror):
+            # Logic for calibrating the mirror
             pass
+            # moving the mirror in a rectangle
         else:
-            pass
+            raise IndexError("Mirror index out of range.")
 
     # TODO probably will replace the camera with zyx or yx image array input
     ## Camera Functions

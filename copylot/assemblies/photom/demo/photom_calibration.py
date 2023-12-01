@@ -40,7 +40,7 @@ class LaserWidget(QWidget):
 
         self.emission_state = 0  # 0 = off, 1 = on
 
-        self.initializer_laser
+        self.initializer_laser()
         self.initialize_UI()
 
     def initializer_laser(self):
@@ -55,12 +55,12 @@ class LaserWidget(QWidget):
         self.laser_power_slider = QSlider(Qt.Horizontal)
         self.laser_power_slider.setMinimum(0)
         self.laser_power_slider.setMaximum(100)
-        self.laser_power_slider.setValue(self.laser.power)
+        self.laser_power_slider.setValue(self.laser.laser_power)
         self.laser_power_slider.valueChanged.connect(self.update_power)
         layout.addWidget(self.laser_power_slider)
 
         # Add a QLabel to display the power value
-        self.power_label = QLabel(f"Power: {self.laser.power}")
+        self.power_label = QLabel(f"Power: {self.laser.laser_power}")
         layout.addWidget(self.power_label)
 
         self.laser_toggle_button = QPushButton("Toggle")
@@ -349,6 +349,9 @@ class PhotomApp(QMainWindow):
 
             # Hide the "Done Calibration" button
             self.done_calibration_button.hide()
+            self.calibrate_button.show()
+            self.cancel_calibration_button.hide()
+
             if DEMO_MODE:
                 print(f'origin: {origin}')
                 print(f'dest: {dest}')
@@ -531,8 +534,10 @@ if __name__ == "__main__":
             def __init__(self, name, power=0, **kwargs):
                 # Initialize the mock laser
                 self.name = name
-                self.power = power
                 self.laser_on = False
+
+                self.toggle_emission = 0
+                self.laser_power = power
 
             @property
             def toggle_emission(self):
@@ -540,7 +545,7 @@ if __name__ == "__main__":
                 Toggles Laser Emission On and Off
                 (1 = On, 0 = Off)
                 """
-                print('Toggling laser emission')
+                print(f'Toggling laser {self.name} emission')
                 return self._toggle_emission
 
             @toggle_emission.setter
@@ -549,17 +554,18 @@ if __name__ == "__main__":
                 Toggles Laser Emission On and Off
                 (1 = On, 0 = Off)
                 """
+                print(f'Laser {self.name} emission set to {value}')
                 self._toggle_emission = value
-                print(f'Laser emission set to {value}')
 
             @property
             def laser_power(self):
+                print(f'Laser {self.name} power: {self.power}')
                 return self.power
 
             @laser_power.setter
             def laser_power(self, power):
                 self.power = power
-                print(f'Laser power set to {power}')
+                print(f'Laser {self.name} power set to {power}')
 
         class MockMirror:
             def __init__(self, name, pos_x=0, pos_y=0, **kwargs):
@@ -580,19 +586,19 @@ if __name__ == "__main__":
             def position(self, value: Tuple[float, float]):
                 self.position_x = value[0]
                 self.position_y = value[1]
-                print(f'Mirror position set to {value}')
+                print(f'Mirror {self.name} position set to {value}')
 
             @property
             def position_x(self) -> float:
                 """Get the current mirror position X"""
-                print(f'Position_X {self.pos_x}')
+                print(f'Mirror {self.name} Position_X {self.pos_x}')
                 return self.pos_x
 
             @position_x.setter
             def position_x(self, value: float):
                 """Set the mirror position X"""
                 self.pos_x = value
-                print(f'Position_X {self.pos_x}')
+                print(f'Mirror {self.name} Position_X {self.pos_x}')
 
             @property
             def position_y(self) -> float:
@@ -603,7 +609,7 @@ if __name__ == "__main__":
             def position_y(self, value: float):
                 """Set the mirror position Y"""
                 self.pos_y = value
-                print(f'Position_Y {self.pos_y}')
+                print(f'Mirror {self.name} Position_Y {self.pos_y}')
 
         Laser = MockLaser
         Mirror = MockMirror
