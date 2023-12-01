@@ -202,8 +202,10 @@ class PhotomApp(QMainWindow):
         # Adding a group box for the lasers
         laser_group = QGroupBox("Lasers")
         laser_layout = QVBoxLayout()
+        self.laser_widgets = []
         for laser in self.lasers:
             laser_widget = LaserWidget(laser)
+            self.laser_widgets.append(laser_widget)
             laser_layout.addWidget(laser_widget)
         laser_group.setLayout(laser_layout)
 
@@ -240,6 +242,11 @@ class PhotomApp(QMainWindow):
         self.done_calibration_button.hide()
         main_layout.addWidget(self.done_calibration_button)
 
+        # Add a "Cancel Calibration" button (initially hidden)
+        self.cancel_calibration_button = QPushButton("Cancel Calibration")
+        self.cancel_calibration_button.clicked.connect(self.cancel_calibration)
+        self.cancel_calibration_button.hide()
+        main_layout.addWidget(self.cancel_calibration_button)
         main_widget = QWidget(self)
         main_widget.setLayout(main_layout)
 
@@ -258,6 +265,11 @@ class PhotomApp(QMainWindow):
         print("Calibrating...")
         # Hide the 'X' marker in photom_window
         # self.photom_window.marker.hide()
+        # Hide the calibrate button
+        self.calibrate_button.hide()
+        # Show the "Cancel Calibration" button
+        self.cancel_calibration_button.show()
+        # Display the rectangle
         self.display_rectangle()
         self.source_pts = self.photom_window.get_coordinates()
         # Show the "Done Calibration" button
@@ -275,10 +287,22 @@ class PhotomApp(QMainWindow):
         else:
             print(f'Calibrating mirror: {self._current_mirror_idx}')
 
+    def cancel_calibration(self):
+        # Implement your cancel calibration function here
+        print("Canceling calibration...")
+        # Hide the "Done Calibration" button
+        self.done_calibration_button.hide()
+        # Show the "Calibrate" button
+        self.calibrate_button.show()
+        # Show the "X" marker in photom_window
+        self.photom_window.marker.show()
+
+        self.cancel_calibration_button.hide()
+        # Switch back to the shooting scene
+        self.photom_window.switch_to_shooting_scene()
+
     def done_calibration(self):
         # Perform any necessary actions after calibration is done
-        self.photom_window.switch_to_shooting_scene()
-        self.photom_window.marker.show()
         self.target_pts = self.photom_window.get_coordinates()
         origin = np.array(
             [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
@@ -291,6 +315,7 @@ class PhotomApp(QMainWindow):
         # logger.debug(f"Affine matrix: {T_affine}")
         print(f"Affine matrix: {T_affine}")
 
+        # Save the affine matrix to a file
         typed_filename, _ = QFileDialog.getSaveFileName(
             self, "Save File", "", "YAML Files (*.yml)"
         )
@@ -298,29 +323,34 @@ class PhotomApp(QMainWindow):
             if not typed_filename.endswith(".yml"):
                 typed_filename += ".yml"
             print("Selected file:", typed_filename)
-
-        # Save the matrix
-        self.photom_assembly.mirror[
-            self._current_mirror_idx
-        ].affine_transform_obj.save_matrix(matrix=T_affine, config_file=typed_filename)
-
-        # Hide the "Done Calibration" button
-        self.done_calibration_button.hide()
-
-        if DEMO_MODE:
-            print(f'origin: {origin}')
-            print(f'dest: {dest}')
-            # transformed_coords = self.affine_trans_obj.apply_affine(dest)
-            transformed_coords = self.photom_assembly.mirror[
+            # Save the matrix
+            self.photom_assembly.mirror[
                 self._current_mirror_idx
-            ].affine_transform_obj.apply_affine(dest)
-            print(transformed_coords)
-            coords_list = self.photom_assembly.mirror[
-                self._current_mirror_idx
-            ].affine_transform_obj.trans_pointwise(transformed_coords)
-            print(coords_list)
-            self.demo_window.updateVertices(coords_list)
+            ].affine_transform_obj.save_matrix(
+                matrix=T_affine, config_file=typed_filename
+            )
+            self.photom_window.switch_to_shooting_scene()
+            self.photom_window.marker.show()
 
+            # Hide the "Done Calibration" button
+            self.done_calibration_button.hide()
+            if DEMO_MODE:
+                print(f'origin: {origin}')
+                print(f'dest: {dest}')
+                # transformed_coords = self.affine_trans_obj.apply_affine(dest)
+                transformed_coords = self.photom_assembly.mirror[
+                    self._current_mirror_idx
+                ].affine_transform_obj.apply_affine(dest)
+                print(transformed_coords)
+                coords_list = self.photom_assembly.mirror[
+                    self._current_mirror_idx
+                ].affine_transform_obj.trans_pointwise(transformed_coords)
+                print(coords_list)
+                self.demo_window.updateVertices(coords_list)
+                return
+        else:
+            print("No file selected")
+            # Show dialog box saying no file selected
         print("Calibration done")
 
     def update_transparency(self, value):
@@ -451,7 +481,6 @@ class LaserMarkerWindow(QMainWindow):
 
     def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent"):
         new_cursor_position = event.screenPos()
-
         print(f"current x: {new_cursor_position}")
 
     def mousePressEvent(self, event):
@@ -460,12 +489,13 @@ class LaserMarkerWindow(QMainWindow):
         print(f"x position (x,y): {(marker_x, marker_y)}")
         # print('Mouse press coords: ( %f : %f )' % (self.mouseX, self.mouseY))
         # Update the mirror slider values
-        self.photom_controls.mirror_widgets[
-            self.photom_controls._current_mirror_idx
-        ].mirror_x_slider.setValue(int(self.marker.pos().x()))
-        self.photom_controls.mirror_widgets[
-            self.photom_controls._current_mirror_idx
-        ].mirror_y_slider.setValue(int(self.marker.pos().y()))
+        if self.photom_controls is not None:
+            self.photom_controls.mirror_widgets[
+                self.photom_controls._current_mirror_idx
+            ].mirror_x_slider.setValue(int(self.marker.pos().x()))
+            self.photom_controls.mirror_widgets[
+                self.photom_controls._current_mirror_idx
+            ].mirror_y_slider.setValue(int(self.marker.pos().y()))
 
         # Update the photom_assembly mirror position
         # self.photom_controls.mirror[self._current_mirror_idx].position = [
