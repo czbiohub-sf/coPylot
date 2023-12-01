@@ -24,21 +24,22 @@ from copylot.assemblies.photom.utils.affine_transform import AffineTransform
 import numpy as np
 from copylot.assemblies.photom.photom import PhotomAssembly
 from pathlib import Path
+from typing import Tuple
 
 DEMO_MODE = True
 
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
 # TODO: check that the calibration step is implemented properly.
-# TODO: remove the self.affine_transform_obj from this file. This is now part of photom-assembly
+# TODO: connect marker to actual mirror position
 
 
 class LaserWidget(QWidget):
     def __init__(self, laser):
         super().__init__()
         self.laser = laser
-        self.initUI()
+        self.initialize_UI()
 
-    def initUI(self):
+    def initialize_UI(self):
         layout = QVBoxLayout()
 
         laser_label = QLabel(self.laser.name)
@@ -70,22 +71,40 @@ class LaserWidget(QWidget):
         self.power_label.setText(f"Power: {value}")
 
 
+class QDoubleSlider(QSlider):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._multiplier = 1000
+
+    def value(self):
+        return super().value() / self._multiplier
+
+    def setValue(self, val):
+        super().setValue(int(val * self._multiplier))
+
+    def setMinimum(self, val):
+        super().setMinimum(int(val * self._multiplier))
+
+    def setMaximum(self, val):
+        super().setMaximum(int(val * self._multiplier))
+
+
 # TODO: connect widget to actual abstract mirror calls
 class MirrorWidget(QWidget):
     def __init__(self, mirror):
         super().__init__()
         self.mirror = mirror
-        self.initUI()
+        self.initialize_UI()
 
-    def initUI(self):
+    def initialize_UI(self):
         layout = QVBoxLayout()
 
         mirror_x_label = QLabel("Mirror X Position")
         layout.addWidget(mirror_x_label)
 
         self.mirror_x_slider = QSlider(Qt.Horizontal)
-        self.mirror_x_slider.setMinimum(0)
-        self.mirror_x_slider.setMaximum(100)
+        self.mirror_x_slider.setMinimum(-500)
+        self.mirror_x_slider.setMaximum(500)
         self.mirror_x_slider.valueChanged.connect(self.update_mirror_x)
         layout.addWidget(self.mirror_x_slider)
 
@@ -97,8 +116,8 @@ class MirrorWidget(QWidget):
         layout.addWidget(mirror_y_label)
 
         self.mirror_y_slider = QSlider(Qt.Horizontal)
-        self.mirror_y_slider.setMinimum(0)
-        self.mirror_y_slider.setMaximum(100)
+        self.mirror_y_slider.setMinimum(-500)
+        self.mirror_y_slider.setMaximum(500)
         self.mirror_y_slider.valueChanged.connect(self.update_mirror_y)
         layout.addWidget(self.mirror_y_slider)
 
@@ -123,25 +142,40 @@ class PhotomApp(QMainWindow):
     def __init__(
         self,
         photom_assembly: PhotomAssembly,
-        photom_window: QMainWindow,
-        config_file: Path = None,
+        photom_window_size: Tuple[int, int] = (100, 100),
         demo_window=None,
     ):
         super().__init__()
 
-        self.photom_window = photom_window
+        self.photom_window = None
+        self.photom_controls_window = None
+
         self.photom_assembly = photom_assembly
         self.lasers = self.photom_assembly.laser
         self.mirrors = self.photom_assembly.mirror
-
-        self._calibrating_mirror_idx = None
+        self.photom_window_size = photom_window_size
+        self._current_mirror_idx = 0
 
         if DEMO_MODE:
             self.demo_window = demo_window
 
-        self.initUI()
+        self.initialize_UI()
+        self.initializer_laser_marker_window()
 
-    def initUI(self):
+    def initializer_laser_marker_window(self):
+        # Making the photom_window a square
+
+        window_size = (
+            self.photom_window_size[0],
+            0,
+            self.photom_window_size[0],
+            self.photom_window_size[1],
+        )
+        self.photom_window = LaserMarkerWindow(
+            photom_controls=self, name='Laser Marker', window_size=window_size
+        )
+
+    def initialize_UI(self):
         """
         Initialize the UI.
 
@@ -176,8 +210,11 @@ class PhotomApp(QMainWindow):
         # Adding a group box for the mirror
         mirror_group = QGroupBox("Mirror")
         mirror_layout = QVBoxLayout()
+
+        self.mirror_widgets = []
         for mirror in self.mirrors:
             mirror_widget = MirrorWidget(mirror)
+            self.mirror_widgets.append(mirror_widget)
             mirror_layout.addWidget(mirror_widget)
         mirror_group.setLayout(mirror_layout)
 
@@ -190,6 +227,8 @@ class PhotomApp(QMainWindow):
         self.mirror_dropdown = QComboBox()
         self.mirror_dropdown.addItems([mirror.name for mirror in self.mirrors])
         main_layout.addWidget(self.mirror_dropdown)
+        self.mirror_dropdown.setCurrentIndex(self._current_mirror_idx)
+        self.mirror_dropdown.currentIndexChanged.connect(self.mirror_dropdown_changed)
 
         self.calibrate_button = QPushButton("Calibrate")
         self.calibrate_button.clicked.connect(self.calibrate)
@@ -207,6 +246,13 @@ class PhotomApp(QMainWindow):
         self.setCentralWidget(main_widget)
         self.show()
 
+    def mirror_dropdown_changed(self, index):
+        print(f"Mirror dropdown changed to index {index}")
+        self._current_mirror_idx = index
+
+        # Reset to (0,0) position
+        self.photom_assembly.mirror[self._current_mirror_idx].position = [0, 0]
+
     def calibrate(self):
         # Implement your calibration function here
         print("Calibrating...")
@@ -218,16 +264,16 @@ class PhotomApp(QMainWindow):
         self.done_calibration_button.show()
 
         selected_mirror_name = self.mirror_dropdown.currentText()
-        self._calibrating_mirror_idx = next(
+        self._current_mirror_idx = next(
             i
             for i, mirror in enumerate(self.mirrors)
             if mirror.name == selected_mirror_name
         )
         if not DEMO_MODE:
             # TODO: move in the pattern for calibration
-            self.photom_assembly.calibrate(self._calibrating_mirror_idx)
+            self.photom_assembly.calibrate(self._current_mirror_idx)
         else:
-            print(f'Calibrating mirror: {self._calibrating_mirror_idx}')
+            print(f'Calibrating mirror: {self._current_mirror_idx}')
 
     def done_calibration(self):
         # Perform any necessary actions after calibration is done
@@ -240,7 +286,7 @@ class PhotomApp(QMainWindow):
         dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
 
         T_affine = self.photom_assembly.mirror[
-            self._calibrating_mirror_idx
+            self._current_mirror_idx
         ].affine_transform_obj.get_affine_matrix(dest, origin)
         # logger.debug(f"Affine matrix: {T_affine}")
         print(f"Affine matrix: {T_affine}")
@@ -255,7 +301,7 @@ class PhotomApp(QMainWindow):
 
         # Save the matrix
         self.photom_assembly.mirror[
-            self._calibrating_mirror_idx
+            self._current_mirror_idx
         ].affine_transform_obj.save_matrix(matrix=T_affine, config_file=typed_filename)
 
         # Hide the "Done Calibration" button
@@ -266,11 +312,11 @@ class PhotomApp(QMainWindow):
             print(f'dest: {dest}')
             # transformed_coords = self.affine_trans_obj.apply_affine(dest)
             transformed_coords = self.photom_assembly.mirror[
-                self._calibrating_mirror_idx
+                self._current_mirror_idx
             ].affine_transform_obj.apply_affine(dest)
             print(transformed_coords)
             coords_list = self.photom_assembly.mirror[
-                self._calibrating_mirror_idx
+                self._current_mirror_idx
             ].affine_transform_obj.trans_pointwise(transformed_coords)
             print(coords_list)
             self.demo_window.updateVertices(coords_list)
@@ -310,10 +356,16 @@ class PhotomApp(QMainWindow):
 
 
 class LaserMarkerWindow(QMainWindow):
-    def __init__(self, name="Laser Marker", window_size=(100, 100, 100, 100)):
+    def __init__(
+        self,
+        photom_controls: QMainWindow = None,
+        name="Laser Marker",
+        window_size=(100, 100, 100, 100),
+    ):
         super().__init__()
+        self.photom_controls = photom_controls
         self.window_name = name
-        self.windowGeo = window_size
+        self.window_geometry = window_size
         self.setMouseTracking(True)
         self.mouseX = None
         self.mouseY = None
@@ -328,23 +380,23 @@ class LaserMarkerWindow(QMainWindow):
         self.initMarker()
         self.init_tetragon()
 
-        self.initUI()
+        self.initialize_UI()
 
         self.setCentralWidget(self.stacked_widget)
 
-    def initUI(self):
+    def initialize_UI(self):
         self.setGeometry(
-            self.windowGeo[0],
-            self.windowGeo[1],
-            self.windowGeo[2],
-            self.windowGeo[3],
+            self.window_geometry[0],
+            self.window_geometry[1],
+            self.window_geometry[2],
+            self.window_geometry[3],
         )
         self.setWindowTitle(self.window_name)
 
         # Fix the size of the window
         self.setFixedSize(
-            self.windowGeo[2],
-            self.windowGeo[3],
+            self.window_geometry[2],
+            self.window_geometry[3],
         )
         self.switch_to_shooting_scene()
         self.show()
@@ -395,7 +447,7 @@ class LaserMarkerWindow(QMainWindow):
             vertex.setPos(x, y)
 
     def recordinate(self, rawcord):
-        return -self.scale * (rawcord - (self.windowGeo[2] / 2)) / 50
+        return -self.scale * (rawcord - (self.window_geometry[2] / 2)) / 50
 
     def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent"):
         new_cursor_position = event.screenPos()
@@ -405,8 +457,21 @@ class LaserMarkerWindow(QMainWindow):
     def mousePressEvent(self, event):
         marker_x = self.marker.pos().x()
         marker_y = self.marker.pos().y()
-        print(f"x position: {(marker_x, marker_y)}")
+        print(f"x position (x,y): {(marker_x, marker_y)}")
         # print('Mouse press coords: ( %f : %f )' % (self.mouseX, self.mouseY))
+        # Update the mirror slider values
+        self.photom_controls.mirror_widgets[
+            self.photom_controls._current_mirror_idx
+        ].mirror_x_slider.setValue(int(self.marker.pos().x()))
+        self.photom_controls.mirror_widgets[
+            self.photom_controls._current_mirror_idx
+        ].mirror_y_slider.setValue(int(self.marker.pos().y()))
+
+        # Update the photom_assembly mirror position
+        # self.photom_controls.mirror[self._current_mirror_idx].position = [
+        #     self.marker.pos().x(),
+        #     self.marker.pos().y(),
+        # ]
 
     def mouseReleaseEvent(self, event):
         print("Mouse release coords: ( %f : %f )" % (self.mouseX, self.mouseY))
@@ -488,32 +553,20 @@ if __name__ == "__main__":
     # Define the positions and sizes for the windows
     screen_width = app.desktop().screenGeometry().width()
     screen_height = app.desktop().screenGeometry().height()
-
     ctrl_window_width = screen_width // 3  # Adjust the width as needed
     ctrl_window_height = screen_height // 3  # Use the full screen height
 
-    # Making the photom_window a square
-    photom_window_width = screen_width // 3  # Adjust the width as needed
-    photom_window_height = screen_width // 3  # Adjust the width as needed
-
-    photom_window_size = (
-        ctrl_window_width,
-        0,
-        photom_window_width,
-        photom_window_height,
-    )
-    photom_window = LaserMarkerWindow(window_size=photom_window_size)
-
     if DEMO_MODE:
         camera_window = LaserMarkerWindow(
-            name="Mock laser dots", window_size=photom_window_size
+            name="Mock laser dots",
+            window_size=(ctrl_window_width, 0, ctrl_window_width, ctrl_window_width),
         )  # Set the positions of the windows
         ctrl_window = PhotomApp(
             photom_assembly=photom_assembly,
-            photom_window=photom_window,
+            photom_window_size=(ctrl_window_width, ctrl_window_width),
             demo_window=camera_window,
         )
-        ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
+        ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_width)
 
         # Set the camera window to the calibration scene
         camera_window.switch_to_calibration_scene()
@@ -530,7 +583,8 @@ if __name__ == "__main__":
     else:
         # Set the positions of the windows
         ctrl_window = PhotomApp(
-            photom_assembly=photom_assembly, photom_window=photom_window
+            photom_assembly=photom_assembly,
+            photom_window_size=(ctrl_window_width, ctrl_window_height),
         )
         ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_height)
 

@@ -35,6 +35,7 @@ class PhotomAssembly:
         else:
             pass
 
+    # TODO probably will replace the camera with zyx or yx image array input
     ## Camera Functions
     def capture(self):
         pass
