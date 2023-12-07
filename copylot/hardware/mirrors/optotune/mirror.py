@@ -126,3 +126,58 @@ class OptoMirror(AbstractMirror):
         """
         self.channel_y.StaticInput.SetXY(value)
         logger.info(f"position_y set to: {value}")
+
+    @property
+    def relative_position(self) -> Tuple[float, float]:
+        """Get the current relative mirror position"""
+        pass
+
+    @relative_position.setter
+    def relative_position(self, value: Tuple[float, float]):
+        """Set the relative mirror position"""
+        pass
+
+    @property
+    def movement_limits(self) -> Tuple[float, float, float, float]:
+        """Get the current mirror movement limits"""
+        pass
+
+    @movement_limits.setter
+    def movement_limits(self, value: Tuple[float, float, float, float]):
+        """Set the mirror movement limits"""
+        pass
+
+    @property
+    def step_resolution(self) -> float:
+        """Get the current mirror step resolution"""
+        pass
+
+    @step_resolution.setter
+    def step_resolution(self, value: float):
+        """Set the mirror step resolution"""
+        pass
+
+    
+    def set_home(self):
+        """Set the mirror home position"""
+        pass
+
+    
+    def set_origin(self, axis: str):
+        """Set the mirror origin for a specific axis"""
+        pass
+
+    @property
+    def external_drive_control(self) -> str:
+        """Get the current mirror drive mode"""
+        pass
+
+    @external_drive_control.setter
+    def external_drive_control(self, value: bool):
+        """Set the mirror drive mode"""
+        pass
+
+    
+    def voltage_to_position(self, voltage: Tuple[float, float]) -> Tuple[float, float]:
+        """Convert voltage to position"""
+        pass

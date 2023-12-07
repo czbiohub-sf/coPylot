@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from re import T
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
@@ -6,7 +7,8 @@ from copylot.hardware.stages.abstract_stage import AbstractStage
 from copylot.hardware.daqs.abstract_daq import AbstractDAQ
 from copylot.assemblies.photom.utils.affine_transform import AffineTransform
 from pathlib import Path
-
+from copylot import logger
+from typing import Tuple
 
 class PhotomAssembly:
     def __init__(
@@ -43,18 +45,16 @@ class PhotomAssembly:
         pass
 
     ## Mirror Functions
-    @property
-    def position(self, mirror_index: int, position: list[float]):
+    def get_position(self, mirror_index: int)->list[float, float]:
         if mirror_index < len(self.mirror):
             if self.DAC is None:
                 NotImplementedError("No DAC found.")
             else:
-                return self.mirror[mirror_index].position
+                return list(self.mirror[mirror_index].position)
         else:
             raise IndexError("Mirror index out of range.")
 
-    @position.setter
-    def position(self, mirror_index: int, position: list[float]):
+    def set_position(self, mirror_index: int, position: list[float]):
         if mirror_index < len(self.mirror):
             if self.DAC is None:
                 NotImplementedError("No DAC found.")
@@ -66,10 +66,8 @@ class PhotomAssembly:
             raise IndexError("Mirror index out of range.")
 
     ## LASER Fuctions
-    @property
-    def laser_power(self, laser_index: int, power: float):
+    def get_laser_power(self, laser_index: int, power: float):
         return self.laser[laser_index].power
 
-    @laser_power.setter
-    def change_laser_power(self, laser_index: int, power: float):
+    def set_laser_power(self, laser_index: int, power: float):
         self.laser[laser_index].power = power
