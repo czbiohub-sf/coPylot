@@ -6,9 +6,14 @@ from copylot.hardware.lasers.abstract_laser import AbstractLaser
 from copylot.hardware.stages.abstract_stage import AbstractStage
 from copylot.hardware.daqs.abstract_daq import AbstractDAQ
 from copylot.assemblies.photom.utils.affine_transform import AffineTransform
+from copylot.assemblies.photom.utils.scanning_algorithms import (
+    calculate_rectangle_corners,
+)
 from pathlib import Path
 from copylot import logger
 from typing import Tuple
+import time
+
 
 class PhotomAssembly:
     def __init__(
@@ -25,16 +30,27 @@ class PhotomAssembly:
         self.mirror = mirror
         self.DAC = dac
 
+        self._calibrating = False
+
         assert len(self.mirror) == len(affine_matrix_path)
 
         # Apply AffineTransform to each mirror
         for i, tx_path in enumerate(affine_matrix_path):
             self.mirror[i].affine_transform_obj = AffineTransform(config_file=tx_path)
 
-    def calibrate(self, mirror_index: int):
+    def calibrate(self, mirror_index: int, rectangle_size_xy: tuple[int, int]):
         if mirror_index < len(self.mirror):
-            # Logic for calibrating the mirror
-            pass
+            print("Calibrating mirror...")
+            rectangle_coords = calculate_rectangle_corners(rectangle_size_xy)
+            # iterate over each corner and move the mirror
+            i = 0
+            while self._calibrating:
+                # Logic for calibrating the mirror
+                self.position(mirror_index, rectangle_coords[i])
+                time.sleep(1)
+                i += 1
+                if i == 3:
+                    i = 0
             # moving the mirror in a rectangle
         else:
             raise IndexError("Mirror index out of range.")
@@ -45,7 +61,7 @@ class PhotomAssembly:
         pass
 
     ## Mirror Functions
-    def get_position(self, mirror_index: int)->list[float, float]:
+    def get_position(self, mirror_index: int) -> list[float, float]:
         if mirror_index < len(self.mirror):
             if self.DAC is None:
                 NotImplementedError("No DAC found.")
