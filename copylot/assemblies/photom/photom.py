@@ -13,7 +13,9 @@ from pathlib import Path
 from copylot import logger
 from typing import Tuple
 import time
+from typing import Optional
 
+#TODO: add the logger from copylot
 
 class PhotomAssembly:
     def __init__(
@@ -21,8 +23,8 @@ class PhotomAssembly:
         laser: list[AbstractLaser],
         mirror: list[AbstractMirror],
         affine_matrix_path: list[Path],
-        camera: list[AbstractCamera] = None,
-        dac: list[AbstractDAQ] = None,
+        camera: Optional[list[AbstractCamera]] = None,
+        dac: Optional[list[AbstractDAQ]]= None,
     ):
         # hardware
         self.camera = camera
@@ -67,10 +69,10 @@ class PhotomAssembly:
         pass
 
     ## Mirror Functions
-    def get_position(self, mirror_index: int) -> list[float, float]:
+    def get_position(self, mirror_index: int) -> list[float]:
         if mirror_index < len(self.mirror):
-            if self.DAC is None:
-                NotImplementedError("No DAC found.")
+            if self.DAC is not None:
+                raise NotImplementedError("No DAC found.")
             else:
                 position = self.mirror[mirror_index].position
                 return list(position)
@@ -79,12 +81,14 @@ class PhotomAssembly:
 
     def set_position(self, mirror_index: int, position: list[float]):
         if mirror_index < len(self.mirror):
-            if self.DAC is None:
-                NotImplementedError("No DAC found.")
+            if self.DAC is not None:
+                raise NotImplementedError("No DAC found.")
             else:
                 # TODO: logic for applying the affine transform to the position
-                new_position = self.mirror.affine_transform_obj.apply_affine(position)
-                self.mirror[mirror_index].position = new_position
+                print(f'postion before affine transform: {position}')
+                new_position = self.mirror[mirror_index].affine_transform_obj.apply_affine(position)
+                print(f'postion after affine transform: {new_position[0]}{new_position[1]}')
+                self.mirror[mirror_index].position = [new_position[0][0], new_position[1][0]]
         else:
             raise IndexError("Mirror index out of range.")
 

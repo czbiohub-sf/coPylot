@@ -9,8 +9,6 @@ For more details regarding operation, refer to the manuals in https://www.optotu
 from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
-from typing import Tuple
-
 
 class OptoMirror(AbstractMirror):
     def __init__(self, com_port: str = None):
@@ -53,11 +51,11 @@ class OptoMirror(AbstractMirror):
         return self.position_x, self.position_y
 
     @position.setter
-    def position(self, value: Tuple[float, float]):
+    def position(self, value: list[float, float]):
         """
         Parameters
         ----------
-        value:Tuple[float,float]
+        value:list[float,float]
             The normalized angular value, value = theta/tan(50degree)
             50 degree is the maximum optical deflection angle for each direction.
             Here x has a range limits of [-1,1] , The combination of value for x-axis and y-axis should be less than 1
@@ -128,22 +126,22 @@ class OptoMirror(AbstractMirror):
         logger.info(f"position_y set to: {value}")
 
     @property
-    def relative_position(self) -> Tuple[float, float]:
+    def relative_position(self) -> list[float, float]:
         """Get the current relative mirror position"""
         pass
 
     @relative_position.setter
-    def relative_position(self, value: Tuple[float, float]):
+    def relative_position(self, value: list[float, float]):
         """Set the relative mirror position"""
         pass
 
     @property
-    def movement_limits(self) -> Tuple[float, float, float, float]:
+    def movement_limits(self) -> list[float, float, float, float]:
         """Get the current mirror movement limits"""
         pass
 
     @movement_limits.setter
-    def movement_limits(self, value: Tuple[float, float, float, float]):
+    def movement_limits(self, value: list[float, float, float, float]):
         """Set the mirror movement limits"""
         pass
 
@@ -178,6 +176,6 @@ class OptoMirror(AbstractMirror):
         pass
 
     
-    def voltage_to_position(self, voltage: Tuple[float, float]) -> Tuple[float, float]:
+    def voltage_to_position(self, voltage: list[float, float]) -> list[float, float]:
         """Convert voltage to position"""
         pass

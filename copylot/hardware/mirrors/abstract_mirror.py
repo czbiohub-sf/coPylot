@@ -1,6 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from typing import Tuple
-
 
 class AbstractMirror(metaclass=ABCMeta):
     """AbstractMirror
@@ -17,13 +15,13 @@ class AbstractMirror(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def position(self) -> Tuple[float, float]:
+    def position(self) -> list[float,float]:
         """Get the current mirror position XY"""
         pass
 
     @position.setter
     @abstractmethod
-    def position(self, value: Tuple[float, float]):
+    def position(self, value: list[float,float]):
         """Set the mirror position XY"""
         pass
 
@@ -53,25 +51,25 @@ class AbstractMirror(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def relative_position(self) -> Tuple[float, float]:
+    def relative_position(self) -> list[float, float]:
         """Get the current relative mirror position"""
         pass
 
     @relative_position.setter
     @abstractmethod
-    def relative_position(self, value: Tuple[float, float]):
+    def relative_position(self, value: list[float, float]):
         """Set the relative mirror position"""
         pass
 
     @property
     @abstractmethod
-    def movement_limits(self) -> Tuple[float, float, float, float]:
+    def movement_limits(self) -> list[float, float, float, float]:
         """Get the current mirror movement limits"""
         pass
 
     @movement_limits.setter
     @abstractmethod
-    def movement_limits(self, value: Tuple[float, float, float, float]):
+    def movement_limits(self, value: list[float, float, float, float]):
         """Set the mirror movement limits"""
         pass
 
@@ -110,6 +108,6 @@ class AbstractMirror(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def voltage_to_position(self, voltage: Tuple[float, float]) -> Tuple[float, float]:
+    def voltage_to_position(self, voltage: list[float, float]) -> list[float, float]:
         """Convert voltage to position"""
         pass

@@ -76,7 +76,7 @@ class AffineTransform:
         )
         return self.T_affine
 
-    def apply_affine(self, coord_list: list):
+    def apply_affine(self, coord_list: list)->list:
         """
         Perform affine transformation.
         :param coord_list: a list of origin coordinate (e.g. [[x,y], ...] or [[list for ch0], [list for ch1]])

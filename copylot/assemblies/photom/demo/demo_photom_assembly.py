@@ -31,3 +31,5 @@ print(curr_pos)
 
 # %%
 photom_device.calibrate(mirror_index=0, rectangle_size_xy=(0.01, 0.01))
+
+# %%
