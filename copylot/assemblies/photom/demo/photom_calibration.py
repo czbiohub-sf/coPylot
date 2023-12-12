@@ -20,17 +20,18 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 from PyQt5.QtGui import QColor, QPen
-from copylot.assemblies.photom.utils.affine_transform import AffineTransform
+from copylot.assemblies.photom.utils.scanning_algorithms import (
+    calculate_rectangle_corners,
+)
 import numpy as np
 from copylot.assemblies.photom.photom import PhotomAssembly
-from pathlib import Path
 from typing import Tuple
 
 DEMO_MODE = True
 
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
 # TODO: check that the calibration step is implemented properly.
-# TODO: connect marker to actual mirror position
+# TODO: connect marker to actual mirror position. Unclear why it's not working.
 
 
 class LaserWidget(QWidget):
@@ -377,19 +378,6 @@ class PhotomApp(QMainWindow):
         opacity = 1.0 - (transparency_percent / 100.0)  # Calculate opacity (0.0 to 1.0)
         self.photom_window.setWindowOpacity(opacity)  # Update photom_window opacity
 
-    def calculate_rectangle_corners(self, window_size):
-        # window_size is a tuple of (width, height)
-
-        # Calculate the coordinates of the rectangle corners
-        x0y0 = (
-            -window_size[0] / 2,
-            -window_size[1] / 2,
-        )
-        x1y0 = (x0y0[0] + window_size[0], x0y0[1])
-        x1y1 = (x0y0[0] + window_size[0], x0y0[1] + window_size[1])
-        x0y1 = (x0y0[0], x0y0[1] + window_size[1])
-        return x0y0, x1y0, x1y1, x0y1
-
     def display_rectangle(self):
         # Calculate the coordinates of the rectangle corners
         rectangle_scaling = 0.5
@@ -398,7 +386,7 @@ class PhotomApp(QMainWindow):
             (window_size[0] * rectangle_scaling),
             (window_size[1] * rectangle_scaling),
         )
-        rectangle_coords = self.calculate_rectangle_corners(rectangle_size)
+        rectangle_coords = calculate_rectangle_corners(rectangle_size)
         self.photom_window.updateVertices(rectangle_coords)
         self.photom_window.switch_to_calibration_scene()
 
@@ -529,87 +517,7 @@ if __name__ == "__main__":
     import os
 
     if DEMO_MODE:
-
-        class MockLaser:
-            def __init__(self, name, power=0, **kwargs):
-                # Initialize the mock laser
-                self.name = name
-                self.laser_on = False
-
-                self.toggle_emission = 0
-                self.laser_power = power
-
-            @property
-            def toggle_emission(self):
-                """
-                Toggles Laser Emission On and Off
-                (1 = On, 0 = Off)
-                """
-                print(f'Toggling laser {self.name} emission')
-                return self._toggle_emission
-
-            @toggle_emission.setter
-            def toggle_emission(self, value):
-                """
-                Toggles Laser Emission On and Off
-                (1 = On, 0 = Off)
-                """
-                print(f'Laser {self.name} emission set to {value}')
-                self._toggle_emission = value
-
-            @property
-            def laser_power(self):
-                print(f'Laser {self.name} power: {self.power}')
-                return self.power
-
-            @laser_power.setter
-            def laser_power(self, power):
-                self.power = power
-                print(f'Laser {self.name} power set to {power}')
-
-        class MockMirror:
-            def __init__(self, name, pos_x=0, pos_y=0, **kwargs):
-                # Initialize the mock mirror with the given x and y positions
-                self.name = name
-
-                self.pos_x = pos_x
-                self.pos_y = pos_y
-
-                self.position = (self.pos_x, self.pos_y)
-
-            @property
-            def position(self):
-                print(f'Getting mirror position ({self.pos_x}, {self.pos_y})')
-                return self.position_x, self.position_y
-
-            @position.setter
-            def position(self, value: Tuple[float, float]):
-                self.position_x = value[0]
-                self.position_y = value[1]
-                print(f'Mirror {self.name} position set to {value}')
-
-            @property
-            def position_x(self) -> float:
-                """Get the current mirror position X"""
-                print(f'Mirror {self.name} Position_X {self.pos_x}')
-                return self.pos_x
-
-            @position_x.setter
-            def position_x(self, value: float):
-                """Set the mirror position X"""
-                self.pos_x = value
-                print(f'Mirror {self.name} Position_X {self.pos_x}')
-
-            @property
-            def position_y(self) -> float:
-                """Get the current mirror position Y"""
-                return self.pos_y
-
-            @position_y.setter
-            def position_y(self, value: float):
-                """Set the mirror position Y"""
-                self.pos_y = value
-                print(f'Mirror {self.name} Position_Y {self.pos_y}')
+        from copylot.assemblies.photom.photom_mock_devices import MockLaser, MockMirror
 
         Laser = MockLaser
         Mirror = MockMirror
@@ -621,6 +529,7 @@ if __name__ == "__main__":
 
     try:
         os.environ["DISPLAY"] = ":1003"
+
     except:
         raise Exception("DISPLAY environment variable not set")
 
@@ -681,7 +590,7 @@ if __name__ == "__main__":
             (window_size[0] * rectangle_scaling),
             (window_size[1] * rectangle_scaling),
         )
-        rectangle_coords = ctrl_window.calculate_rectangle_corners(rectangle_size)
+        rectangle_coords = calculate_rectangle_corners(rectangle_size)
         # translate each coordinate by the offset
         rectangle_coords = [(x + 30, y) for x, y in rectangle_coords]
         camera_window.updateVertices(rectangle_coords)

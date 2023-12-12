@@ -23,7 +23,6 @@ photom_device?
 # %%
 
 curr_pos = photom_device.get_position(mirror_index=0)
-
 print(curr_pos)
 #%%
 photom_device.set_position(mirror_index=0,position=[0.009,0.009])
@@ -31,3 +30,4 @@ curr_pos = photom_device.get_position(mirror_index=0)
 print(curr_pos)
 
 # %%
+photom_device.calibrate(mirror_index=0, rectangle_size_xy=(0.01, 0.01))

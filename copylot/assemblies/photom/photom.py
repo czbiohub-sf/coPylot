@@ -46,12 +46,18 @@ class PhotomAssembly:
             i = 0
             while self._calibrating:
                 # Logic for calibrating the mirror
-                self.position(mirror_index, rectangle_coords[i])
+                self.set_position(mirror_index, rectangle_coords[i])
                 time.sleep(1)
                 i += 1
                 if i == 3:
                     i = 0
             # moving the mirror in a rectangle
+        else:
+            raise IndexError("Mirror index out of range.")
+
+    def stop_mirror(self, mirror_index: int):
+        if mirror_index < len(self.mirror):
+            self._calibrating = False
         else:
             raise IndexError("Mirror index out of range.")
 
@@ -66,7 +72,8 @@ class PhotomAssembly:
             if self.DAC is None:
                 NotImplementedError("No DAC found.")
             else:
-                return list(self.mirror[mirror_index].position)
+                position = self.mirror[mirror_index].position
+                return list(position)
         else:
             raise IndexError("Mirror index out of range.")
 
@@ -82,8 +89,9 @@ class PhotomAssembly:
             raise IndexError("Mirror index out of range.")
 
     ## LASER Fuctions
-    def get_laser_power(self, laser_index: int, power: float):
-        return self.laser[laser_index].power
+    def get_laser_power(self, laser_index: int) -> float:
+        power = self.laser[laser_index].power
+        return power
 
     def set_laser_power(self, laser_index: int, power: float):
         self.laser[laser_index].power = power
