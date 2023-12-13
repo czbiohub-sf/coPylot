@@ -9,4 +9,4 @@ mirrors:
     COM_port: COM8
     x_position: 0
     y_position: 0
-    affine_matrix_path: C:\Users\ZebraPhysics\Documents\GitHub\coPylot\copylot\assemblies\photom\demo\affine_T.yml
+    affine_matrix_path: ./copylot/assemblies/photom/demo/affine_T.yml

@@ -10,13 +10,21 @@ from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 
+
 class OptoMirror(AbstractMirror):
-    def __init__(self, com_port: str = None):
+    def __init__(
+        self,
+        name: str = "OPTOTUNE_MIRROR",
+        com_port: str = None,
+        pos_x: float = 0.0,
+        pos_y: float = 0.0,
+    ):
         """
         Wrapper for Optotune mirror controller MR-E-2.
         establishes a connection through COM port
 
         """
+        self.name = name
         self.mirror = optoMDC.connect(
             com_port
             if com_port is not None
@@ -31,6 +39,10 @@ class OptoMirror(AbstractMirror):
         self.channel_y.SetControlMode(optoMDC.Units.XY)
         self.channel_y.StaticInput.SetAsInput()
         logger.info("mirror connected")
+        self.position_x = pos_x
+        self.position_y = pos_y
+
+        self._movement_limits = [-1.0, 1.0, -1.0, 1.0]
 
     def __del__(self):
         self.position_x = 0
@@ -138,12 +150,12 @@ class OptoMirror(AbstractMirror):
     @property
     def movement_limits(self) -> list[float, float, float, float]:
         """Get the current mirror movement limits"""
-        pass
+        return self._movement_limits
 
     @movement_limits.setter
     def movement_limits(self, value: list[float, float, float, float]):
         """Set the mirror movement limits"""
-        pass
+        self._movement_limits = value
 
     @property
     def step_resolution(self) -> float:
@@ -155,12 +167,10 @@ class OptoMirror(AbstractMirror):
         """Set the mirror step resolution"""
         pass
 
-    
     def set_home(self):
         """Set the mirror home position"""
         pass
 
-    
     def set_origin(self, axis: str):
         """Set the mirror origin for a specific axis"""
         pass
@@ -175,7 +185,6 @@ class OptoMirror(AbstractMirror):
         """Set the mirror drive mode"""
         pass
 
-    
     def voltage_to_position(self, voltage: list[float, float]) -> list[float, float]:
         """Convert voltage to position"""
         pass

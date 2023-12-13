@@ -1,5 +1,6 @@
 from typing import Tuple
 
+
 class MockLaser:
     def __init__(self, name, power=0, **kwargs):
         # Initialize the mock laser
@@ -37,6 +38,7 @@ class MockLaser:
         self.power = power
         print(f'Laser {self.name} power set to {power}')
 
+
 class MockMirror:
     def __init__(self, name, pos_x=0, pos_y=0, **kwargs):
         # Initialize the mock mirror with the given x and y positions
@@ -46,6 +48,7 @@ class MockMirror:
         self.pos_y = pos_y
 
         self.position = (self.pos_x, self.pos_y)
+        self.movement_limits = [-1, 1, -1, 1]
 
     @property
     def position(self):
@@ -81,3 +84,12 @@ class MockMirror:
         self.pos_y = value
         print(f'Mirror {self.name} Position_Y {self.pos_y}')
 
+    @property
+    def movement_limits(self) -> list[float, float, float, float]:
+        """Get the current mirror movement limits"""
+        return self._movement_limits
+
+    @movement_limits.setter
+    def movement_limits(self, value: list[float, float, float, float]):
+        """Set the mirror movement limits"""
+        self._movement_limits = value
