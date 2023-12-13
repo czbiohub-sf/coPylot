@@ -40,7 +40,7 @@ class PhotomAssembly:
         for i, tx_path in enumerate(affine_matrix_path):
             self.mirror[i].affine_transform_obj = AffineTransform(config_file=tx_path)
 
-    def calibrate(self, mirror_index: int, rectangle_size_xy: tuple[int, int],center=[0.009,0.009]):
+    def calibrate(self, mirror_index: int, rectangle_size_xy: tuple[int, int],center=[0.0,0.0]):
         if mirror_index < len(self.mirror):
             print("Calibrating mirror...")
             rectangle_coords = calculate_rectangle_corners(rectangle_size_xy,center)

@@ -38,5 +38,7 @@ while time.time() - start_time < 5:
     # Your code here
     elapsed_time = time.time() - start_time
     print(f'starttime: {start_time} elapsed_time: {elapsed_time}')
-    photom_device.calibrate(mirror_index=0, rectangle_size_xy=[0.005+center, 0.005+center])
+    photom_device.calibrate(mirror_index=0, rectangle_size_xy=[0.002, 0.002], center=[0.000,0.000])
 photom_device._calibrating = False
+
+# %%
