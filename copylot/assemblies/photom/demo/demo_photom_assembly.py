@@ -30,6 +30,13 @@ curr_pos = photom_device.get_position(mirror_index=0)
 print(curr_pos)
 
 # %%
-photom_device.calibrate(mirror_index=0, rectangle_size_xy=(0.01, 0.01))
-
-# %%
+import time
+start_time = time.time()
+center = 0.009
+photom_device._calibrating = True
+while time.time() - start_time < 5:
+    # Your code here
+    elapsed_time = time.time() - start_time
+    print(f'starttime: {start_time} elapsed_time: {elapsed_time}')
+    photom_device.calibrate(mirror_index=0, rectangle_size_xy=[0.005+center, 0.005+center])
+photom_device._calibrating = False
