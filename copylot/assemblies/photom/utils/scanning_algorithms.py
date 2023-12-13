@@ -196,15 +196,17 @@ class ScanAlgorithm:
         return cord_x, cord_y
 
 
-def calculate_rectangle_corners(window_size):
+def calculate_rectangle_corners(window_size: tuple[int, int],center=[0.0,0.0]):
     # window_size is a tuple of (width, height)
 
     # Calculate the coordinates of the rectangle corners
-    x0y0 = (
-        -window_size[0] / 2,
-        -window_size[1] / 2,
-    )
-    x1y0 = (x0y0[0] + window_size[0], x0y0[1])
-    x1y1 = (x0y0[0] + window_size[0], x0y0[1] + window_size[1])
-    x0y1 = (x0y0[0], x0y0[1] + window_size[1])
-    return x0y0, x1y0, x1y1, x0y1
+    x0y0 = [
+        -window_size[0] / 2 + center[0],
+        -window_size[1] / 2 + center[1],
+    ]
+    x1y0 = [x0y0[0] + window_size[0], x0y0[1]]
+    x1y1 = [x0y0[0] + window_size[0], x0y0[1] + window_size[1]]
+    x0y1 = [x0y0[0], x0y0[1] + window_size[1]]
+    
+    
+    return [x0y0, x1y0, x1y1, x0y1]
