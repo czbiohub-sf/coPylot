@@ -1,6 +1,6 @@
 import sys
 import yaml
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -26,7 +26,7 @@ from copylot.assemblies.photom.utils.scanning_algorithms import (
 from copylot.assemblies.photom.utils.qt_utils import DoubleSlider
 import numpy as np
 from copylot.assemblies.photom.photom import PhotomAssembly
-from typing import Tuple
+from typing import Any, Tuple
 
 # DEMO_MODE = True
 DEMO_MODE = False
@@ -131,7 +131,6 @@ class MirrorWidget(QWidget):
         self.setLayout(layout)
 
     def update_mirror_x(self, value):
-        print(f'updating mirror x to {value}')
         self.mirror.position_x = value
         # Update the QLabel with the new X value
         self.mirror_x_label.setText(f"X: {value}")
@@ -166,6 +165,10 @@ class PhotomApp(QMainWindow):
         self.photom_window_size = photom_window_size
         self.photom_window_pos = photom_window_pos
         self._current_mirror_idx = 0
+
+        self.calibration_thread = CalibrationThread(
+            self.photom_assembly, self._current_mirror_idx
+        )
 
         if DEMO_MODE:
             self.demo_window = demo_window
@@ -302,14 +305,11 @@ class PhotomApp(QMainWindow):
             print(f'Calibrating mirror: {self._current_mirror_idx}')
         else:
             self.photom_assembly._calibrating = True
-            self.photom_assembly.calibrate(
-                self._current_mirror_idx,
-                rectangle_size_xy=[0.002, 0.002],
-                center=[0.000, 0.000],
-            )
+            self.calibration_thread.start()
 
     def cancel_calibration(self):
         self.photom_assembly._calibrating = False
+
         # Implement your cancel calibration function here
         print("Canceling calibration...")
         # Hide the "Done Calibration" button
@@ -398,6 +398,23 @@ class PhotomApp(QMainWindow):
         rectangle_coords = calculate_rectangle_corners(rectangle_size)
         self.photom_window.updateVertices(rectangle_coords)
         self.photom_window.switch_to_calibration_scene()
+
+
+class CalibrationThread(QThread):
+    finished = pyqtSignal()
+
+    def __init__(self, photom_assembly, current_mirror_idx):
+        super().__init__()
+        self.photom_assembly = photom_assembly
+        self.current_mirror_idx = current_mirror_idx
+
+    def run(self):
+        self.photom_assembly.calibrate(
+            self.current_mirror_idx,
+            rectangle_size_xy=[0.002, 0.002],
+            center=[0.000, 0.000],
+        )
+        self.finished.emit()
 
 
 class LaserMarkerWindow(QMainWindow):
