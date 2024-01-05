@@ -35,6 +35,7 @@ DEMO_MODE = False
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
 # TODO: check that the calibration step is implemented properly.
 # TODO: connect marker to actual mirror position. Unclear why it's not working.
+# TODO: verify that if you move the window, the markers frame of reference is still the same
 
 
 class LaserWidget(QWidget):
@@ -327,11 +328,20 @@ class PhotomApp(QMainWindow):
         self.photom_assembly._calibrating = False
         # TODO: Logic to return to some position
 
-        # Perform any necessary actions after calibration is done
+        ## Perform any necessary actions after calibration is done
+        # Get the mirror (target) positions
         self.target_pts = self.photom_window.get_coordinates()
         origin = np.array(
             [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
         )
+
+        # Mirror calibration size
+        mirror_calib_size = self.photom_assembly._calibration_rectangle_size_xy
+        self.target_pts = [
+            [pts[0] * mirror_calib_size[0], pts[1] * mirror_calib_size[1]]
+            for pts in self.target_pts
+        ]
+
         dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
 
         T_affine = self.photom_assembly.mirror[
@@ -411,7 +421,7 @@ class CalibrationThread(QThread):
     def run(self):
         self.photom_assembly.calibrate(
             self.current_mirror_idx,
-            rectangle_size_xy=[0.002, 0.002],
+            rectangle_size_xy=self.photom_assembly._calibration_rectangle_size_xy,
             center=[0.000, 0.000],
         )
         self.finished.emit()

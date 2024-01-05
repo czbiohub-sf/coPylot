@@ -15,7 +15,8 @@ from typing import Tuple
 import time
 from typing import Optional
 
-#TODO: add the logger from copylot
+# TODO: add the logger from copylot
+
 
 class PhotomAssembly:
     def __init__(
@@ -24,7 +25,7 @@ class PhotomAssembly:
         mirror: list[AbstractMirror],
         affine_matrix_path: list[Path],
         camera: Optional[list[AbstractCamera]] = None,
-        dac: Optional[list[AbstractDAQ]]= None,
+        dac: Optional[list[AbstractDAQ]] = None,
     ):
         # hardware
         self.camera = camera
@@ -34,17 +35,23 @@ class PhotomAssembly:
 
         self._calibrating = False
 
+        # TODO: replace these hardcoded values to mirror's scan steps given the magnification
+        # and the mirrors angles
+        self._calibration_rectangle_size_xy = [0.002, 0.002]
+
         assert len(self.mirror) == len(affine_matrix_path)
 
         # Apply AffineTransform to each mirror
         for i, tx_path in enumerate(affine_matrix_path):
             self.mirror[i].affine_transform_obj = AffineTransform(config_file=tx_path)
 
-    def calibrate(self, mirror_index: int, rectangle_size_xy: tuple[int, int],center=[0.0,0.0]):
+    def calibrate(
+        self, mirror_index: int, rectangle_size_xy: tuple[int, int], center=[0.0, 0.0]
+    ):
         if mirror_index < len(self.mirror):
             print("Calibrating mirror...")
-            rectangle_coords = calculate_rectangle_corners(rectangle_size_xy,center)
-            #offset the rectangle coords by the center
+            rectangle_coords = calculate_rectangle_corners(rectangle_size_xy, center)
+            # offset the rectangle coords by the center
             # iterate over each corner and move the mirror
             i = 0
             while self._calibrating:
@@ -87,9 +94,16 @@ class PhotomAssembly:
             else:
                 # TODO: logic for applying the affine transform to the position
                 print(f'postion before affine transform: {position}')
-                new_position = self.mirror[mirror_index].affine_transform_obj.apply_affine(position)
-                print(f'postion after affine transform: {new_position[0]}{new_position[1]}')
-                self.mirror[mirror_index].position = [new_position[0][0], new_position[1][0]]
+                new_position = self.mirror[
+                    mirror_index
+                ].affine_transform_obj.apply_affine(position)
+                print(
+                    f'postion after affine transform: {new_position[0]}{new_position[1]}'
+                )
+                self.mirror[mirror_index].position = [
+                    new_position[0][0],
+                    new_position[1][0],
+                ]
         else:
             raise IndexError("Mirror index out of range.")
 
