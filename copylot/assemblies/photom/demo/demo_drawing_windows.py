@@ -29,77 +29,56 @@ class CustomWindow(QMainWindow):
         self.board_num = 0
         self.setWindowOpacity(0.7)
         self.scale = 0.025
-        self.offset = (-0.032000, -0.046200)
 
         self.view = None
         self.scene = None
-        self.initMarker()
         self.initUI()
+        self.initMarker()
+        self.show()
         print(
             f'liveView actual {self.frameGeometry().x(), self.frameGeometry().y(), self.width(), self.height()}'
         )
         print(self.frameGeometry().height(), self.frameGeometry().width())
 
     def initUI(self):
-        # self.setGeometry(
-        #     self.windowGeo[0],
-        #     self.windowGeo[1],
-        #     self.windowGeo[2],
-        #     self.windowGeo[3],
-        # )
         self.setWindowTitle('Mouse Tracker')
         self.setFixedSize(
             self.windowGeo[2],
             self.windowGeo[3],
         )
-        self.show()
+        self.sidebar_size = self.frameGeometry().width() - self.windowGeo[2]
+        self.topbar_size = self.frameGeometry().height() - self.windowGeo[3]
+        self.canvas_width = self.frameGeometry().width() - self.sidebar_size
+        self.canvas_height = self.frameGeometry().height() - self.topbar_size
+        print(f'sidebar size: {self.sidebar_size}, topbar size: {self.topbar_size}')
+        print(f'canvas width: {self.canvas_width}, canvas height: {self.canvas_height}')
 
     def initMarker(self):
         self.scene = QGraphicsScene(self)
+        self.scene.setSceneRect(0, 0, self.canvas_width, self.canvas_width)
+
         self.view = QGraphicsView(self.scene)
         self.view.setMouseTracking(True)
         self.setCentralWidget(self.view)
         self.view.setAlignment(Qt.AlignTop | Qt.AlignLeft)
         self.view.viewport().installEventFilter(self)
-
         self.setMouseTracking(True)
+        # Scene items
         self.marker = QGraphicsSimpleTextItem('X')
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.scene.addItem(self.marker)
-        self.view.setScene(self.scene)
+
         # Disable scrollbars
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
-        self.sidebar_size = self.frameGeometry().width() - self.windowGeo[2]
-        self.topbar_size = self.frameGeometry().height() - self.windowGeo[3]
-        self.canvas_width = self.view.frameGeometry().width() - self.sidebar_size
-        self.canvas_height = self.view.frameGeometry().height() - self.topbar_size
-        print(f'sidebar size: {self.sidebar_size}, topbar size: {self.topbar_size}')
-        print(f'canvas width: {self.canvas_width}, canvas height: {self.canvas_height}')
+        # Move the marker
         self.display_marker_center(
-            self.marker, (self.canvas_width / 2, -self.canvas_height / 2)
+            self.marker, (self.canvas_width / 2, self.canvas_height / 2)
         )
 
-    def recordinate(self, rawcord):
-        return -self.scale * (rawcord - (self.windowGeo[2] / 2)) / 50
-
-    # def mouseMoveEvent(self, event: 'QGraphicsSceneMouseEvent'):
-    #     new_cursor_position = event.screenPos()
-
-    #     print(f'current x: {new_cursor_position}')
-
-    # def mousePressEvent(self, event):
-    #     # marker_x = self.marker.pos().x()
-    #     # marker_y = self.marker.pos().y()
-    #     marker_x, marker_y = self.get_marker_center(self.marker)
-    #     print(f'x position: {(marker_x, marker_y)}')
-
-    #     # print('Mouse press coords: ( %f : %f )' % (self.mouseX, self.mouseY))
-
-    # def mouseReleaseEvent(self, event):
-    #     pass
-    #     # print('Mouse release coords: ( %f : %f )' % (self.mouseX, self.mouseY))
+        # Add items and set the scene
+        self.scene.addItem(self.marker)
+        self.view.setScene(self.scene)
 
     def get_marker_center(self, marker):
         fm = QFontMetricsF(QFont())
@@ -109,36 +88,32 @@ class CustomWindow(QMainWindow):
         y = marker.pos().y() + mergintop + boundingRect.height() / 2
         return x, y
 
-    def display_marker_center(self, marker, cord=None):
-        if cord is None:
-            cord = (marker.x(), marker.y())
+    def display_marker_center(self, marker, coords=None):
+        if coords is None:
+            coords = (marker.x(), marker.y())
 
-        # Get the font metrics for accurate measurement
-        fm = QFontMetricsF(marker.font())
-
-        # Calculate the bounding rectangle of the text
-        boundingRect = fm.boundingRect(marker.text())
-
-        # Calculate the correct position to move the marker
-        # so that its center is at the specified coordinates
-        newX = cord[0] - boundingRect.width() / 2
-        newY = cord[1] - boundingRect.height() / 2
-
-        # Set the new position of the marker
-        marker.setPos(newX, newY)
+        if coords is None:
+            coords = (marker.x(), marker.y())
+        fm = QFontMetricsF(QFont())
+        boundingRect = fm.tightBoundingRect(marker.text())
+        mergintop = fm.ascent() + boundingRect.top()
+        marker.setPos(
+            coords[0] - boundingRect.left() - boundingRect.width() / 2,
+            coords[1] - mergintop - boundingRect.height() / 2,
+        )
         return marker
 
     def eventFilter(self, source, event):
         "The mouse movements do not work without this function"
         if event.type() == QMouseEvent.MouseMove:
             print('mouse move')
-            print(f'x: {event.screenPos().x()}, y: {event.screenPos().y()}')
+            print(f'x1: {event.screenPos().x()}, y1: {event.screenPos().y()}')
             # print(f'x: {event.posF().x()}, y: {event.posF().y()}')
             # print(f'x: {event.localPosF().x()}, y: {event.localPosF().y()}')
             # print(f'x: {event.windowPosF().x()}, y: {event.windowPosF().y()}')
             # print(f'x: {event.screenPosF().x()}, y: {event.screenPosF().y()}')
             # print(f'x: {event.globalPosF().x()}, y: {event.globalPosF().y()}')
-            print(f'x: {event.pos().x()}, y: {event.pos().y()}')
+            print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
         elif event.type() == QMouseEvent.MouseButtonPress:
             print('mouse button pressed')
             if event.buttons() == Qt.LeftButton:
@@ -217,7 +192,13 @@ class CtrlWindow(QMainWindow):
             self.mouse_tracker_window.marker
         )
         print(f'x: {x}, y: {y}')
-        self.mouse_tracker_window.marker.setPos(0, 0)
+        self.mouse_tracker_window.display_marker_center(
+            self.mouse_tracker_window.marker,
+            (
+                self.mouse_tracker_window.canvas_width / 2,
+                self.mouse_tracker_window.canvas_height / 2,
+            ),
+        )
         # self.mouse_tracker_windowdisplay_marker_center(self.mouse_tracker_window.marker, (0.0, 0.0))
         # self.mouse_tracker_window.marker.setPos(0, 0)
 
