@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QFileDialog,
 )
-from PyQt5.QtGui import QColor, QPen
+from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )
@@ -33,9 +33,6 @@ DEMO_MODE = False
 
 
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
-# TODO: check that the calibration step is implemented properly.
-# TODO: connect marker to actual mirror position. Unclear why it's not working.
-# TODO: verify that if you move the window, the markers frame of reference is still the same
 
 
 class LaserWidget(QWidget):
@@ -166,6 +163,7 @@ class PhotomApp(QMainWindow):
         self.photom_window_size = photom_window_size
         self.photom_window_pos = photom_window_pos
         self._current_mirror_idx = 0
+        self._laser_window_transparency = 0.7
 
         self.calibration_thread = CalibrationThread(
             self.photom_assembly, self._current_mirror_idx
@@ -211,7 +209,9 @@ class PhotomApp(QMainWindow):
         self.transparency_slider = QSlider(Qt.Horizontal)
         self.transparency_slider.setMinimum(0)
         self.transparency_slider.setMaximum(100)
-        self.transparency_slider.setValue(100)  # Initial value is fully opaque
+        self.transparency_slider.setValue(
+            int(self._laser_window_transparency * 100)
+        )  # Initial value is fully opaque
         self.transparency_slider.valueChanged.connect(self.update_transparency)
         transparency_layout.addWidget(self.transparency_slider)
 
@@ -235,7 +235,7 @@ class PhotomApp(QMainWindow):
         mirror_layout = QVBoxLayout()
 
         self.mirror_widgets = []
-        for mirror in self.mirrors:
+        for idx, mirror in enumerate(self.mirrors):
             mirror_widget = MirrorWidget(mirror)
             self.mirror_widgets.append(mirror_widget)
             mirror_layout.addWidget(mirror_widget)
@@ -253,9 +253,17 @@ class PhotomApp(QMainWindow):
         self.mirror_dropdown.setCurrentIndex(self._current_mirror_idx)
         self.mirror_dropdown.currentIndexChanged.connect(self.mirror_dropdown_changed)
 
+        self.recenter_marker_button = QPushButton("Recenter Marker")
+        self.recenter_marker_button.clicked.connect(self.recenter_marker)
+        main_layout.addWidget(self.recenter_marker_button)
+
         self.calibrate_button = QPushButton("Calibrate")
         self.calibrate_button.clicked.connect(self.calibrate)
         main_layout.addWidget(self.calibrate_button)
+
+        self.load_calibration_button = QPushButton("Load Calibration")
+        self.load_calibration_button.clicked.connect(self.load_calibration)
+        main_layout.addWidget(self.load_calibration_button)
 
         # Add a "Done Calibration" button (initially hidden)
         self.done_calibration_button = QPushButton("Done Calibration")
@@ -281,21 +289,25 @@ class PhotomApp(QMainWindow):
         # Reset to (0,0) position
         self.photom_assembly.mirror[self._current_mirror_idx].position = [0, 0]
 
+    def recenter_marker(self):
+        self.photom_window.display_marker_center(
+            self.photom_window.marker,
+            (self.photom_window.canvas_width / 2, self.photom_window.canvas_height / 2),
+        )
+
     def calibrate(self):
         # Implement your calibration function here
         print("Calibrating...")
-        # Hide the 'X' marker in photom_window
-        # self.photom_window.marker.hide()
         # Hide the calibrate button
         self.calibrate_button.hide()
+        self.load_calibration_button.hide()
         # Show the "Cancel Calibration" button
         self.cancel_calibration_button.show()
         # Display the rectangle
         self.display_rectangle()
-        self.source_pts = self.photom_window.get_coordinates()
         # Show the "Done Calibration" button
         self.done_calibration_button.show()
-
+        # Get the mirror idx
         selected_mirror_name = self.mirror_dropdown.currentText()
         self._current_mirror_idx = next(
             i
@@ -307,6 +319,29 @@ class PhotomApp(QMainWindow):
         else:
             self.photom_assembly._calibrating = True
             self.calibration_thread.start()
+            self.photom_assembly.mirror[
+                self._current_mirror_idx
+            ].affine_transform_obj.reset_T_affine()
+
+    def load_calibration(self):
+        self.photom_assembly._calibrating = False
+        print("Loading calibration...")
+        # Prompt the user to select a file
+        typed_filename, _ = QFileDialog.getOpenFileName(
+            self, "Open Calibration File", "", "YAML Files (*.yml)"
+        )
+        if typed_filename:
+            assert typed_filename.endswith(".yml")
+            print("Selected file:", typed_filename)
+            # Load the matrix
+            self.photom_assembly.mirror[
+                self._current_mirror_idx
+            ].affine_transform_obj.load_matrix(config_file=typed_filename)
+            print(
+                f'Loaded matrix:{self.photom_assembly.mirror[self._current_mirror_idx].affine_transform_obj.T_affine}'
+            )
+            self.photom_window.switch_to_shooting_scene()
+            self.photom_window.marker.show()
 
     def cancel_calibration(self):
         self.photom_assembly._calibrating = False
@@ -317,6 +352,7 @@ class PhotomApp(QMainWindow):
         self.done_calibration_button.hide()
         # Show the "Calibrate" button
         self.calibrate_button.show()
+        self.load_calibration_button.show()
         # Show the "X" marker in photom_window
         self.photom_window.marker.show()
 
@@ -331,22 +367,27 @@ class PhotomApp(QMainWindow):
         ## Perform any necessary actions after calibration is done
         # Get the mirror (target) positions
         self.target_pts = self.photom_window.get_coordinates()
-        origin = np.array(
-            [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
-        )
 
         # Mirror calibration size
         mirror_calib_size = self.photom_assembly._calibration_rectangle_size_xy
-        self.target_pts = [
-            [pts[0] * mirror_calib_size[0], pts[1] * mirror_calib_size[1]]
-            for pts in self.target_pts
-        ]
-
-        dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
-
+        origin = np.array(
+            [[pt.x(), pt.y()] for pt in self.target_pts],
+            dtype=np.float32,
+        )
+        # TODO make the dest points from the mirror calibration size
+        mirror_x = mirror_calib_size[0] / 2
+        mirror_y = mirror_calib_size[1] / 2
+        dest = np.array(
+            [
+                [-mirror_x, -mirror_y],
+                [mirror_x, -mirror_y],
+                [mirror_x, mirror_y],
+                [-mirror_x, mirror_y],
+            ]
+        )
         T_affine = self.photom_assembly.mirror[
             self._current_mirror_idx
-        ].affine_transform_obj.get_affine_matrix(dest, origin)
+        ].affine_transform_obj.get_affine_matrix(origin, dest)
         # logger.debug(f"Affine matrix: {T_affine}")
         print(f"Affine matrix: {T_affine}")
 
@@ -398,15 +439,6 @@ class PhotomApp(QMainWindow):
         self.photom_window.setWindowOpacity(opacity)  # Update photom_window opacity
 
     def display_rectangle(self):
-        # Calculate the coordinates of the rectangle corners
-        rectangle_scaling = 0.5
-        window_size = (self.photom_window.width(), self.photom_window.height())
-        rectangle_size = (
-            (window_size[0] * rectangle_scaling),
-            (window_size[1] * rectangle_scaling),
-        )
-        rectangle_coords = calculate_rectangle_corners(rectangle_size)
-        self.photom_window.updateVertices(rectangle_coords)
         self.photom_window.switch_to_calibration_scene()
 
 
@@ -440,31 +472,38 @@ class LaserMarkerWindow(QMainWindow):
         self.window_name = name
         self.window_geometry = window_pos + window_size
         self.setMouseTracking(True)
-        self.mouseX = None
-        self.mouseY = None
-        self.setWindowOpacity(0.7)
-        self.scale = 0.025
-        # self.offset = (-0.032000, -0.046200)
+        self.setWindowOpacity(self.photom_controls._laser_window_transparency)
 
         # Create a QStackedWidget
+        # TODO: do we need the stacked widget?
         self.stacked_widget = QStackedWidget()
         # Set the QStackedWidget as the central widget
-
-        self.initMarker()
-        self.init_tetragon()
-
         self.initialize_UI()
+        self.initMarker()
+
+        tetragon_coords = calculate_rectangle_corners(
+            [self.canvas_width / 5, self.canvas_height / 5],
+            center=[self.canvas_width / 2, self.canvas_height / 2],
+        )
+        self.init_tetragon(tetragon_coords=tetragon_coords)
 
         self.setCentralWidget(self.stacked_widget)
 
+        self.switch_to_shooting_scene()
+
+        # Flags for mouse tracking
+        # NOTE: these are variables inherited from the photom_controls
+        self.calibration_mode = self.photom_controls.photom_assembly._calibrating
+
+        # show the window
+        self.show()
+
+        # FLAGS
+        self._right_click_hold = False
+        self._left_click_hold = False
+
     def initialize_UI(self):
         print(f'window geometry: {self.window_geometry}')
-        self.setGeometry(
-            self.window_geometry[0],
-            self.window_geometry[1],
-            self.window_geometry[2],
-            self.window_geometry[3],
-        )
         self.setWindowTitle(self.window_name)
 
         # Fix the size of the window
@@ -472,37 +511,78 @@ class LaserMarkerWindow(QMainWindow):
             self.window_geometry[2],
             self.window_geometry[3],
         )
-        self.switch_to_shooting_scene()
-        self.show()
+        self.sidebar_size = self.frameGeometry().width() - self.window_geometry[2]
+        self.topbar_size = self.frameGeometry().height() - self.window_geometry[3]
+        self.canvas_width = self.frameGeometry().width() - self.sidebar_size
+        self.canvas_height = self.frameGeometry().height() - self.topbar_size
+
+        print(f'sidebar size: {self.sidebar_size}, topbar size: {self.topbar_size}')
+        print(f'canvas width: {self.canvas_width}, canvas height: {self.canvas_height}')
 
     def initMarker(self):
+        # Generate the shooting scene
         self.shooting_scene = QGraphicsScene(self)
+        self.shooting_scene.setSceneRect(0, 0, self.canvas_width, self.canvas_height)
+
+        # Generate the shooting view
         self.shooting_view = QGraphicsView(self.shooting_scene)
         self.shooting_view.setMouseTracking(True)
         self.setCentralWidget(self.shooting_view)
+        self.shooting_view.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        # Mouse tracking
+        self.shooting_view.installEventFilter(self)
         self.setMouseTracking(True)
         self.marker = QGraphicsSimpleTextItem("X")
+        self.marker.setBrush(QColor(255, 0, 0))
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
-        self.shooting_scene.addItem(self.marker)
+        self.shooting_view.viewport().installEventFilter(self)
+        # Position the marker
+        self.display_marker_center(
+            self.marker, (self.canvas_width / 2, self.canvas_height / 2)
+        )
 
+        self.shooting_scene.addItem(self.marker)
         # Add the view to the QStackedWidget
         self.stacked_widget.addWidget(self.shooting_view)
+
+        # Disable scrollbars
+        self.shooting_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.shooting_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
 
     def init_tetragon(
         self, tetragon_coords: list = [(100, 100), (200, 100), (200, 200), (100, 200)]
     ):
+        # Generate the calibration scene
         self.calibration_scene = QGraphicsScene(self)
+        self.calibration_scene.setSceneRect(0, 0, self.canvas_width, self.canvas_height)
+
+        # Generate the calibration view
         self.calibration_view = QGraphicsView(self.calibration_scene)
-        self.calibration_view.setMouseTracking(True)
-        self.setCentralWidget(self.calibration_view)
-        self.setMouseTracking(True)
+        self.calibration_view.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+
+        # Disable scrollbars
+        self.calibration_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.calibration_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Add the tetragon to the calibration scene
         self.vertices = []
         for x, y in tetragon_coords:
-            vertex = QGraphicsEllipseItem(x - 5, y - 5, 10, 10)
+            vertex = QGraphicsEllipseItem(0, 0, 10, 10)
             vertex.setBrush(Qt.red)
             vertex.setFlag(QGraphicsEllipseItem.ItemIsMovable)
+            vertex.setPos(x, y)
             self.vertices.append(vertex)
             self.calibration_scene.addItem(vertex)
+            print(f"Vertex added at: ({x}, {y})")  # Debugging statement
+
+        print(
+            f"Scene Rect: {self.calibration_scene.sceneRect()}"
+        )  # Debugging statement
+
+        # Mouse tracking
+        self.calibration_view.installEventFilter(self)
+        self.setMouseTracking(True)
 
         # Add the view to the QStackedWidget
         self.stacked_widget.addWidget(self.calibration_view)
@@ -516,33 +596,112 @@ class LaserMarkerWindow(QMainWindow):
     def get_coordinates(self):
         return [vertex.pos() for vertex in self.vertices]
 
-    def updateVertices(self, new_coordinates):
+    def create_tetragon(self, tetragon_coords):
+        # Add the tetragon to the calibration scene
+        self.vertices = []
+        for x, y in tetragon_coords:
+            vertex = QGraphicsEllipseItem(x - 5, y - 5, 10, 10)
+            vertex.setBrush(Qt.red)
+            vertex.setFlag(QGraphicsEllipseItem.ItemIsMovable)
+            self.vertices.append(vertex)
+            vertex.setVisible(True)  # Show the item
+            self.calibration_scene.addItem(vertex)
+
+    def update_vertices(self, new_coordinates):
+        # Check if the lengths of vertices and new_coordinates match
+        if len(self.vertices) != len(new_coordinates):
+            print("Error: Mismatch in the number of vertices and new coordinates")
+            return
         for vertex, (x, y) in zip(self.vertices, new_coordinates):
             vertex.setPos(x, y)
+            print(f'vertex pos: {vertex.pos()}')
 
-    def recordinate(self, rawcord):
-        return -self.scale * (rawcord - (self.window_geometry[2] / 2)) / 50
+    def eventFilter(self, source, event):
+        "The mouse movements do not work without this function"
+        self.calibration_mode = self.photom_controls.photom_assembly._calibrating
+        if event.type() == QMouseEvent.MouseMove:
+            pass
+            if self._left_click_hold and not self.calibration_mode:
+                # Move the mirror around if the left button is clicked
+                self._move_marker_and_update_sliders()
+            # Debugging statements
+            # print('mouse move')
+            # print(f'x1: {event.screenPos().x()}, y1: {event.screenPos().y()}')
+            # print(f'x: {event.posF().x()}, y: {event.posF().y()}')
+            # print(f'x: {event.localPosF().x()}, y: {event.localPosF().y()}')
+            # print(f'x: {event.windowPosF().x()}, y: {event.windowPosF().y()}')
+            # print(f'x: {event.screenPosF().x()}, y: {event.screenPosF().y()}')
+            # print(f'x: {event.globalPosF().x()}, y: {event.globalPosF().y()}')
+            # print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
+        elif event.type() == QMouseEvent.MouseButtonPress:
+            print('mouse button pressed')
+            if self.calibration_mode:
+                print('calibration mode')
+                if event.buttons() == Qt.LeftButton:
+                    self._left_click_hold = True
+                    print('left button pressed')
+                    # print(f'x: {event.posF().x()}, y: {event.posF().y()}')
+                    print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
+                elif event.buttons() == Qt.RightButton:
+                    self._right_click_hold = True
+                    print('right button pressed')
+            else:
+                print('shooting mode')
+                if event.buttons() == Qt.LeftButton:
+                    self._left_click_hold = True
+                    print('left button pressed')
+                    print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
+                    self._move_marker_and_update_sliders()
+                elif event.buttons() == Qt.RightButton:
+                    self._right_click_hold = True
+                    print('right button pressed')
+        elif event.type() == QMouseEvent.MouseButtonRelease:
+            print('mouse button released')
+            if event.buttons() == Qt.LeftButton:
+                self._left_click_hold = False
+                print('left button released')
+            elif event.buttons() == Qt.RightButton:
+                self._right_click_hold = False
+                print('right button released')
 
-    def mouseMoveEvent(self, event: "QGraphicsSceneMouseEvent"):
-        new_cursor_position = event.screenPos()
-        print(f"current x: {new_cursor_position}")
+        return super(LaserMarkerWindow, self).eventFilter(source, event)
 
-    def mousePressEvent(self, event):
-        marker_x = self.marker.pos().x()
-        marker_y = self.marker.pos().y()
-        print(f"x position (x,y): {(marker_x, marker_y)}")
-        # print('Mouse press coords: ( %f : %f )' % (self.mouseX, self.mouseY))
+    def _move_marker_and_update_sliders(self):
         # Update the mirror slider values
         if self.photom_controls is not None:
+            marker_position = [self.marker.pos().x(), self.marker.pos().y()]
+            new_coords = self.photom_controls.mirror_widgets[
+                self.photom_controls._current_mirror_idx
+            ].mirror.affine_transform_obj.apply_affine(marker_position)
             self.photom_controls.mirror_widgets[
                 self.photom_controls._current_mirror_idx
-            ].mirror_x_slider.setValue(int(self.marker.pos().x()))
+            ].mirror_x_slider.setValue(new_coords[0][0])
             self.photom_controls.mirror_widgets[
                 self.photom_controls._current_mirror_idx
-            ].mirror_y_slider.setValue(int(self.marker.pos().y()))
+            ].mirror_y_slider.setValue(new_coords[1][0])
 
-    def mouseReleaseEvent(self, event):
-        print("Mouse release coords: ( %f : %f )" % (self.mouseX, self.mouseY))
+    def get_marker_center(self, marker):
+        fm = QFontMetricsF(QFont())
+        boundingRect = fm.tightBoundingRect(marker.text())
+        mergintop = fm.ascent() + boundingRect.top()
+        x = marker.pos().x() + boundingRect.left() + boundingRect.width() / 2
+        y = marker.pos().y() + mergintop + boundingRect.height() / 2
+        return x, y
+
+    def display_marker_center(self, marker, coords=None):
+        if coords is None:
+            coords = (marker.x(), marker.y())
+
+        if coords is None:
+            coords = (marker.x(), marker.y())
+        fm = QFontMetricsF(QFont())
+        boundingRect = fm.tightBoundingRect(marker.text())
+        mergintop = fm.ascent() + boundingRect.top()
+        marker.setPos(
+            coords[0] - boundingRect.left() - boundingRect.width() / 2,
+            coords[1] - mergintop - boundingRect.height() / 2,
+        )
+        return marker
 
 
 if __name__ == "__main__":
@@ -562,12 +721,6 @@ if __name__ == "__main__":
 
         Laser = MockLaser
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
-
-    # try:
-    #     os.environ["DISPLAY"] = ":1003"
-
-    # except:
-    #     raise Exception("DISPLAY environment variable not set")
 
     config_path = r"./copylot/assemblies/photom/demo/photom_VIS_config.yml"
 
@@ -628,7 +781,7 @@ if __name__ == "__main__":
         rectangle_coords = calculate_rectangle_corners(rectangle_size)
         # translate each coordinate by the offset
         rectangle_coords = [(x + 30, y) for x, y in rectangle_coords]
-        camera_window.updateVertices(rectangle_coords)
+        camera_window.update_vertices(rectangle_coords)
     else:
         # Set the positions of the windows
         ctrl_window = PhotomApp(

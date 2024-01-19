@@ -76,7 +76,7 @@ class AffineTransform:
         )
         return self.T_affine
 
-    def apply_affine(self, coord_list: list)->list:
+    def apply_affine(self, coord_list: list) -> list:
         """
         Perform affine transformation.
         :param coord_list: a list of origin coordinate (e.g. [[x,y], ...] or [[list for ch0], [list for ch1]])
@@ -152,3 +152,19 @@ class AffineTransform:
             affine_transform_yx=matrix.tolist(),
         )
         model_to_yaml(model, self.config_file)
+
+    def load_matrix(self, config_file: Path = None) -> None:
+        """
+        Load affine matrix from a YAML file.
+
+        Parameters
+        ----------
+        config_file : str, optional
+            path to the YAML file, by default None will load the current config_file.
+            This updates the config_file attribute.
+        """
+        if config_file is not None:
+            self.config_file = config_file
+
+        settings = yaml_to_model(self.config_file, AffineTransformationSettings)
+        self.T_affine = np.array(settings.affine_transform_yx)
