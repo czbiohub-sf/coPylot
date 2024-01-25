@@ -1,8 +1,6 @@
 lasers:
-  - name: laser_1
-    power: 50
-  - name: laser_2
-    power: 30
+  - name: laser_405
+    COM_port: COM7
     
 mirrors:
   - name: mirror_1_VIS

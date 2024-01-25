@@ -31,8 +31,10 @@ from typing import Any, Tuple
 # DEMO_MODE = True
 DEMO_MODE = False
 
-
+# TODO fix the right click releaser
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
+# TODO: update the mock laser and mirror
+# TODO: replace the entry boxes tos et the laser powers
 
 
 class LaserWidget(QWidget):
@@ -41,12 +43,18 @@ class LaserWidget(QWidget):
         self.laser = laser
 
         self.emission_state = 0  # 0 = off, 1 = on
+        self.emission_delay = 0.0
+
+        self._curr_power = 0.0
+        self._slider_decimal = 1
 
         self.initializer_laser()
         self.initialize_UI()
 
     def initializer_laser(self):
         self.laser.toggle_emission = self.emission_state
+        self.laser.power = self._curr_power
+        self.laser.emission_delay = self.emission_delay
 
     def initialize_UI(self):
         layout = QVBoxLayout()
@@ -54,15 +62,17 @@ class LaserWidget(QWidget):
         self.laser_label = QLabel(self.laser.name)
         layout.addWidget(self.laser_label)
 
-        self.laser_power_slider = QSlider(Qt.Horizontal)
+        self.laser_power_slider = DoubleSlider(
+            orientation=Qt.Horizontal, decimals=self._slider_decimal
+        )
         self.laser_power_slider.setMinimum(0)
         self.laser_power_slider.setMaximum(100)
-        self.laser_power_slider.setValue(self.laser.laser_power)
+        self.laser_power_slider.setValue(self.laser.power)
         self.laser_power_slider.valueChanged.connect(self.update_power)
         layout.addWidget(self.laser_power_slider)
 
         # Add a QLabel to display the power value
-        self.power_label = QLabel(f"Power: {self.laser.laser_power}")
+        self.power_label = QLabel(f"Power: {self._curr_power} %")
         layout.addWidget(self.power_label)
 
         self.laser_toggle_button = QPushButton("Toggle")
@@ -83,9 +93,10 @@ class LaserWidget(QWidget):
             self.laser_toggle_button.setStyleSheet("background-color: green")
 
     def update_power(self, value):
-        self.laser.laser_power = value
+        self.laser.power = value / (10**self._slider_decimal)
+        self._curr_power = self.laser.power
         # Update the QLabel with the new power value
-        self.power_label.setText(f"Power: {value}")
+        self.power_label.setText(f"Power: {self._curr_power} %")
 
 
 # TODO: connect widget to actual abstract mirror calls
@@ -654,15 +665,27 @@ class LaserMarkerWindow(QMainWindow):
                     self._move_marker_and_update_sliders()
                 elif event.buttons() == Qt.RightButton:
                     self._right_click_hold = True
+                    self.photom_controls.photom_assembly.laser[0].toggle_emission = True
                     print('right button pressed')
         elif event.type() == QMouseEvent.MouseButtonRelease:
-            print('mouse button released')
-            if event.buttons() == Qt.LeftButton:
-                self._left_click_hold = False
-                print('left button released')
-            elif event.buttons() == Qt.RightButton:
-                self._right_click_hold = False
-                print('right button released')
+            if self.calibration_mode:
+                if event.buttons() == Qt.LeftButton:
+                    self._left_click_hold = False
+                    print('left button released')
+                elif event.buttons() == Qt.RightButton:
+                    self._right_click_hold = False
+                    print('right button released')
+            else:
+                print('mouse button released')
+                if event.buttons() == Qt.LeftButton:
+                    self._left_click_hold = False
+                    print('left button released')
+                elif event.buttons() == Qt.RightButton:
+                    print('right button released')
+                    self._right_click_hold = False
+                    self.photom_controls.photom_assembly.laser[
+                        0
+                    ].toggle_emission = False
 
         return super(LaserMarkerWindow, self).eventFilter(source, event)
 
@@ -714,13 +737,8 @@ if __name__ == "__main__":
         Mirror = MockMirror
 
     else:
-        # NOTE: These are the actual classes that will be used in the photom assembly
-        # from copylot.hardware.lasers.vortran import VortranLaser as Laser
-        # TODO: remove after testing
-        from copylot.assemblies.photom.photom_mock_devices import MockLaser, MockMirror
-
-        Laser = MockLaser
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
+        from copylot.hardware.lasers.vortran.vortran import VortranLaser as Laser
 
     config_path = r"./copylot/assemblies/photom/demo/photom_VIS_config.yml"
 
@@ -728,7 +746,13 @@ if __name__ == "__main__":
     # Load the config file and parse it
     with open(config_path, "r") as config_file:
         config = yaml.load(config_file, Loader=yaml.FullLoader)
-        lasers = [Laser(**laser_data) for laser_data in config["lasers"]]
+        lasers = [
+            Laser(
+                name=laser_data["name"],
+                port=laser_data["COM_port"],
+            )
+            for laser_data in config["lasers"]
+        ]
         mirrors = [
             Mirror(
                 name=mirror_data["name"],
