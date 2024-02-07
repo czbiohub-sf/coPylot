@@ -380,7 +380,7 @@ class PhotomApp(QMainWindow):
         self.target_pts = self.photom_window.get_coordinates()
 
         # Mirror calibration size
-        mirror_calib_size = self.photom_assembly._calibration_rectangle_size_xy
+        mirror_calib_size = self.photom_assembly._calibration_rectangle_boundaries
         origin = np.array(
             [[pt.x(), pt.y()] for pt in self.target_pts],
             dtype=np.float32,

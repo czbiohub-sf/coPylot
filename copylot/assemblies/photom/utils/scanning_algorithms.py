@@ -1,12 +1,13 @@
 import math
-
-"""
-Borrowing from Hirofumi's photom-code
-
-"""
+import numpy as np
+from typing import ArrayLike
 
 
 class ScanAlgorithm:
+    """
+    Borrowing from Hirofumi's photom-code
+    """
+
     def __init__(self, initial_cord, size, gap, shape, sec_per_cycle):
         """
         Generates lists of x & y coordinates for various shapes with different scanning curves.
@@ -196,7 +197,7 @@ class ScanAlgorithm:
         return cord_x, cord_y
 
 
-def calculate_rectangle_corners(window_size: tuple[int, int],center=[0.0,0.0]):
+def calculate_rectangle_corners(window_size: tuple[int, int], center=[0.0, 0.0]):
     # window_size is a tuple of (width, height)
 
     # Calculate the coordinates of the rectangle corners
@@ -207,6 +208,54 @@ def calculate_rectangle_corners(window_size: tuple[int, int],center=[0.0,0.0]):
     x1y0 = [x0y0[0] + window_size[0], x0y0[1]]
     x1y1 = [x0y0[0] + window_size[0], x0y0[1] + window_size[1]]
     x0y1 = [x0y0[0], x0y0[1] + window_size[1]]
-    
-    
+
     return [x0y0, x1y0, x1y1, x0y1]
+
+
+def generate_grid_points(
+    rectangle_size: ArrayLike[int, int], n_points: int = 5
+) -> np.ndarray:
+    """
+    Generate grid points for a given rectangle.
+
+    Parameters:
+    - rectangle_size: ArrayLike, containing the start and end coordinates of the rectangle
+                      as [[start_x, start_y], [end_x, end_y]].
+    - n_points: The number of points per row and column in the grid.
+
+    Returns:
+    - An array of coordinates for the grid points, evenly distributed across the rectangle.
+
+    Example:
+    >>> rectangle_size = [[-1, -1], [1, 1]]
+    >>> n_points = 3
+    >>> generate_grid_points(rectangle_size, n_points)
+    array([[-1. , -1. ],
+           [ 0. , -1. ],
+           [ 1. , -1. ],
+           [-1. ,  0. ],
+           [ 0. ,  0. ],
+           [ 1. ,  0. ],
+           [-1. ,  1. ],
+           [ 0. ,  1. ],
+           [ 1. ,  1. ]], dtype=float32)
+    """
+    start_x, start_y = rectangle_size[0]
+    end_x, end_y = rectangle_size[1]
+
+    # Calculate intervals between points in the grid
+    interval_x = (end_x - start_x) / (n_points - 1)
+    interval_y = (end_y - start_y) / (n_points - 1)
+
+    # Initialize an array to store the coordinates of the grid points
+    grid_points = np.zeros((n_points * n_points, 2), dtype=np.float32)
+
+    # Populate the array with the coordinates of the grid points
+    for i in range(n_points):
+        for j in range(n_points):
+            index = i * n_points + j
+            x = start_x + j * interval_x
+            y = start_y + i * interval_y
+            grid_points[index] = [y, x]
+
+    return grid_points

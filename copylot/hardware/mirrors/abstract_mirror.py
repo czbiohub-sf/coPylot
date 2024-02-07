@@ -1,5 +1,6 @@
 from abc import ABCMeta, abstractmethod
 
+
 class AbstractMirror(metaclass=ABCMeta):
     """AbstractMirror
 
@@ -11,17 +12,31 @@ class AbstractMirror(metaclass=ABCMeta):
     """
 
     def __init__(self):
+        self.name: str = "AbstractMirror"
         self.affine_transform_obj = None
+        self.pos_x: float = 0.0
+        self.pos_y: float = 0.0
+
+    @property
+    def device_id(self):
+        "Returns the device unique id(name or serial number)of the current mirror"
+        return self.name
+
+    @device_id.setter
+    @abstractmethod
+    def device_id(self, value: str):
+        "Sets the device unique id(name or serial number)of the current mirror"
+        pass
 
     @property
     @abstractmethod
-    def position(self) -> list[float,float]:
+    def position(self) -> list[float, float]:
         """Get the current mirror position XY"""
         pass
 
     @position.setter
     @abstractmethod
-    def position(self, value: list[float,float]):
+    def position(self, value: list[float, float]):
         """Set the mirror position XY"""
         pass
 
