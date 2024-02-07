@@ -125,6 +125,7 @@ class PhotomAssembly:
         grid_n_points: int = 5,
         config_file: Path = './affine_matrix.yml',
         save_calib_stack_path: Path = None,
+        verbose: bool = False,
     ):
         assert self.camera is not None
         assert config_file.endswith('.yml') or config_file.endswith('.yaml')
@@ -151,6 +152,17 @@ class PhotomAssembly:
             self.mirror[mirror_index].position = [coord[1], coord[0]]
             img_sequence[idx] = self.camera[camera_index].snap()
 
+        # Find the coordinates of peak per image
+        peak_coords = np.zeros((len(grid_points), 2))
+        for idx, img in tqdm(
+            enumerate(img_sequence),
+            total=len(img_sequence),
+            desc='Finding peak coordinates',
+        ):
+            peak_coords[idx] = ia.find_objects_centroids(
+                img, sigma=5, threshold_rel=1.0, min_distance=30, max_num_peaks=1
+            )
+
         if save_calib_stack_path is not None:
             print('Saving calibration stack')
             save_calib_stack_path = Path(save_calib_stack_path)
@@ -164,17 +176,11 @@ class PhotomAssembly:
             tifffile.imwrite(
                 output_path_name, img_sequence, dtype='uint16', imagej=True
             )
+            print("Saving coordinate and image stack plot")
 
-        # Find the coordinates of peak per image
-        peak_coords = np.zeros((len(grid_points), 2))
-        for idx, img in tqdm(
-            enumerate(img_sequence),
-            total=len(img_sequence),
-            desc='Finding peak coordinates',
-        ):
-            peak_coords[idx] = ia.find_objects_centroids(
-                img, sigma=5, threshold_rel=0.5, min_distance=10
-            )
+        if verbose:
+            # Plot the centroids with the MIP of the image sequence
+            ia.plot_centroids(img_sequence, peak_coords, mip=True)
 
         # Find the affine transform
         T_affine = self.mirror[mirror_index].affine_transform_obj.get_affine_matrix(

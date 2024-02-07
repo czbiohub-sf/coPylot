@@ -4,7 +4,9 @@ from skimage import filters
 from skimage.filters import gaussian
 
 
-def find_objects_centroids(image, sigma=5, threshold_rel=0.5, min_distance=10):
+def find_objects_centroids(
+    image, sigma=5, threshold_rel=0.5, min_distance=10, max_num_peaks=1
+):
     """
     Calculate the centroids of blurred objects in an image.
 
@@ -22,16 +24,44 @@ def find_objects_centroids(image, sigma=5, threshold_rel=0.5, min_distance=10):
 
     # Thresholding to isolate objects
     threshold_value = filters.threshold_otsu(smoothed_image)
-    binary_image = smoothed_image > threshold_value * threshold_rel
+    # binary_image = smoothed_image > threshold_value * threshold_rel
 
     # Detect peaks which represent object centroids
     coordinates = peak_local_max(
         smoothed_image,
         min_distance=min_distance,
         threshold_abs=threshold_value * threshold_rel,
+        num_peaks=max_num_peaks,
+        exclude_border=True,
     )
 
     return coordinates
+
+
+def plot_centroids(image_sequence, centroids, mip=True):
+    """
+    Plot the centroids of objects on top of the image sequence.
+
+    Parameters:
+    - image_sequence: 3D numpy array, sequence of frames from the fluorescence microscopy data.
+    - centroids: (N, 2) array where each row is (row, column) of an object's centroid.
+    """
+    import matplotlib.pyplot as plt
+
+    if mip:
+        plt.figure()
+        plt.imshow(np.max(image_sequence, axis=0), cmap="gray")
+        for i, centroid in enumerate(centroids):
+            plt.scatter(centroid[1], centroid[0], color="red")
+            plt.text(centroid[1], centroid[0], str(i + 1), color="white", fontsize=8)
+        plt.show()
+
+    else:
+        for frame, frame_centroids in zip(image_sequence, centroids):
+            plt.figure()
+            plt.imshow(frame, cmap="gray")
+            plt.scatter(frame_centroids[1], frame_centroids[0], color="red")
+            plt.show()
 
 
 def calculate_centroids(image_sequence, sigma=5, threshold_rel=0.5, min_distance=10):
