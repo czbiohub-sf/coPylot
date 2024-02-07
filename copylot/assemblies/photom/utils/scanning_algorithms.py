@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from typing import ArrayLike
+from numpy.typing import ArrayLike
 
 
 class ScanAlgorithm:
@@ -212,9 +212,7 @@ def calculate_rectangle_corners(window_size: tuple[int, int], center=[0.0, 0.0])
     return [x0y0, x1y0, x1y1, x0y1]
 
 
-def generate_grid_points(
-    rectangle_size: ArrayLike[int, int], n_points: int = 5
-) -> np.ndarray:
+def generate_grid_points(rectangle_size: ArrayLike, n_points: int = 5) -> np.ndarray:
     """
     Generate grid points for a given rectangle.
 

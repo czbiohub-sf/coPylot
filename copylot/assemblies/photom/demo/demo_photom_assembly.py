@@ -9,13 +9,9 @@ import time
 # %%
 config_file = './photom_VIS_config.yml'
 # Mock imports for the mirror and the lasers
-laser = MockLaser('Mock Laser', power=0)
+laser = MockLaser(name='Mock Laser', power=0)
 mirror = OptoMirror(com_port='COM8')
 
-
-camera_array = FlirCamera()
-print(camera_array.list_available_cameras())
-camera = camera_array.open(index=0)
 
 # %%
 # Test the moving of the mirrors
@@ -46,16 +42,51 @@ curr_pos = photom_device.get_position(mirror_index=0)
 print(curr_pos)
 
 # %%
+from copylot.assemblies.photom.utils.scanning_algorithms import (
+    calculate_rectangle_corners,
+    generate_grid_points,
+)
+import time
+
 mirror_roi = [
-    [0.004, 0.004],
-    [0.006, 0.006],
+    [-0.01, 0.00],
+    [0.019, 0.019],
+]
+grid_points = generate_grid_points(rectangle_size=mirror_roi, n_points=5)
+for idx, coord in enumerate(grid_points):
+    mirror.position = [coord[1], coord[0]]
+    time.sleep(0.1)
+
+
+# %%
+cam = FlirCamera()
+# open the system
+cam.open()
+# serial number
+print(cam.device_id)
+# list of cameras
+print(cam.list_available_cameras())
+photom_device = PhotomAssembly(
+    laser=[laser],
+    mirror=[mirror],
+    affine_matrix_path=[r'./affine_T.yml'],
+    camera=[cam],
+)
+# %%
+mirror_roi = [
+    [-0.01, 0.00],
+    [0.019, 0.019],
 ]  # Top-left and Bottom-right corners of the mirror ROI
-photom_device.camera[0]
+photom_device.camera[0].exposure = 5000
+photom_device.camera[0].gain = 0
+photom_device.camera[0].flip_horizontal = True
+photom_device.camera[0].pixel_format = 'Mono16'
 photom_device.calibrate_w_camera(
     mirror_index=0,
     camera_index=0,
     rectangle_boundaries=mirror_roi,
-    config_file='./affine_T.yml',
+    grid_n_points=5,
+    config_file='./affine_T.yaml',
     save_calib_stack_path='./calib_stack',
 )
 

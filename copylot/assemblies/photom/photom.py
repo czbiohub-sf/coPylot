@@ -1,3 +1,4 @@
+from re import T
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
@@ -16,6 +17,7 @@ from typing import Optional
 import numpy as np
 import tifffile
 from copylot.assemblies.photom.utils import image_analysis as ia
+from tqdm import tqdm
 
 # TODO: add the logger from copylot
 # TODO: add mirror's confidence ROI or update with calibration in OptotuneDocumentation
@@ -39,6 +41,7 @@ class PhotomAssembly:
         self._calibrating = False
         # TODO: These are hardcoded values. Unsure if they should come from a config file
         self._calibration_rectangle_boundaries = None
+        self.init_mirrors()
 
     def init_mirrors(self):
         assert len(self.mirror) == len(self.affine_matrix_path)
@@ -49,7 +52,7 @@ class PhotomAssembly:
             self.mirror[i].affine_transform_obj = AffineTransform(
                 config_file=self.affine_matrix_path[i]
             )
-            self._calibration_rectangle_boundaries[i] = [[None, None], [None, None]]
+            # self._calibration_rectangle_boundaries[i] = [[, ], [, ]]
 
     # TODO probably will replace the camera with zyx or yx image array input
     ## Camera Functions
@@ -119,14 +122,15 @@ class PhotomAssembly:
         mirror_index: int,
         camera_index: int,
         rectangle_boundaries: Tuple[Tuple[int, int], Tuple[int, int]],
+        grid_n_points: int = 5,
         config_file: Path = './affine_matrix.yml',
         save_calib_stack_path: Path = None,
     ):
         assert self.camera is not None
-        assert config_file.endswith('.yaml')
-        self._calibration_rectangle_boundaries[mirror_index] = rectangle_boundaries
+        assert config_file.endswith('.yml') or config_file.endswith('.yaml')
+        # self._calibration_rectangle_boundaries[mirror_index] = rectangle_boundaries
 
-        x_min, x_max, y_min, y_max = self.camera.image_size_limits
+        x_min, x_max, y_min, y_max = self.camera[camera_index].image_size_limits
         # assuming the minimum is always zero, which is typically that case
         assert mirror_index < len(self.mirror)
         assert camera_index < len(self.camera)
@@ -134,17 +138,40 @@ class PhotomAssembly:
         # TODO: replace these values with something from the config
         # Generate grid of points
         grid_points = generate_grid_points(
-            rectangle_size=rectangle_boundaries, n_points=5
+            rectangle_size=rectangle_boundaries,
+            n_points=grid_n_points,
         )
         # Acquire sequence of images with points
-        img_sequence = np.zeros((len(grid_points), x_max, y_max))
-        for idx, coord in enumerate(grid_points):
-            self.set_position(mirror_index, coord)
+        img_sequence = np.zeros((len(grid_points), y_max, x_max), dtype='uint16')
+        for idx, coord in tqdm(
+            enumerate(grid_points),
+            total=len(grid_points),
+            desc="Collecting grid points",
+        ):
+            self.mirror[mirror_index].position = [coord[1], coord[0]]
             img_sequence[idx] = self.camera[camera_index].snap()
+
+        if save_calib_stack_path is not None:
+            print('Saving calibration stack')
+            save_calib_stack_path = Path(save_calib_stack_path)
+            save_calib_stack_path = Path(save_calib_stack_path)
+            if not save_calib_stack_path.exists():
+                save_calib_stack_path.mkdir(parents=True, exist_ok=True)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            output_path_name = (
+                save_calib_stack_path / f'calibration_images_{timestamp}.tif'
+            )
+            tifffile.imwrite(
+                output_path_name, img_sequence, dtype='uint16', imagej=True
+            )
 
         # Find the coordinates of peak per image
         peak_coords = np.zeros((len(grid_points), 2))
-        for idx, img in enumerate(img_sequence):
+        for idx, img in tqdm(
+            enumerate(img_sequence),
+            total=len(img_sequence),
+            desc='Finding peak coordinates',
+        ):
             peak_coords[idx] = ia.find_objects_centroids(
                 img, sigma=5, threshold_rel=0.5, min_distance=10
             )
@@ -163,17 +190,6 @@ class PhotomAssembly:
         self.photom_assembly.mirror[
             self._current_mirror_idx
         ].affine_transform_obj.save_matrix(matrix=T_affine, config_file=config_file)
-
-        if save_calib_stack_path is not None:
-            save_calib_stack_path = Path(save_calib_stack_path)
-            save_calib_stack_path = Path(save_calib_stack_path)
-            if not save_calib_stack_path.exists():
-                save_calib_stack_path.mkdir(parents=True, exist_ok=True)
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            output_path_name = (
-                save_calib_stack_path / f'calibration_images_{timestamp}.tif'
-            )
-            tifffile.imwrite(output_path_name)
 
     ## LASER Fuctions
     def get_laser_power(self, laser_index: int) -> float:

@@ -6,9 +6,13 @@ Optotune Tip-tilt mirror controller MR-E-2 python wrapper
 For more details regarding operation, refer to the manuals in https://www.optotune.com/fast-steering-mirrors
 
 """
+from os import device_encoding
+from zmq import device
 from copylot import logger
 from copylot.hardware.mirrors.optotune import optoMDC
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
+
+# TODO: switch device ID for the serial number
 
 
 class OptoMirror(AbstractMirror):
@@ -49,6 +53,15 @@ class OptoMirror(AbstractMirror):
         self.position_y = 0
         self.mirror.disconnect()
         logger.info("mirror disconnected")
+
+    @property
+    def device_id(self):
+        return self.name
+
+    @device_id.setter
+    def device_id(self, value: str):
+        self.name = value
+        logger.info(f"device_id set to: {value}")
 
     @property
     def position(self):
