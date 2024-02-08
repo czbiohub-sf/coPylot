@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QFileDialog,
     QLineEdit,
+    QGridLayout,
 )
 from PyQt5.QtGui import QColor, QPen
 from copylot.assemblies.photom.utils.scanning_algorithms import (
@@ -131,42 +132,98 @@ class ArduinoPWMWidget(QWidget):
     def __init__(self, arduino_pwm):
         super().__init__()
         self.arduino_pwm = arduino_pwm
+
+        # default values
+        self.duty_cycle = 50  # [%] (0-100)
+        self.frequency = 1000  # [Hz]
+        self.duration = 5000  # [ms]
+
         self.initialize_UI()
 
     def initialize_UI(self):
-        layout = QVBoxLayout()
+        layout = QGridLayout()  # Use QGridLayout
 
+        # Duty Cycle
+        layout.addWidget(QLabel("Duty Cycle [%]:"), 0, 0)  # Label for duty cycle
         self.duty_cycle_slider = QDoubleSlider(Qt.Horizontal)
         self.duty_cycle_slider.setMinimum(0)
         self.duty_cycle_slider.setMaximum(100)
-        self.duty_cycle_slider.setValue(50)
-        layout.addWidget(self.duty_cycle_slider)
+        self.duty_cycle_slider.setValue(self.duty_cycle)
+        self.duty_cycle_slider.valueChanged.connect(self.update_duty_cycle)
+        layout.addWidget(self.duty_cycle_slider, 0, 1)
+        self.duty_cycle_edit = QLineEdit(f"{self.duty_cycle}")
+        self.duty_cycle_edit.returnPressed.connect(self.edit_duty_cycle)
+        layout.addWidget(self.duty_cycle_edit, 0, 2)
 
-        # Add a QLabel to display the duty cycle value
-        self.duty_cycle_label = QLabel(f"Duty Cycle: {self.arduino_pwm.duty_cycle}")
-        layout.addWidget(self.duty_cycle_label)
-
+        # Frequency
+        layout.addWidget(QLabel("Frequency [Hz]:"), 1, 0)  # Label for frequency
         self.frequency_slider = QDoubleSlider(Qt.Horizontal)
         self.frequency_slider.setMinimum(0)
         self.frequency_slider.setMaximum(100)
-        self.frequency_slider.setValue(50)
-        layout.addWidget(self.frequency_slider)
+        self.frequency_slider.setValue(self.frequency)
+        self.frequency_slider.valueChanged.connect(self.update_frequency)
+        layout.addWidget(self.frequency_slider, 1, 1)
+        self.frequency_edit = QLineEdit(f"{self.frequency}")
+        self.frequency_edit.returnPressed.connect(self.edit_frequency)
+        layout.addWidget(self.frequency_edit, 1, 2)
 
-        # Add a QLabel to display the frequency value
-        self.frequency_label = QLabel(f"Frequency: {self.arduino_pwm.frequency}")
-        layout.addWidget(self.frequency_label)
-
-        self.duration_slider = QSlider(Qt.Horizontal)
+        # Duration
+        layout.addWidget(QLabel("Duration [ms]:"), 2, 0)  # Label for duration
+        self.duration_slider = QDoubleSlider(Qt.Horizontal)
         self.duration_slider.setMinimum(0)
         self.duration_slider.setMaximum(100)
-        self.duration_slider.setValue(50)
-        layout.addWidget(self.duration_slider)
+        self.duration_slider.setValue(self.duration)
+        self.duration_slider.valueChanged.connect(self.update_duration)
+        layout.addWidget(self.duration_slider, 2, 1)
+        self.duration_edit = QLineEdit(f"{self.duration}")
+        self.duration_edit.returnPressed.connect(self.edit_duration)
+        layout.addWidget(self.duration_edit, 2, 2)
 
-        # Add a QLabel to display the duration value
-        self.duration_label = QLabel(f"Duration: {self.arduino_pwm.duration}")
-        layout.addWidget(self.duration_label)
+        # Add Start Button
+        self.start_button = QPushButton("Start PWM")
+        self.start_button.clicked.connect(
+            self.start_pwm
+        )  # Assuming start_pwm is a method you've defined
+        layout.addWidget(self.start_button, 0, 3, 1, 2)  # Span 1 row and 2 columns
 
         self.setLayout(layout)
+
+    def update_duty_cycle(self, value):
+        self.duty_cycle = value
+        self.duty_cycle_edit.setText(f"{value:.2f}")
+        self.update_command()
+
+    def edit_duty_cycle(self):
+        value = float(self.duty_cycle_edit.text())
+        self.duty_cycle = value
+        self.duty_cycle_slider.setValue(value)
+
+    def update_frequency(self, value):
+        self.frequency = value
+        self.frequency_edit.setText(f"{value:.2f}")
+        self.update_command()
+
+    def edit_frequency(self):
+        value = float(self.frequency_edit.text())
+        self.frequency = value
+        self.frequency_slider.setValue(value)
+
+    def update_duration(self, value):
+        self.duration = value
+        self.duration_edit.setText(f"{value:.2f}")
+        self.update_command()
+
+    def edit_duration(self):
+        value = float(self.duration_edit.text())
+        self.duration = value
+        self.duration_slider.setValue(value)
+
+    def update_command(self):
+        self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
+        self.arduino_pwm.send_command(self.command)
+
+    def start_pwm(self):
+        self.arduino_pwm.send_command("S")
 
 
 # TODO: connect widget to actual abstract mirror calls
@@ -224,6 +281,7 @@ class PhotomApp(QMainWindow):
         photom_assembly: PhotomAssembly,
         photom_window_size: Tuple[int, int] = (100, 100),
         demo_window=None,
+        arduino=[],
     ):
         super().__init__()
 
@@ -235,6 +293,9 @@ class PhotomApp(QMainWindow):
         self.mirrors = self.photom_assembly.mirror
         self.photom_window_size = photom_window_size
         self._current_mirror_idx = 0
+
+        # TODO: this probably will probably get removed along with any arduino pwm functionalities
+        self.arduino_pwm = arduino
 
         if DEMO_MODE:
             self.demo_window = demo_window
@@ -300,11 +361,22 @@ class PhotomApp(QMainWindow):
             mirror_layout.addWidget(mirror_widget)
         mirror_group.setLayout(mirror_layout)
 
+        # Adding group for arduino PWM
+        arduino_group = QGroupBox("Arduino PWM")
+        arduino_layout = QVBoxLayout()
+        self.arduino_pwm_widgets = []
+        for arduino in self.arduino_pwm:
+            arduino_pwm_widget = ArduinoPWMWidget(arduino)
+            self.arduino_pwm_widgets.append(arduino_pwm_widget)
+            arduino_layout.addWidget(arduino_pwm_widget)
+        arduino_group.setLayout(arduino_layout)
+
         # Add the laser and mirror group boxes to the main layout
         main_layout = QVBoxLayout()
         main_layout.addWidget(transparency_group)
         main_layout.addWidget(laser_group)
         main_layout.addWidget(mirror_group)
+        main_layout.addWidget(arduino_group)
 
         self.mirror_dropdown = QComboBox()
         self.mirror_dropdown.addItems([mirror.name for mirror in self.mirrors])
@@ -581,15 +653,21 @@ if __name__ == "__main__":
     import os
 
     if DEMO_MODE:
-        from copylot.assemblies.photom.photom_mock_devices import MockLaser, MockMirror
+        from copylot.assemblies.photom.photom_mock_devices import (
+            MockLaser,
+            MockMirror,
+            MockArduinoPWM,
+        )
 
         Laser = MockLaser
         Mirror = MockMirror
+        ArduinoPWM = MockArduinoPWM
 
     else:
         # NOTE: These are the actual classes that will be used in the photom assembly
         from copylot.hardware.lasers.vortran import VortranLaser as Laser
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
+        from copylot.assemblies.photom.utils.arduino_pwm import ArduinoPWM
 
     try:
         os.environ["DISPLAY"] = ":1002"
@@ -617,6 +695,7 @@ if __name__ == "__main__":
         affine_matrix_paths = [
             mirror['affine_matrix_path'] for mirror in config['mirrors']
         ]
+        arduino = [ArduinoPWM(serial_port='COM3', baud_rate=115200)]
         # Check that the number of mirrors and affine matrices match
         assert len(mirrors) == len(affine_matrix_paths)
 
@@ -643,6 +722,7 @@ if __name__ == "__main__":
             photom_assembly=photom_assembly,
             photom_window_size=(ctrl_window_width, ctrl_window_width),
             demo_window=camera_window,
+            arduino=arduino,
         )
         ctrl_window.setGeometry(0, 0, ctrl_window_width, ctrl_window_width)
 
