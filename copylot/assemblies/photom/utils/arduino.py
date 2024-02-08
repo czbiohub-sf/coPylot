@@ -1,5 +1,6 @@
 import serial
 import time
+from tqdm import tqdm
 
 """
 quick and dirty class to control the Arduino.
@@ -38,3 +39,17 @@ class ArduinoPWM:
         self.time.sleep(2)  # Wait for Arduino to process the command
         while self.ser.in_waiting:
             print(self.ser.readline().decode().strip())
+
+    def set_pwm(self, duty_cycle, frequency, duration):
+        command = f'U,{duty_cycle},{frequency},{duration}'
+        self.send_command(command)
+
+    def start(self):
+        self.send_command('S')
+
+    def start_timelapse(self, repetitions=1, time_interval_s=5):
+        for i in tqdm(
+            range(repetitions), desc='Timelapse', unit='repetition', total=repetitions
+        ):
+            self.start()
+            time.sleep(time_interval_s)
