@@ -1,6 +1,6 @@
 lasers:
   - name: laser_405
-    COM_port: COM7
+    COM_port: COM9
     
 mirrors:
   - name: mirror_1_VIS

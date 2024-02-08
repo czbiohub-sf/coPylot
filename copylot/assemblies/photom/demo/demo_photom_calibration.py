@@ -665,9 +665,9 @@ if __name__ == "__main__":
 
     else:
         # NOTE: These are the actual classes that will be used in the photom assembly
-        from copylot.hardware.lasers.vortran import VortranLaser as Laser
+        from copylot.hardware.lasers.vortran.vortran import VortranLaser as Laser
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
-        from copylot.assemblies.photom.utils.arduino_pwm import ArduinoPWM
+        from copylot.assemblies.photom.utils.arduino import ArduinoPWM
 
     try:
         os.environ["DISPLAY"] = ":1002"
@@ -675,9 +675,7 @@ if __name__ == "__main__":
     except:
         raise Exception("DISPLAY environment variable not set")
 
-    config_path = (
-        "/home/eduardo.hirata/repos/coPylot/copylot/assemblies/photom/demo/config.yml"
-    )
+    config_path = r"copylot\assemblies\photom\demo\photom_VIS_config.yml"
 
     # TODO: this should be a function that parses the config_file and returns the photom_assembly
     # Load the config file and parse it
