@@ -38,7 +38,7 @@ def find_objects_centroids(
     return coordinates
 
 
-def plot_centroids(image_sequence, centroids, mip=True):
+def plot_centroids(image_sequence, centroids, mip=True, save_path=None):
     """
     Plot the centroids of objects on top of the image sequence.
 
@@ -54,6 +54,9 @@ def plot_centroids(image_sequence, centroids, mip=True):
         for i, centroid in enumerate(centroids):
             plt.scatter(centroid[1], centroid[0], color="red")
             plt.text(centroid[1], centroid[0], str(i + 1), color="white", fontsize=8)
+
+        if save_path is not None:
+            plt.savefig(save_path)
         plt.show()
 
     else:

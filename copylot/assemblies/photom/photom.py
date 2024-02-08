@@ -1,4 +1,6 @@
 from re import T
+
+from matplotlib import pyplot as plt
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
@@ -149,7 +151,7 @@ class PhotomAssembly:
             total=len(grid_points),
             desc="Collecting grid points",
         ):
-            self.mirror[mirror_index].position = [coord[1], coord[0]]
+            self.mirror[mirror_index].position = [coord[0], coord[1]]
             img_sequence[idx] = self.camera[camera_index].snap()
 
         # Find the coordinates of peak per image
@@ -163,13 +165,13 @@ class PhotomAssembly:
                 img, sigma=5, threshold_rel=1.0, min_distance=30, max_num_peaks=1
             )
 
+        timestamp = time.strftime("%Y%m%d_%H%M%S")
         if save_calib_stack_path is not None:
             print('Saving calibration stack')
             save_calib_stack_path = Path(save_calib_stack_path)
             save_calib_stack_path = Path(save_calib_stack_path)
             if not save_calib_stack_path.exists():
                 save_calib_stack_path.mkdir(parents=True, exist_ok=True)
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
             output_path_name = (
                 save_calib_stack_path / f'calibration_images_{timestamp}.tif'
             )
@@ -179,9 +181,27 @@ class PhotomAssembly:
             print("Saving coordinate and image stack plot")
 
         if verbose:
+            if save_calib_stack_path is None:
+                save_calib_stack_path = Path.cwd()
             # Plot the centroids with the MIP of the image sequence
-            ia.plot_centroids(img_sequence, peak_coords, mip=True)
+            ia.plot_centroids(
+                img_sequence,
+                peak_coords,
+                mip=True,
+                save_path=save_calib_stack_path / f'calibration_plot_{timestamp}.png'
+                if save_calib_stack_path is not None
+                else './calibration_plot.png',
+            )
 
+            ## Save the points
+            grid_points = np.array(grid_points)
+            peak_coords = np.array(peak_coords)
+            # save the array of grid points and peak coordinates
+            np.savez(
+                save_calib_stack_path / f'calibration_points_{timestamp}.npz',
+                grid_points=grid_points,
+                peak_coords=peak_coords,
+            )
         # Find the affine transform
         T_affine = self.mirror[mirror_index].affine_transform_obj.get_affine_matrix(
             peak_coords, grid_points
@@ -189,13 +209,9 @@ class PhotomAssembly:
         print(f"Affine matrix: {T_affine}")
 
         # Save the matrix
-        config_file = Path(config_file)
-        if not config_file.exists():
-            config_file.mkdir(parents=True, exist_ok=True)
-
-        self.photom_assembly.mirror[
-            self._current_mirror_idx
-        ].affine_transform_obj.save_matrix(matrix=T_affine, config_file=config_file)
+        self.mirror[mirror_index].affine_transform_obj.save_matrix(
+            matrix=T_affine, config_file=config_file
+        )
 
     ## LASER Fuctions
     def get_laser_power(self, laser_index: int) -> float:

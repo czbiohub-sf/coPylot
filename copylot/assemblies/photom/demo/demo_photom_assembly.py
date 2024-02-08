@@ -48,14 +48,16 @@ from copylot.assemblies.photom.utils.scanning_algorithms import (
 )
 import time
 
-mirror_roi = [
-    [-0.01, 0.00],
-    [0.019, 0.019],
-]
+# mirror_roi = [
+#     [-0.005, 0.018],  # [y,x]
+#     [0.013, 0.0],
+# ]
+mirror_roi = [[0.18, -0.005], [0.0, 0.013]]
 grid_points = generate_grid_points(rectangle_size=mirror_roi, n_points=5)
 for idx, coord in enumerate(grid_points):
-    mirror.position = [coord[1], coord[0]]
-    time.sleep(0.1)
+    mirror.position = [coord[0], coord[1]]
+    print(coord)
+    time.sleep(0.5)
 
 
 # %%
@@ -74,8 +76,8 @@ photom_device = PhotomAssembly(
 )
 # %%
 mirror_roi = [
-    [-0.01, 0.00],
-    [0.019, 0.019],
+    [-0.005, 0.018],  # [y,x]
+    [0.013, 0.0],
 ]  # Top-left and Bottom-right corners of the mirror ROI
 photom_device.camera[0].exposure = 5000
 photom_device.camera[0].gain = 0

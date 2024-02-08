@@ -222,7 +222,7 @@ def generate_grid_points(rectangle_size: ArrayLike, n_points: int = 5) -> np.nda
     - n_points: The number of points per row and column in the grid.
 
     Returns:
-    - An array of coordinates for the grid points, evenly distributed across the rectangle.
+    - An array of coordinates for the grid points, evenly distributed across the rectangle in (x,y).
 
     Example:
     >>> rectangle_size = [[-1, -1], [1, 1]]
@@ -254,6 +254,6 @@ def generate_grid_points(rectangle_size: ArrayLike, n_points: int = 5) -> np.nda
             index = i * n_points + j
             x = start_x + j * interval_x
             y = start_y + i * interval_y
-            grid_points[index] = [y, x]
+            grid_points[index] = [x, y]
 
     return grid_points

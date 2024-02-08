@@ -36,7 +36,7 @@ class ArduinoPWM:
     def send_command(self, command):
         print(f"Sending command: {command}")
         self.ser.write((command + '\n').encode())
-        self.time.sleep(2)  # Wait for Arduino to process the command
+        time.sleep(2)  # Wait for Arduino to process the command
         while self.ser.in_waiting:
             print(self.ser.readline().decode().strip())
 
