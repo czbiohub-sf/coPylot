@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QStackedWidget,
     QComboBox,
     QFileDialog,
+    QLineEdit,
 )
 from PyQt5.QtGui import QColor, QPen
 from copylot.assemblies.photom.utils.scanning_algorithms import (
@@ -61,8 +62,11 @@ class LaserWidget(QWidget):
         layout.addWidget(self.laser_power_slider)
 
         # Add a QLabel to display the power value
-        self.power_label = QLabel(f"Power: {self.laser.laser_power}")
-        layout.addWidget(self.power_label)
+        self.power_edit = QLineEdit(f"{self.laser.laser_power}")  # Changed to QLineEdit
+        self.power_edit.returnPressed.connect(
+            self.edit_power
+        )  # Connect the returnPressed signal
+        layout.addWidget(self.power_edit)
 
         self.laser_toggle_button = QPushButton("Toggle")
         self.laser_toggle_button.clicked.connect(self.toggle_laser)
@@ -83,8 +87,26 @@ class LaserWidget(QWidget):
 
     def update_power(self, value):
         self.laser.laser_power = value
-        # Update the QLabel with the new power value
-        self.power_label.setText(f"Power: {value}")
+        # Update the QLineEdit with the new power value
+        self.power_edit.setText(f"{value:.2f}")  # Use string formatting for float
+
+    def edit_power(self):
+        try:
+            # Convert the text value to float
+            value = float(self.power_edit.text())
+            if 0 <= value <= 100:  # Assuming the power range is 0 to 100
+                self.laser.laser_power = value
+                self.laser_power_slider.setValue(
+                    int(value)
+                )  # Synchronize the slider position, may need adjustment for float handling
+                self.power_edit.setText(f"{value:.2f}")
+            else:
+                self.power_edit.setText(
+                    f"{self.laser.laser_power:.2f}"
+                )  # Reset to the last valid value if out of bounds
+        except ValueError:
+            # If conversion fails, reset QLineEdit to the last valid value
+            self.power_edit.setText(f"{self.laser.laser_power:.2f}")
 
 
 class QDoubleSlider(QSlider):
@@ -103,6 +125,48 @@ class QDoubleSlider(QSlider):
 
     def setMaximum(self, val):
         super().setMaximum(int(val * self._multiplier))
+
+
+class ArduinoPWMWidget(QWidget):
+    def __init__(self, arduino_pwm):
+        super().__init__()
+        self.arduino_pwm = arduino_pwm
+        self.initialize_UI()
+
+    def initialize_UI(self):
+        layout = QVBoxLayout()
+
+        self.duty_cycle_slider = QDoubleSlider(Qt.Horizontal)
+        self.duty_cycle_slider.setMinimum(0)
+        self.duty_cycle_slider.setMaximum(100)
+        self.duty_cycle_slider.setValue(50)
+        layout.addWidget(self.duty_cycle_slider)
+
+        # Add a QLabel to display the duty cycle value
+        self.duty_cycle_label = QLabel(f"Duty Cycle: {self.arduino_pwm.duty_cycle}")
+        layout.addWidget(self.duty_cycle_label)
+
+        self.frequency_slider = QDoubleSlider(Qt.Horizontal)
+        self.frequency_slider.setMinimum(0)
+        self.frequency_slider.setMaximum(100)
+        self.frequency_slider.setValue(50)
+        layout.addWidget(self.frequency_slider)
+
+        # Add a QLabel to display the frequency value
+        self.frequency_label = QLabel(f"Frequency: {self.arduino_pwm.frequency}")
+        layout.addWidget(self.frequency_label)
+
+        self.duration_slider = QSlider(Qt.Horizontal)
+        self.duration_slider.setMinimum(0)
+        self.duration_slider.setMaximum(100)
+        self.duration_slider.setValue(50)
+        layout.addWidget(self.duration_slider)
+
+        # Add a QLabel to display the duration value
+        self.duration_label = QLabel(f"Duration: {self.arduino_pwm.duration}")
+        layout.addWidget(self.duration_label)
+
+        self.setLayout(layout)
 
 
 # TODO: connect widget to actual abstract mirror calls
@@ -528,7 +592,7 @@ if __name__ == "__main__":
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
 
     try:
-        os.environ["DISPLAY"] = ":1003"
+        os.environ["DISPLAY"] = ":1002"
 
     except:
         raise Exception("DISPLAY environment variable not set")
