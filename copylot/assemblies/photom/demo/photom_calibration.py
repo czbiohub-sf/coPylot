@@ -388,7 +388,8 @@ class PhotomApp(QMainWindow):
     def __init__(
         self,
         photom_assembly: PhotomAssembly,
-        photom_window_size: Tuple[int, int] = (400, 500),
+        photom_sensor_size: Tuple[int, int] = (2048, 2048),
+        photom_window_size: int = 800,
         photom_window_pos: Tuple[int, int] = (100, 100),
         demo_window=None,
         arduino=[],
@@ -404,6 +405,7 @@ class PhotomApp(QMainWindow):
         self.lasers = self.photom_assembly.laser
         self.mirrors = self.photom_assembly.mirror
         self.photom_window_size = photom_window_size
+        self.photom_sensor_size = photom_sensor_size
         self.photom_window_pos = photom_window_pos
         self._current_mirror_idx = 0
         self._laser_window_transparency = 0.7
@@ -421,16 +423,19 @@ class PhotomApp(QMainWindow):
     def initializer_laser_marker_window(self):
         # Making the photom_window a square and display right besides the control UI
         window_pos = (
-            self.photom_window_size[0] + self.photom_window_pos[0],
+            self.photom_window_size + self.photom_window_pos[0],
             self.photom_window_pos[1],
         )
-        window_size = (self.photom_window_size[0], self.photom_window_size[1])
         self.photom_window = LaserMarkerWindow(
             photom_controls=self,
             name='Laser Marker',
-            window_size=window_size,
+            sensor_size=self.photom_sensor_size,
+            fixed_width=self.photom_window_size,
             window_pos=window_pos,
         )
+        self.photom_window.windowClosed.connect(
+            self.closeAllWindows
+        )  # Connect the signal to slot
 
     def initialize_UI(self):
         """
@@ -440,8 +445,8 @@ class PhotomApp(QMainWindow):
         self.setGeometry(
             self.photom_window_pos[0],
             self.photom_window_pos[1],
-            self.photom_window_size[0],
-            self.photom_window_size[1],
+            self.photom_window_size,
+            self.photom_window_size,
         )
         self.setWindowTitle("Laser and Mirror Control App")
 
@@ -695,6 +700,15 @@ class PhotomApp(QMainWindow):
     def display_rectangle(self):
         self.photom_window.switch_to_calibration_scene()
 
+    def closeEvent(self, event):
+        self.closeAllWindows()  # Ensure closing main window closes everything
+        super().closeEvent(event)
+
+    def closeAllWindows(self):
+        self.photom_window.close()
+        self.close()
+        QApplication.quit()  # Quit the application
+
 
 class PWMWorker(QThread):
     finished = pyqtSignal()
@@ -744,17 +758,23 @@ class CalibrationThread(QThread):
 
 
 class LaserMarkerWindow(QMainWindow):
+    windowClosed = pyqtSignal()  # Define the signal
+
     def __init__(
         self,
         photom_controls: QMainWindow = None,
         name="Laser Marker",
-        window_size: Tuple = (400, 500),
+        sensor_size: Tuple = (2048, 2048),
         window_pos: Tuple = (100, 100),
+        fixed_width: int = 800,
     ):
         super().__init__()
         self.photom_controls = photom_controls
         self.window_name = name
-        self.window_geometry = window_pos + window_size
+        self.aspect_ratio = sensor_size[0] / sensor_size[1]
+        fixed_width = 800
+        calculated_height = int(fixed_width / self.aspect_ratio)
+        self.window_geometry = window_pos + (calculated_height, fixed_width)
         self.setMouseTracking(True)
         self.setWindowOpacity(self.photom_controls._laser_window_transparency)
 
@@ -817,10 +837,15 @@ class LaserMarkerWindow(QMainWindow):
         # Mouse tracking
         self.shooting_view.installEventFilter(self)
         self.setMouseTracking(True)
-        self.marker = QGraphicsSimpleTextItem("X")
+        self.marker = QGraphicsSimpleTextItem("+")
         self.marker.setBrush(QColor(255, 0, 0))
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.shooting_view.viewport().installEventFilter(self)
+        # Set larger font size
+        font = self.marker.font()
+        font.setPointSize(20)
+        self.marker.setFont(font)
+
         # Position the marker
         self.display_marker_center(
             self.marker, (self.canvas_width / 2, self.canvas_height / 2)
@@ -1000,9 +1025,16 @@ class LaserMarkerWindow(QMainWindow):
         )
         return marker
 
+    def closeEvent(self, event):
+        self.windowClosed.emit()  # Emit the signal when the window is about to close
+        super().closeEvent(event)  # Proceed with the default close event
+
 
 if __name__ == "__main__":
     import os
+
+    # TODO: grab the actual value if the camera is connected to photom_assmebly
+    CAMERA_SENSOR_YX = (2048, 2448)
 
     if DEMO_MODE:
         from copylot.assemblies.photom.photom_mock_devices import (
@@ -1066,12 +1098,14 @@ if __name__ == "__main__":
     if DEMO_MODE:
         camera_window = LaserMarkerWindow(
             name="Mock laser dots",
-            window_size=(ctrl_window_width, ctrl_window_width),
+            sensor_size=(2048, 2048),
             window_pos=(100, 100),
+            fixed_width=ctrl_window_width,
         )  # Set the positions of the windows
         ctrl_window = PhotomApp(
             photom_assembly=photom_assembly,
-            photom_window_size=(ctrl_window_width, ctrl_window_width),
+            photom_sensor_size=CAMERA_SENSOR_YX,
+            photom_window_size=ctrl_window_width,
             photom_window_pos=(100, 100),
             demo_window=camera_window,
             arduino=arduino,
@@ -1092,7 +1126,8 @@ if __name__ == "__main__":
         # Set the positions of the windows
         ctrl_window = PhotomApp(
             photom_assembly=photom_assembly,
-            photom_window_size=(ctrl_window_width, ctrl_window_width),
+            photom_sensor_size=CAMERA_SENSOR_YX,
+            photom_window_size=ctrl_window_width,
             photom_window_pos=(100, 100),
             arduino=arduino,
         )
