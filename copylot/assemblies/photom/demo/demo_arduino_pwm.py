@@ -43,7 +43,7 @@ mirror_roi = [
     ],
 ]  # [x,y]
 
-photom_device.camera[0].exposure = 10000  # [us]
+photom_device.camera[0].exposure = 10_000  # [us]
 photom_device.camera[0].gain = 0
 # photom_device.camera[0].pixel_format = 'Mono16'
 
@@ -65,7 +65,7 @@ photom_device.laser[0].toggle_emission = False
 
 # %%
 # Remove the camera from the photom_device so we can use it in the acquisiton engine
-photom_device.camera[0].exposure = 50_000  # [us]
+photom_device.camera[0].exposure = 10_000  # [us]
 photom_device.camera = []
 
 
@@ -79,22 +79,28 @@ photom_device.laser[0].toggle_emission = False
 # Set the ablation parameters
 # Test the PWM signal
 duty_cycle = 50  # [%] (0-100)
-period_ms = 20  # [ms]
-total_duration_ms = 5000  # [ms] total time to run the PWM signal
+period_ms = 500  # [ms]
+total_duration_ms = 5_000  # [ms] total time to run the PWM signal
 reps = 2
 time_interval_s = 3
-photom_device.laser[0].power = 10  # [%]
+photom_device.laser[0].pulse_power = 10  # [%]
 
 # %%
 # Ablate the cells
-photom_device.set_position(0, [1024, 1224])  # center [y,x]
+# photom_device.set_position(0, [1024, 1224])  # center [y,x]
+photom_device.set_position(0, [0, 0])  # edge [y,x] might not be visble
+photom_device.laser[0].toggle_emission = 1
+time.sleep(0.2)
 photom_device.laser[0].pulse_mode = 1  # True enabled, False disabled
-photom_device.laser[0].toggle_emission = True
+time.sleep(0.2)
 frequency = 1000.0 / period_ms  # [Hz]
 arduino.set_pwm(duty_cycle, frequency, total_duration_ms)
 arduino.start_timelapse(repetitions=reps, time_interval_s=time_interval_s)
-photom_device.laser[0].toggle_emission = 0
+# %%
 photom_device.laser[0].pulse_mode = 0  # True enabled, False disabled
-photom_device.laser[0].power = 5  # [mW]
+time.sleep(0.2)
+photom_device.laser[0].toggle_emission = 0
+time.sleep(0.2)
+photom_device.laser[0].power = 5.0  # [mW]
 
 # %%

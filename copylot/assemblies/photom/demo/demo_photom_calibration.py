@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QGridLayout,
 )
-from PyQt5.QtGui import QColor, QPen
+from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )

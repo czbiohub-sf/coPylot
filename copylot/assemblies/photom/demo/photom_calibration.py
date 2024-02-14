@@ -1,5 +1,6 @@
 import sys
 from tokenize import Double
+from matplotlib.pylab import f
 import yaml
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
@@ -21,6 +22,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
     QLineEdit,
     QGridLayout,
+    QProgressBar,
 )
 from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent
 from copylot.assemblies.photom.utils.scanning_algorithms import (
@@ -30,6 +32,7 @@ from copylot.assemblies.photom.utils.qt_utils import DoubleSlider
 import numpy as np
 from copylot.assemblies.photom.photom import PhotomAssembly
 from typing import Any, Tuple
+import time
 
 # DEMO_MODE = True
 DEMO_MODE = False
@@ -46,18 +49,29 @@ class LaserWidget(QWidget):
         self.laser = laser
 
         self.emission_state = 0  # 0 = off, 1 = on
-        self.emission_delay = 0.0
+        self.emission_delay = 0  # 0 =off ,1= 5 sec delay
 
-        self._curr_power = 0.0
+        self._curr_power = 0
         self._slider_decimal = 1
+        self._curr_laser_pulse_mode = False
 
         self.initializer_laser()
         self.initialize_UI()
 
     def initializer_laser(self):
-        self.laser.toggle_emission = self.emission_state
-        self.laser.power = self._curr_power
+        # Set the power to 0
+        self.laser.toggle_emission = 0
         self.laser.emission_delay = self.emission_delay
+        self.laser.pulse_power = self._curr_power
+        self.laser.power = self._curr_power
+
+        # Make sure laser is in continuous mode
+        if self.laser.pulse_mode == 1:
+            self.laser.toggle_emission = 1
+            time.sleep(0.2)
+            self.laser.pulse_mode = self._curr_laser_pulse_mode ^ 1
+            time.sleep(0.2)
+            self.laser.toggle_emission = 0
 
     def initialize_UI(self):
         layout = QVBoxLayout()
@@ -81,6 +95,12 @@ class LaserWidget(QWidget):
         )  # Connect the returnPressed signal
         layout.addWidget(self.power_edit)
 
+        # Set Pulse Mode Button
+        self.pulse_mode_button = QPushButton("Pulse Mode")
+        self.pulse_mode_button.clicked.connect(self.laser_pulse_mode)
+        layout.addWidget(self.pulse_mode_button)
+        self.pulse_mode_button.setStyleSheet("background-color: magenta")
+
         self.laser_toggle_button = QPushButton("Toggle")
         self.laser_toggle_button.clicked.connect(self.toggle_laser)
         # make it background red if laser is off
@@ -99,9 +119,12 @@ class LaserWidget(QWidget):
             self.laser_toggle_button.setStyleSheet("background-color: green")
 
     def update_power(self, value):
-        self.laser.power = value / (10**self._slider_decimal)
-
         self._curr_power = value / (10**self._slider_decimal)
+        if self._curr_laser_pulse_mode:
+            self.laser.pulse_power = self._curr_power
+        else:
+            self.laser.power = self._curr_power
+
         # Update the QLabel with the new power value
         self.power_edit.setText(f"{self._curr_power:.2f}")
 
@@ -120,8 +143,29 @@ class LaserWidget(QWidget):
                 self.power_edit.setText(f"{self._curr_power:.2f}")
             else:
                 self.power_edit.setText(f"{self._curr_power:.2f}")
+            print(f"Power: {self._curr_power}")
         except ValueError:
             self.power_edit.setText(f"{self._curr_power:.2f}")
+
+    def laser_pulse_mode(self):
+        self._curr_laser_pulse_mode = not self._curr_laser_pulse_mode
+        self.laser.toggle_emission = 1
+        if self._curr_laser_pulse_mode:
+            self.pulse_mode_button.setStyleSheet("background-color: green")
+            self.laser.pulse_power = self._curr_power
+            self.laser.pulse_mode = 1
+            time.sleep(0.2)
+        else:
+            self.laser.power = self._curr_power
+            self.laser.pulse_mode = 0
+            self.pulse_mode_button.setStyleSheet("background-color: magenta")
+            time.sleep(0.2)
+            self.laser_toggle_button.setStyleSheet("background-color: magenta")
+            self.laser.toggle_emission = 0
+            self.emission_state = 0
+
+        print(f'pulse mode bool: {self._curr_laser_pulse_mode}')
+        print(f'digital modulation = {self.laser.pulse_mode}')
 
 
 # TODO: connect widget to actual abstract mirror calls
@@ -181,101 +225,163 @@ class MirrorWidget(QWidget):
 
 
 class ArduinoPWMWidget(QWidget):
-    def __init__(self, arduino_pwm):
+    def __init__(self, photom_assembly, arduino_pwm):
         super().__init__()
         self.arduino_pwm = arduino_pwm
-
+        self.photom_assembly = photom_assembly
         # default values
         self.duty_cycle = 50  # [%] (0-100)
-        self.frequency = 1000  # [Hz]
+        self.time_period_ms = 10  # [ms]
+        self.frequency = 1000.0 / self.time_period_ms  # [Hz]
         self.duration = 5000  # [ms]
+        self.repetitions = 1  # By default it runs once
+        self.time_interval_s = 0  # [s]
+
+        self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
 
         self.initialize_UI()
 
     def initialize_UI(self):
         layout = QGridLayout()  # Use QGridLayout
 
+        # Laser Dropdown Menu
+        self.laser_dropdown = QComboBox()
+        for laser in self.photom_assembly.laser:
+            self.laser_dropdown.addItem(laser.name)
+        layout.addWidget(QLabel("Select Laser:"), 0, 0)
+        layout.addWidget(self.laser_dropdown, 0, 1)
+        self.laser_dropdown.currentIndexChanged.connect(self.current_laser_changed)
+
         # Duty Cycle
-        layout.addWidget(QLabel("Duty Cycle [%]:"), 0, 0)  # Label for duty cycle
-        self.duty_cycle_slider = DoubleSlider(orientation=Qt.Horizontal)
-        self.duty_cycle_slider.setMinimum(0)
-        self.duty_cycle_slider.setMaximum(100)
-        self.duty_cycle_slider.setValue(self.duty_cycle)
-        self.duty_cycle_slider.valueChanged.connect(self.update_duty_cycle)
-        layout.addWidget(self.duty_cycle_slider, 0, 1)
+        layout.addWidget(QLabel("Duty Cycle [%]:"), 1, 0)
         self.duty_cycle_edit = QLineEdit(f"{self.duty_cycle}")
         self.duty_cycle_edit.returnPressed.connect(self.edit_duty_cycle)
-        layout.addWidget(self.duty_cycle_edit, 0, 2)
+        layout.addWidget(self.duty_cycle_edit, 1, 1)
 
-        # Frequency
-        layout.addWidget(QLabel("Frequency [Hz]:"), 1, 0)  # Label for frequency
-        self.frequency_slider = DoubleSlider(orientation=Qt.Horizontal)
-        self.frequency_slider.setMinimum(0)
-        self.frequency_slider.setMaximum(100)
-        self.frequency_slider.setValue(self.frequency)
-        self.frequency_slider.valueChanged.connect(self.update_frequency)
-        layout.addWidget(self.frequency_slider, 1, 1)
-        self.frequency_edit = QLineEdit(f"{self.frequency}")
-        self.frequency_edit.returnPressed.connect(self.edit_frequency)
-        layout.addWidget(self.frequency_edit, 1, 2)
+        # Time Period
+        layout.addWidget(QLabel("Time Period [ms]:"), 2, 0)
+        self.time_period_edit = QLineEdit(f"{self.time_period_ms}")
+        self.time_period_edit.returnPressed.connect(self.edit_time_period)
+        layout.addWidget(self.time_period_edit, 2, 1)
 
         # Duration
-        layout.addWidget(QLabel("Duration [ms]:"), 2, 0)  # Label for duration
-        self.duration_slider = DoubleSlider(orientation=Qt.Horizontal)
-        self.duration_slider.setMinimum(0)
-        self.duration_slider.setMaximum(100)
-        self.duration_slider.setValue(self.duration)
-        self.duration_slider.valueChanged.connect(self.update_duration)
-        layout.addWidget(self.duration_slider, 2, 1)
+        layout.addWidget(QLabel("Duration [ms]:"), 3, 0)
         self.duration_edit = QLineEdit(f"{self.duration}")
         self.duration_edit.returnPressed.connect(self.edit_duration)
-        layout.addWidget(self.duration_edit, 2, 2)
+        layout.addWidget(self.duration_edit, 3, 1)
 
-        # Add Start Button
+        # Repetitions
+        layout.addWidget(QLabel("Repetitions:"), 4, 0)
+        self.repetitions_edit = QLineEdit(f"{self.repetitions}")
+        self.repetitions_edit.textChanged.connect(self.edit_repetitions)
+        layout.addWidget(self.repetitions_edit, 4, 1)
+
+        # Time interval
+        layout.addWidget(QLabel("Time interval [s]:"), 5, 0)
+        self.time_interval_edit = QLineEdit(f"{self.time_interval_s}")
+        self.time_interval_edit.textChanged.connect(self.edit_time_interval)
+        layout.addWidget(self.time_interval_edit, 5, 1)
+
+        # Apply Button
+        self.apply_button = QPushButton("Apply")
+        self.apply_button.clicked.connect(self.apply_settings)
+        layout.addWidget(self.apply_button, 6, 0, 1, 2)
+
+        # Start Button
         self.start_button = QPushButton("Start PWM")
-        self.start_button.clicked.connect(
-            self.start_pwm
-        )  # Assuming start_pwm is a method you've defined
-        layout.addWidget(self.start_button, 0, 3, 1, 2)  # Span 1 row and 2 columns
+        self.start_button.clicked.connect(self.start_pwm)
+        layout.addWidget(self.start_button, 7, 0, 1, 2)
+
+        # Add Stop Button
+        self.stop_button = QPushButton("Stop PWM")
+        self.stop_button.clicked.connect(self.stop_pwm)
+        layout.addWidget(self.stop_button, 8, 0, 1, 2)  # Adjust position as needed
+
+        # Add Progress Bar
+        self.progressBar = QProgressBar(self)
+        self.progressBar.setMaximum(100)  # Set the maximum value
+        layout.addWidget(self.progressBar, 9, 0, 1, 2)  # Adjust position as needed
 
         self.setLayout(layout)
 
-    def update_duty_cycle(self, value):
-        self.duty_cycle = value
-        self.duty_cycle_edit.setText(f"{value:.2f}")
-        self.update_command()
-
     def edit_duty_cycle(self):
-        value = float(self.duty_cycle_edit.text())
-        self.duty_cycle = value
-        self.duty_cycle_slider.setValue(value)
+        try:
+            value = float(self.duty_cycle_edit.text())
+            self.duty_cycle = value
+            self.update_command()
+        except ValueError:
+            self.duty_cycle_edit.setText(f"{self.duty_cycle}")
 
-    def update_frequency(self, value):
-        self.frequency = value
-        self.frequency_edit.setText(f"{value:.2f}")
-        self.update_command()
-
-    def edit_frequency(self):
-        value = float(self.frequency_edit.text())
-        self.frequency = value
-        self.frequency_slider.setValue(value)
-
-    def update_duration(self, value):
-        self.duration = value
-        self.duration_edit.setText(f"{value:.2f}")
-        self.update_command()
+    def edit_time_period(self):
+        try:
+            value = float(self.time_period_edit.text())
+            self.time_period_ms = value
+            self.frequency = 1000.0 / self.time_period_ms
+            self.update_command()
+        except ValueError:
+            self.time_period_edit.setText(f"{self.time_period}")
 
     def edit_duration(self):
-        value = float(self.duration_edit.text())
-        self.duration = value
-        self.duration_slider.setValue(value)
+        try:
+            value = float(self.duration_edit.text())
+            self.duration = value
+            self.update_command()
+        except ValueError:
+            self.duration_edit.setText(f"{self.duration}")
+
+    def edit_repetitions(self):
+        try:
+            value = int(self.repetitions_edit.text())
+            self.repetitions = value
+        except ValueError:
+            self.repetitions_edit.setText(
+                f"{self.repetitions}"
+            )  # Reset to last valid value
+
+    def edit_time_interval(self):
+        try:
+            value = float(self.time_interval_edit.text())
+            self.time_interval_s = value
+        except ValueError:
+            self.time_interval_edit.setText(
+                f"{self.time_interval_s}"
+            )  # Reset to last valid value
 
     def update_command(self):
         self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
+        print(f"arduino out: {self.command}")
         self.arduino_pwm.send_command(self.command)
 
     def start_pwm(self):
-        self.arduino_pwm.send_command("S")
+        print("Starting PWM...")
+        self.pwm_worker = PWMWorker(
+            self.arduino_pwm, 'S', self.repetitions, self.time_interval_s, self.duration
+        )
+        self.pwm_worker.finished.connect(self.on_pwm_finished)
+        self.pwm_worker.progress.connect(self.update_progress_bar)
+        self.pwm_worker.start()
+
+    def update_progress_bar(self, value):
+        self.progressBar.setValue(value)  # Update the progress bar with the new value
+
+    def stop_pwm(self):
+        if hasattr(self, 'pwm_worker') and self.pwm_worker.isRunning():
+            self.pwm_worker.request_stop()
+
+    def on_pwm_finished(self):
+        print("PWM operation completed.")
+        # self.progressBar.setValue(0)  # Reset the progress bar
+
+    def current_laser_changed(self, index):
+        self._curr_laser_idx = index
+        self.apply_settings()
+
+    def apply_settings(self):
+        # Implement functionality to apply settings to the selected laser
+        self._curr_laser_idx = self.laser_dropdown.currentIndex()
+        # TODO: Need to modify the data struct for command for multiple lasers
+        if hasattr(self, 'command'):
+            self.arduino_pwm.send_command(self.command)
 
 
 class PhotomApp(QMainWindow):
@@ -384,7 +490,7 @@ class PhotomApp(QMainWindow):
         arduino_layout = QVBoxLayout()
         self.arduino_pwm_widgets = []
         for arduino in self.arduino_pwm:
-            arduino_pwm_widget = ArduinoPWMWidget(arduino)
+            arduino_pwm_widget = ArduinoPWMWidget(self.photom_assembly, arduino)
             self.arduino_pwm_widgets.append(arduino_pwm_widget)
             arduino_layout.addWidget(arduino_pwm_widget)
         arduino_group.setLayout(arduino_layout)
@@ -537,7 +643,6 @@ class PhotomApp(QMainWindow):
         T_affine = self.photom_assembly.mirror[
             self._current_mirror_idx
         ].affine_transform_obj.get_affine_matrix(origin, dest)
-        # logger.debug(f"Affine matrix: {T_affine}")
         print(f"Affine matrix: {T_affine}")
 
         # Save the affine matrix to a file
@@ -589,6 +694,36 @@ class PhotomApp(QMainWindow):
 
     def display_rectangle(self):
         self.photom_window.switch_to_calibration_scene()
+
+
+class PWMWorker(QThread):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)  # Signal to report progress
+    _stop_requested = False
+
+    def request_stop(self):
+        self._stop_requested = True
+
+    def __init__(self, arduino_pwm, command, repetitions, time_interval_s, duration):
+        super().__init__()
+        self.arduino_pwm = arduino_pwm
+        self.command = command
+        self.repetitions = repetitions
+        self.time_interval_s = time_interval_s
+        self.duration = duration
+
+    def run(self):
+        # Simulate sending the command and waiting (replace with actual logic)
+        for i in range(self.repetitions):
+            if self._stop_requested:
+                break
+            self.arduino_pwm.send_command(self.command)
+            # TODO: replace when using a better microcontroller since we dont get signals back rn
+            time.sleep(self.duration / 1000)
+            self.progress.emit(int((i + 1) / self.repetitions * 100))
+            time.sleep(self.time_interval_s)  # Simulate time interval
+
+        self.finished.emit()
 
 
 class CalibrationThread(QThread):
@@ -807,23 +942,24 @@ class LaserMarkerWindow(QMainWindow):
                     print('right button pressed')
         elif event.type() == QMouseEvent.MouseButtonRelease:
             if self.calibration_mode:
-                if event.buttons() == Qt.LeftButton:
+                if event.button() == Qt.LeftButton:
                     self._left_click_hold = False
                     print('left button released')
-                elif event.buttons() == Qt.RightButton:
+                elif event.button() == Qt.RightButton:
                     self._right_click_hold = False
                     print('right button released')
             else:
                 print('mouse button released')
-                if event.buttons() == Qt.LeftButton:
-                    self._left_click_hold = False
+                if event.button() == Qt.LeftButton:
                     print('left button released')
-                elif event.buttons() == Qt.RightButton:
-                    print('right button released')
+                    self._left_click_hold = False
+                elif event.button() == Qt.RightButton:
                     self._right_click_hold = False
                     self.photom_controls.photom_assembly.laser[
                         0
                     ].toggle_emission = False
+                    time.sleep(0.5)
+                    print('right button released')
 
         return super(LaserMarkerWindow, self).eventFilter(source, event)
 
@@ -869,15 +1005,19 @@ if __name__ == "__main__":
     import os
 
     if DEMO_MODE:
-        from copylot.assemblies.photom.photom_mock_devices import MockLaser, MockMirror
+        from copylot.assemblies.photom.photom_mock_devices import (
+            MockLaser,
+            MockMirror,
+            MockArduinoPWM,
+        )
 
         Laser = MockLaser
         Mirror = MockMirror
-
+        ArduinoPWM = MockArduinoPWM
     else:
         from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
         from copylot.hardware.lasers.vortran.vortran import VortranLaser as Laser
-        from copylot.assemblies.photom.utils.arduino import ArduinoPWM
+        from copylot.assemblies.photom.utils.arduino import ArduinoPWM as ArduinoPWM
 
     config_path = r"./copylot/assemblies/photom/demo/photom_VIS_config.yml"
 
@@ -954,6 +1094,7 @@ if __name__ == "__main__":
             photom_assembly=photom_assembly,
             photom_window_size=(ctrl_window_width, ctrl_window_width),
             photom_window_pos=(100, 100),
+            arduino=arduino,
         )
 
     sys.exit(app.exec_())

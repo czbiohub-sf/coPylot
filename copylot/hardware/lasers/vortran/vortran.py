@@ -400,6 +400,9 @@ class VortranLaser(AbstractLaser):
         Pulse Power configuration
         """
         logger.info(f'Setting Power:{power}')
+        if power > self._max_power:
+            power = self._max_power
+            logger.info(f'Maximum power is: {self._max_power}')
         self._pulse_power = float(self._write_cmd('PP', str(power))[0])
 
     @property
@@ -415,6 +418,7 @@ class VortranLaser(AbstractLaser):
         """
         Toggle Pulse Mode On and Off (1=On)
         """
+        logger.debug(f'Digital Modulation: {mode}')
         self._pulse_mode = self._write_cmd('PUL', str(mode))[0]
 
     @property
