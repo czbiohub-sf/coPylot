@@ -23,8 +23,9 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QGridLayout,
     QProgressBar,
+    QGraphicsRectItem,
 )
-from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent
+from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent, QBrush
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )
@@ -833,17 +834,18 @@ class LaserMarkerWindow(QMainWindow):
         self.shooting_view.setMouseTracking(True)
         self.setCentralWidget(self.shooting_view)
         self.shooting_view.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.shooting_view.setFixedSize(self.canvas_width, self.canvas_height)
 
         # Mouse tracking
         self.shooting_view.installEventFilter(self)
         self.setMouseTracking(True)
-        self.marker = QGraphicsSimpleTextItem("+")
+        self.marker = QGraphicsSimpleTextItem("X")
         self.marker.setBrush(QColor(255, 0, 0))
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.shooting_view.viewport().installEventFilter(self)
         # Set larger font size
         font = self.marker.font()
-        font.setPointSize(20)
+        font.setPointSize(10)
         self.marker.setFont(font)
 
         # Position the marker
@@ -852,6 +854,24 @@ class LaserMarkerWindow(QMainWindow):
         )
 
         self.shooting_scene.addItem(self.marker)
+
+        ## Add the rectangle
+        rect_width = 2 * self.canvas_width / 3
+        rect_height = 2 * self.canvas_height / 3
+        rect_x = (self.canvas_width - rect_width) / 2
+        rect_y = (self.canvas_height - rect_height) / 2
+        # Continue from the previous code in initMarker...
+        pen = QPen(QColor(0, 0, 0))
+        pen.setStyle(Qt.DashLine)  # Dashed line style
+        pen.setWidth(2)  # Set the pen width
+
+        # Create the rectangle with no fill (transparent)
+        rect_item = QGraphicsRectItem(rect_x, rect_y, rect_width, rect_height)
+        rect_item.setPen(pen)
+        rect_item.setBrush(QBrush(Qt.transparent))  # Transparent fill
+        # Add the rectangle to the scene
+        self.shooting_scene.addItem(rect_item)
+
         # Add the view to the QStackedWidget
         self.stacked_widget.addWidget(self.shooting_view)
 
@@ -1018,10 +1038,10 @@ class LaserMarkerWindow(QMainWindow):
             coords = (marker.x(), marker.y())
         fm = QFontMetricsF(QFont())
         boundingRect = fm.tightBoundingRect(marker.text())
-        mergintop = fm.ascent() + boundingRect.top()
+        margintop = fm.ascent() + boundingRect.top()
         marker.setPos(
             coords[0] - boundingRect.left() - boundingRect.width() / 2,
-            coords[1] - mergintop - boundingRect.height() / 2,
+            coords[1] - margintop - boundingRect.height() / 2,
         )
         return marker
 
