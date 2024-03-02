@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QGraphicsEllipseItem,
     QStackedWidget,
     QComboBox,
+    QSpinBox,
     QFileDialog,
     QLineEdit,
     QGridLayout,
@@ -414,6 +415,7 @@ class PhotomApp(QMainWindow):
         self._current_mirror_idx = 0
         self._laser_window_transparency = 0.7
         self.scaling_matrix = np.eye(3)
+        self.T_mirror_cam_matrix = np.eye(3)
         self.calibration_thread = CalibrationThread(
             self.photom_assembly, self._current_mirror_idx
         )
@@ -421,8 +423,8 @@ class PhotomApp(QMainWindow):
         if DEMO_MODE:
             self.demo_window = demo_window
 
-        self.initialize_UI()
         self.initializer_laser_marker_window()
+        self.initialize_UI()
 
     def initializer_laser_marker_window(self):
         # Making the photom_window a square and display right besides the control UI
@@ -449,8 +451,6 @@ class PhotomApp(QMainWindow):
         self.scaling_matrix = np.array(
             [[self.scaling_factor_x, 0, 1], [0, self.scaling_factor_y, 1], [0, 0, 1]]
         )
-        print(f'scaling factor x: {self.scaling_factor_x}')
-        print(f'scaling factor y: {self.scaling_factor_y}')
         self.photom_window.windowClosed.connect(
             self.closeAllWindows
         )  # Connect the signal to slot
@@ -484,6 +484,18 @@ class PhotomApp(QMainWindow):
         # Add a QLabel to display the current percent transparency value
         self.transparency_label = QLabel(f"Transparency: 100%")
         transparency_layout.addWidget(self.transparency_label)
+
+        # Resize QSpinBox
+        self.resize_spinbox = QSpinBox()
+        self.resize_spinbox.setRange(50, 200)  # Set range from 50% to 200%
+        self.resize_spinbox.setSuffix("%")  # Add a percentage sign as suffix
+        self.resize_spinbox.setValue(100)  # Default value is 100%
+        self.resize_spinbox.valueChanged.connect(self.resize_laser_marker_window)
+        self.resize_spinbox.editingFinished.connect(self.resize_laser_marker_window)
+        transparency_layout.addWidget(QLabel("Resize Window:"))
+        transparency_layout.addWidget(self.resize_spinbox)
+
+        # Set the transparency group layout
         transparency_group.setLayout(transparency_layout)
 
         # Adding a group box for the lasers
@@ -560,6 +572,53 @@ class PhotomApp(QMainWindow):
         self.setCentralWidget(main_widget)
         self.show()
 
+    def resize_laser_marker_window(self):
+        # Retrieve the selected resize percentage from the QSpinBox
+        percentage = self.resize_spinbox.value() / 100.0
+
+        # Calculate the new width based on the selected percentage
+        new_width = int(self.photom_window_size_x * percentage)
+        # Calculate the new height to maintain the aspect ratio
+        new_height = int(new_width / self.photom_window.aspect_ratio)
+
+        # Resize the LaserMarkerWindow
+        self.photom_window.setFixedSize(new_width, new_height)
+        self.photom_window.shooting_scene.setSceneRect(0, 0, new_width, new_height)
+        self.photom_window.calibration_scene.setSceneRect(0, 0, new_width, new_height)
+        # Resize and reposition the rectangle within the scene
+        # Assuming you have a reference to the rectangle as self.photom_window.myRectangle
+        rect_width = new_width * 2 / 3  # Example: 2/3 of the new width
+        rect_height = new_height * 2 / 3  # Example: 2/3 of the new height
+        rect_x = (new_width - rect_width) / 2
+        rect_y = (new_height - rect_height) / 2
+
+        self.photom_window.dashed_rectangle.setRect(
+            rect_x, rect_y, rect_width, rect_height
+        )
+        pen = QPen(
+            QColor(0, 0, 0), 2, Qt.DashLine
+        )  # Example: black color, width 2, dashed line
+        self.photom_window.dashed_rectangle.setPen(pen)
+
+        # Re-center the "X" marker
+        marker_center_x = new_width / 2
+        marker_center_y = new_height / 2
+        # self.photom_window.marker.setPos(marker_center_x, marker_center_y)
+        self.photom_window.display_marker_center(
+            self.photom_window.marker, (marker_center_x, marker_center_y)
+        )
+
+        # Update the scaling transform matrix
+        self.scaling_factor_x = self.photom_sensor_size_yx[1] / new_width
+        self.scaling_factor_y = self.photom_sensor_size_yx[0] / new_height
+        self.scaling_matrix = np.array(
+            [[self.scaling_factor_x, 0, 1], [0, self.scaling_factor_y, 1], [0, 0, 1]]
+        )
+        T_compose_mat = self.T_mirror_cam_matrix @ self.scaling_matrix
+        self.photom_assembly.mirror[
+            self._current_mirror_idx
+        ].affine_transform_obj.set_affine_matrix(T_compose_mat)
+
     def mirror_dropdown_changed(self, index):
         print(f"Mirror dropdown changed to index {index}")
         self._current_mirror_idx = index
@@ -619,11 +678,11 @@ class PhotomApp(QMainWindow):
                 f'Loaded matrix:{self.photom_assembly.mirror[self._current_mirror_idx].affine_transform_obj.T_affine}'
             )
             # Scale the matrix calculated from calibration to match the photom laser window
-            T_mirror_cam_matrix = self.photom_assembly.mirror[
+            self.T_mirror_cam_matrix = self.photom_assembly.mirror[
                 self._current_mirror_idx
             ].affine_transform_obj.get_affine_matrix()
-            T_compose_mat = T_mirror_cam_matrix @ self.scaling_matrix
-            T_mirror_cam_matrix = self.photom_assembly.mirror[
+            T_compose_mat = self.T_mirror_cam_matrix @ self.scaling_matrix
+            self.photom_assembly.mirror[
                 self._current_mirror_idx
             ].affine_transform_obj.set_affine_matrix(T_compose_mat)
             print("Scaled matrix:", T_compose_mat)
@@ -892,11 +951,13 @@ class LaserMarkerWindow(QMainWindow):
         pen.setWidth(2)  # Set the pen width
 
         # Create the rectangle with no fill (transparent)
-        rect_item = QGraphicsRectItem(rect_x, rect_y, rect_width, rect_height)
-        rect_item.setPen(pen)
-        rect_item.setBrush(QBrush(Qt.transparent))  # Transparent fill
+        self.dashed_rectangle = QGraphicsRectItem(
+            rect_x, rect_y, rect_width, rect_height
+        )
+        self.dashed_rectangle.setPen(pen)
+        self.dashed_rectangle.setBrush(QBrush(Qt.transparent))  # Transparent fill
         # Add the rectangle to the scene
-        self.shooting_scene.addItem(rect_item)
+        self.shooting_scene.addItem(self.dashed_rectangle)
 
         # Add the view to the QStackedWidget
         self.stacked_widget.addWidget(self.shooting_view)
