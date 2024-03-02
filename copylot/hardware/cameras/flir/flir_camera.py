@@ -137,7 +137,7 @@ class FlirCamera(AbstractCamera):
         # set back to default
         self.system = None
         self.cam_list = None
-        self.device_id = None
+        # self._device_id = None
         self.nodemap_tldevice = None
 
     def list_available_cameras(self):
@@ -545,7 +545,7 @@ class FlirCamera(AbstractCamera):
             logger.error(
                 'Mode input: ', mode, ' is not valid. Enter global or rolling mode'
             )
-            
+
     @property
     def flip_sensor_X(self):
         return self.cam.ReverseX.GetValue()
@@ -584,11 +584,11 @@ class FlirCamera(AbstractCamera):
         if not PySpin.IsWritable(node_pixel_format):
             logger.error("Pixel Format node is not writable")
             raise FlirCameraException("Pixel Format node is not writable")
-        
+
         new_format = node_pixel_format.GetEntryByName(format_str)
         if new_format is None or not PySpin.IsReadable(new_format):
             logger.error(f"Pixel format '{format_str}' is not supported")
             raise FlirCameraException(f"Pixel format '{format_str}' is not supported")
-        
+
         node_pixel_format.SetIntValue(new_format.GetValue())
         logger.info(f"Pixel format set to {format_str}")
