@@ -463,7 +463,7 @@ class PhotomApp(QMainWindow):
 
         T_affine = self.photom_assembly.mirror[
             self._current_mirror_idx
-        ].affine_transform_obj.get_affine_matrix(dest, origin)
+        ].affine_transform_obj.compute_affine_matrix(dest, origin)
         # logger.debug(f"Affine matrix: {T_affine}")
         print(f"Affine matrix: {T_affine}")
 

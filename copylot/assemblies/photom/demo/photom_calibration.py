@@ -42,6 +42,7 @@ DEMO_MODE = False
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
 # TODO: update the mock laser and mirror
 # TODO: replace the entry boxes tos et the laser powers
+# TODO: resizeable laser marker window with aspect ratio of the camera sensor
 
 
 class LaserWidget(QWidget):
@@ -358,6 +359,8 @@ class ArduinoPWMWidget(QWidget):
         self.pwm_worker = PWMWorker(
             self.arduino_pwm, 'S', self.repetitions, self.time_interval_s, self.duration
         )
+        # Rest Progress Bar
+        self.progressBar.setValue(0)
         self.pwm_worker.finished.connect(self.on_pwm_finished)
         self.pwm_worker.progress.connect(self.update_progress_bar)
         self.pwm_worker.start()
@@ -389,8 +392,8 @@ class PhotomApp(QMainWindow):
     def __init__(
         self,
         photom_assembly: PhotomAssembly,
-        photom_sensor_size: Tuple[int, int] = (2048, 2048),
-        photom_window_size: int = 800,
+        photom_sensor_size_yx: Tuple[int, int] = (2048, 2448),
+        photom_window_size_x: int = 800,
         photom_window_pos: Tuple[int, int] = (100, 100),
         demo_window=None,
         arduino=[],
@@ -405,12 +408,12 @@ class PhotomApp(QMainWindow):
         self.photom_assembly = photom_assembly
         self.lasers = self.photom_assembly.laser
         self.mirrors = self.photom_assembly.mirror
-        self.photom_window_size = photom_window_size
-        self.photom_sensor_size = photom_sensor_size
+        self.photom_window_size_x = photom_window_size_x
+        self.photom_sensor_size_yx = photom_sensor_size_yx
         self.photom_window_pos = photom_window_pos
         self._current_mirror_idx = 0
         self._laser_window_transparency = 0.7
-
+        self.scaling_matrix = np.eye(3)
         self.calibration_thread = CalibrationThread(
             self.photom_assembly, self._current_mirror_idx
         )
@@ -424,16 +427,30 @@ class PhotomApp(QMainWindow):
     def initializer_laser_marker_window(self):
         # Making the photom_window a square and display right besides the control UI
         window_pos = (
-            self.photom_window_size + self.photom_window_pos[0],
+            self.photom_window_size_x + self.photom_window_pos[0],
             self.photom_window_pos[1],
         )
         self.photom_window = LaserMarkerWindow(
             photom_controls=self,
             name='Laser Marker',
-            sensor_size=self.photom_sensor_size,
-            fixed_width=self.photom_window_size,
+            sensor_size_yx=self.photom_sensor_size_yx,
+            fixed_width=self.photom_window_size_x,
             window_pos=window_pos,
         )
+        self.aspect_ratio = (
+            self.photom_sensor_size_yx[1] / self.photom_sensor_size_yx[0]
+        )
+        calculated_height = self.photom_window_size_x / self.aspect_ratio
+        self.scaling_factor_x = (
+            self.photom_sensor_size_yx[1] / self.photom_window_size_x
+        )
+        self.scaling_factor_y = self.photom_sensor_size_yx[0] / calculated_height
+        # TODO: the affine transforms are in XY coordinates. Need to change to YX
+        self.scaling_matrix = np.array(
+            [[self.scaling_factor_x, 0, 1], [0, self.scaling_factor_y, 1], [0, 0, 1]]
+        )
+        print(f'scaling factor x: {self.scaling_factor_x}')
+        print(f'scaling factor y: {self.scaling_factor_y}')
         self.photom_window.windowClosed.connect(
             self.closeAllWindows
         )  # Connect the signal to slot
@@ -446,8 +463,8 @@ class PhotomApp(QMainWindow):
         self.setGeometry(
             self.photom_window_pos[0],
             self.photom_window_pos[1],
-            self.photom_window_size,
-            self.photom_window_size,
+            self.photom_window_size_x,
+            self.photom_window_size_x,
         )
         self.setWindowTitle("Laser and Mirror Control App")
 
@@ -601,6 +618,15 @@ class PhotomApp(QMainWindow):
             print(
                 f'Loaded matrix:{self.photom_assembly.mirror[self._current_mirror_idx].affine_transform_obj.T_affine}'
             )
+            # Scale the matrix calculated from calibration to match the photom laser window
+            T_mirror_cam_matrix = self.photom_assembly.mirror[
+                self._current_mirror_idx
+            ].affine_transform_obj.get_affine_matrix()
+            T_compose_mat = T_mirror_cam_matrix @ self.scaling_matrix
+            T_mirror_cam_matrix = self.photom_assembly.mirror[
+                self._current_mirror_idx
+            ].affine_transform_obj.set_affine_matrix(T_compose_mat)
+            print("Scaled matrix:", T_compose_mat)
             self.photom_window.switch_to_shooting_scene()
             self.photom_window.marker.show()
 
@@ -648,7 +674,7 @@ class PhotomApp(QMainWindow):
         )
         T_affine = self.photom_assembly.mirror[
             self._current_mirror_idx
-        ].affine_transform_obj.get_affine_matrix(origin, dest)
+        ].affine_transform_obj.compute_affine_matrix(origin, dest)
         print(f"Affine matrix: {T_affine}")
 
         # Save the affine matrix to a file
@@ -765,17 +791,17 @@ class LaserMarkerWindow(QMainWindow):
         self,
         photom_controls: QMainWindow = None,
         name="Laser Marker",
-        sensor_size: Tuple = (2048, 2048),
+        sensor_size_yx: Tuple = (2048, 2048),
         window_pos: Tuple = (100, 100),
         fixed_width: int = 800,
     ):
         super().__init__()
         self.photom_controls = photom_controls
         self.window_name = name
-        self.aspect_ratio = sensor_size[0] / sensor_size[1]
-        fixed_width = 800
-        calculated_height = int(fixed_width / self.aspect_ratio)
-        self.window_geometry = window_pos + (calculated_height, fixed_width)
+        self.aspect_ratio = sensor_size_yx[1] / sensor_size_yx[0]
+        self.fixed_width = fixed_width
+        calculated_height = int(self.fixed_width / self.aspect_ratio)
+        self.window_geometry = window_pos + (self.fixed_width, calculated_height)
         self.setMouseTracking(True)
         self.setWindowOpacity(self.photom_controls._laser_window_transparency)
 
@@ -1118,14 +1144,14 @@ if __name__ == "__main__":
     if DEMO_MODE:
         camera_window = LaserMarkerWindow(
             name="Mock laser dots",
-            sensor_size=(2048, 2048),
+            sensor_size_yx=(2048, 2048),
             window_pos=(100, 100),
             fixed_width=ctrl_window_width,
         )  # Set the positions of the windows
         ctrl_window = PhotomApp(
             photom_assembly=photom_assembly,
-            photom_sensor_size=CAMERA_SENSOR_YX,
-            photom_window_size=ctrl_window_width,
+            photom_sensor_size_yx=CAMERA_SENSOR_YX,
+            photom_window_size_x=ctrl_window_width,
             photom_window_pos=(100, 100),
             demo_window=camera_window,
             arduino=arduino,
@@ -1146,8 +1172,8 @@ if __name__ == "__main__":
         # Set the positions of the windows
         ctrl_window = PhotomApp(
             photom_assembly=photom_assembly,
-            photom_sensor_size=CAMERA_SENSOR_YX,
-            photom_window_size=ctrl_window_width,
+            photom_sensor_size_yx=CAMERA_SENSOR_YX,
+            photom_window_size_x=ctrl_window_width,
             photom_window_pos=(100, 100),
             arduino=arduino,
         )

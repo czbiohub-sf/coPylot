@@ -221,7 +221,7 @@ class PhotomApp(QMainWindow):
             [[pt.x(), pt.y()] for pt in self.source_pts], dtype=np.float32
         )
         dest = np.array([[pt.x(), pt.y()] for pt in self.target_pts], dtype=np.float32)
-        T_affine = self.affine_trans_obj.get_affine_matrix(dest, origin)
+        T_affine = self.affine_trans_obj.compute_affine_matrix(dest, origin)
         self.affine_trans_obj.save_matrix()
         print(T_affine)
 

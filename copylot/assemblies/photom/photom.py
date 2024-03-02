@@ -161,10 +161,11 @@ class PhotomAssembly:
             total=len(img_sequence),
             desc='Finding peak coordinates',
         ):
+            # NOTE: typically the images are returned as (y,x) coords
             peak_coords[idx] = ia.find_objects_centroids(
                 img, sigma=5, threshold_rel=1.0, min_distance=30, max_num_peaks=1
             )
-
+        peak_coords_xy = peak_coords[:, [1, 0]]
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         if save_calib_stack_path is not None:
             print('Saving calibration stack')
@@ -184,6 +185,7 @@ class PhotomAssembly:
             if save_calib_stack_path is None:
                 save_calib_stack_path = Path.cwd()
             # Plot the centroids with the MIP of the image sequence
+
             ia.plot_centroids(
                 img_sequence,
                 peak_coords,
@@ -195,16 +197,16 @@ class PhotomAssembly:
 
             ## Save the points
             grid_points = np.array(grid_points)
-            peak_coords = np.array(peak_coords)
+            peak_coords_xy = np.array(peak_coords_xy)
             # save the array of grid points and peak coordinates
             np.savez(
                 save_calib_stack_path / f'calibration_points_{timestamp}.npz',
                 grid_points=grid_points,
-                peak_coords=peak_coords,
+                peak_coords_xy=peak_coords_xy,
             )
         # Find the affine transform
-        T_affine = self.mirror[mirror_index].affine_transform_obj.get_affine_matrix(
-            peak_coords, grid_points
+        T_affine = self.mirror[mirror_index].affine_transform_obj.compute_affine_matrix(
+            peak_coords_xy, grid_points
         )
         print(f"Affine matrix: {T_affine}")
 

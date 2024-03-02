@@ -5,11 +5,13 @@ from copylot.hardware.mirrors.optotune.mirror import OptoMirror
 from copylot.assemblies.photom.photom_mock_devices import MockLaser, MockMirror
 from copylot.hardware.cameras.flir.flir_camera import FlirCamera
 import time
+from copylot.hardware.lasers.vortran.vortran import VortranLaser as Laser
 
 # %%
 config_file = './photom_VIS_config.yml'
 # Mock imports for the mirror and the lasers
-laser = MockLaser(name='Mock Laser', power=0)
+# laser = MockLaser(name='Mock Laser', power=0)
+laser = Laser(name='vortran405', port='COM9')
 mirror = OptoMirror(com_port='COM8')
 
 
@@ -42,17 +44,14 @@ curr_pos = photom_device.get_position(mirror_index=0)
 print(curr_pos)
 
 # %%
+# Demo the grid scanning
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
     generate_grid_points,
 )
 import time
 
-# mirror_roi = [
-#     [-0.005, 0.018],  # [y,x]
-#     [0.013, 0.0],
-# ]
-mirror_roi = [[0.18, -0.005], [0.0, 0.013]]
+mirror_roi = [[-0.01, 0.0], [0.015, 0.018]]
 grid_points = generate_grid_points(rectangle_size=mirror_roi, n_points=5)
 for idx, coord in enumerate(grid_points):
     mirror.position = [coord[0], coord[1]]
@@ -61,13 +60,9 @@ for idx, coord in enumerate(grid_points):
 
 
 # %%
+# Load the camera
 cam = FlirCamera()
-# open the system
 cam.open()
-# serial number
-print(cam.device_id)
-# list of cameras
-print(cam.list_available_cameras())
 photom_device = PhotomAssembly(
     laser=[laser],
     mirror=[mirror],
@@ -75,11 +70,17 @@ photom_device = PhotomAssembly(
     camera=[cam],
 )
 # %%
-mirror_roi = [
-    [-0.005, 0.018],  # [y,x]
-    [0.013, 0.0],
-]  # Top-left and Bottom-right corners of the mirror ROI
-photom_device.camera[0].exposure = 5000
+# Turn on the laser
+photom_device.laser[0].power = 0.0
+photom_device.laser[0].toggle_emission = True
+photom_device.laser[0].power = 30.0
+# %%
+# mirror_roi = [
+#     [-0.005, 0.018],  # [y,x]
+#     [0.013, 0.0],
+# ]  # Top-left and Bottom-right corners of the mirror ROI
+mirror_roi = [[-0.01, 0.0], [0.015, 0.018]]  # [x,y]
+photom_device.camera[0].exposure = 1000
 photom_device.camera[0].gain = 0
 photom_device.camera[0].flip_horizontal = True
 photom_device.camera[0].pixel_format = 'Mono16'
@@ -88,23 +89,9 @@ photom_device.calibrate_w_camera(
     camera_index=0,
     rectangle_boundaries=mirror_roi,
     grid_n_points=5,
-    config_file='./affine_T.yaml',
+    config_file='./affine_T_v1_projT.yml',
     save_calib_stack_path='./calib_stack',
+    verbose=True,
 )
-
-# %%
-# # TODO: Test the calibration without GUI
-# import time
-
-# start_time = time.time()
-# photom_device._calibrating = True
-# while time.time() - start_time < 5:
-#     # Your code here
-#     elapsed_time = time.time() - start_time
-#     print(f'starttime: {start_time} elapsed_time: {elapsed_time}')
-#     photom_device.calibrate(
-#         mirror_index=0, rectangle_size_xy=[0.002, 0.002], center=[0.000, 0.000]
-#     )
-# photom_device._calibrating = False
 
 # %%

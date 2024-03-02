@@ -60,7 +60,7 @@ class AffineTransform:
         """
         self.T_affine = np.eye(3)
 
-    def get_affine_matrix(self, origin, dest):
+    def compute_affine_matrix(self, origin, dest):
         """
         Compute affine matrix from 2 origin & 2 destination coordinates.
         :param origin: 3 sets of coordinate of origin e.g. [(x1, y1), (x2, y2), (x3, y3)]
@@ -75,6 +75,17 @@ class AffineTransform:
             "affine", np.float32(origin), np.float32(dest)
         )
         return self.T_affine
+
+    def get_affine_matrix(self):
+        """
+        Get the current affine matrix.
+        :return: affine matrix
+        """
+        return self.T_affine
+
+    def set_affine_matrix(self, matrix: np.array):
+        assert matrix.shape == (3, 3)
+        self.T_affine = matrix
 
     def apply_affine(self, coord_list: list) -> list:
         """

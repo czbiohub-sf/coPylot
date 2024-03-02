@@ -49,7 +49,7 @@ pts2 = [
     [xv[-1, -1] + 1, yv[-1, -1] + 1],
     [xv[0, -1] + 1, yv[0, -1] + 1],
 ]
-trans_obj.get_affine_matrix(pts1, pts2)
+trans_obj.compute_affine_matrix(pts1, pts2)
 # %%
 trans_obj.save_matrix(config_file='./test.yml')
 # %%
