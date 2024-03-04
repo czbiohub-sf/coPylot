@@ -229,19 +229,22 @@ class MirrorWidget(QWidget):
 
 
 class ArduinoPWMWidget(QWidget):
-    def __init__(self, photom_assembly, arduino_pwm):
+    def __init__(self, photom_assembly, arduino_pwm, parent):
         super().__init__()
+        self.parent = parent
         self.arduino_pwm = arduino_pwm
         self.photom_assembly = photom_assembly
         # default values
         self.duty_cycle = 50  # [%] (0-100)
-        self.time_period_ms = 10  # [ms]
+        self.time_period_ms = 100  # [ms]
         self.frequency = 1000.0 / self.time_period_ms  # [Hz]
         self.duration = 5000  # [ms]
         self.repetitions = 1  # By default it runs once
         self.time_interval_s = 0  # [s]
 
         self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
+
+        self._curr_laser_idx = 0
 
         self.initialize_UI()
 
@@ -254,6 +257,7 @@ class ArduinoPWMWidget(QWidget):
             self.laser_dropdown.addItem(laser.name)
         layout.addWidget(QLabel("Select Laser:"), 0, 0)
         layout.addWidget(self.laser_dropdown, 0, 1)
+        self.laser_dropdown.setCurrentIndex(self._curr_laser_idx)
         self.laser_dropdown.currentIndexChanged.connect(self.current_laser_changed)
 
         # Duty Cycle
@@ -357,9 +361,17 @@ class ArduinoPWMWidget(QWidget):
         self.arduino_pwm.send_command(self.command)
 
     def start_pwm(self):
+        if not self.parent.laser_widgets[self._curr_laser_idx]._curr_laser_pulse_mode:
+            print('Setup laser as pulse mode...')
+            self.parent.laser_widgets[self._curr_laser_idx].laser_pulse_mode()
+
         print("Starting PWM...")
         self.pwm_worker = PWMWorker(
-            self.arduino_pwm, 'S', self.repetitions, self.time_interval_s, self.duration
+            self.arduino_pwm,
+            'S',
+            self.repetitions,
+            self.time_interval_s,
+            self.duration,
         )
         # Rest Progress Bar
         self.progressBar.setValue(0)
@@ -530,7 +542,7 @@ class PhotomApp(QMainWindow):
         arduino_layout = QVBoxLayout()
         self.arduino_pwm_widgets = []
         for arduino in self.arduino_pwm:
-            arduino_pwm_widget = ArduinoPWMWidget(self.photom_assembly, arduino)
+            arduino_pwm_widget = ArduinoPWMWidget(self.photom_assembly, arduino, self)
             self.arduino_pwm_widgets.append(arduino_pwm_widget)
             arduino_layout.addWidget(arduino_pwm_widget)
         arduino_group.setLayout(arduino_layout)
@@ -923,10 +935,6 @@ class LaserMarkerWindow(QMainWindow):
 
         self.switch_to_shooting_scene()
 
-        # Flags for mouse tracking
-        # NOTE: these are variables inherited from the photom_controls
-        self.calibration_mode = self.photom_controls.photom_assembly._calibrating
-
         # show the window
         self.show()
 
@@ -1076,10 +1084,9 @@ class LaserMarkerWindow(QMainWindow):
 
     def eventFilter(self, source, event):
         "The mouse movements do not work without this function"
-        self.calibration_mode = self.photom_controls.photom_assembly._calibrating
         if event.type() == QMouseEvent.MouseMove:
             pass
-            if self._left_click_hold and not self.calibration_mode:
+            if self._left_click_hold:
                 # Move the mirror around if the left button is clicked
                 self._move_marker_and_update_sliders()
             # Debugging statements
@@ -1093,47 +1100,26 @@ class LaserMarkerWindow(QMainWindow):
             # print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
         elif event.type() == QMouseEvent.MouseButtonPress:
             print('mouse button pressed')
-            if self.calibration_mode:
-                print('calibration mode')
-                if event.buttons() == Qt.LeftButton:
-                    self._left_click_hold = True
-                    print('left button pressed')
-                    # print(f'x: {event.posF().x()}, y: {event.posF().y()}')
-                    print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
-                elif event.buttons() == Qt.RightButton:
-                    self._right_click_hold = True
-                    print('right button pressed')
-            else:
-                print('shooting mode')
-                if event.buttons() == Qt.LeftButton:
-                    self._left_click_hold = True
-                    print('left button pressed')
-                    print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
-                    self._move_marker_and_update_sliders()
-                elif event.buttons() == Qt.RightButton:
-                    self._right_click_hold = True
-                    self.photom_controls.photom_assembly.laser[0].toggle_emission = True
-                    print('right button pressed')
+            print('shooting mode')
+            if event.buttons() == Qt.LeftButton:
+                self._left_click_hold = True
+                print('left button pressed')
+                print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
+                self._move_marker_and_update_sliders()
+            elif event.buttons() == Qt.RightButton:
+                self._right_click_hold = True
+                self.photom_controls.photom_assembly.laser[0].toggle_emission = True
+                print('right button pressed')
         elif event.type() == QMouseEvent.MouseButtonRelease:
-            if self.calibration_mode:
-                if event.button() == Qt.LeftButton:
-                    self._left_click_hold = False
-                    print('left button released')
-                elif event.button() == Qt.RightButton:
-                    self._right_click_hold = False
-                    print('right button released')
-            else:
-                print('mouse button released')
-                if event.button() == Qt.LeftButton:
-                    print('left button released')
-                    self._left_click_hold = False
-                elif event.button() == Qt.RightButton:
-                    self._right_click_hold = False
-                    self.photom_controls.photom_assembly.laser[
-                        0
-                    ].toggle_emission = False
-                    time.sleep(0.5)
-                    print('right button released')
+            print('mouse button released')
+            if event.button() == Qt.LeftButton:
+                print('left button released')
+                self._left_click_hold = False
+            elif event.button() == Qt.RightButton:
+                self._right_click_hold = False
+                self.photom_controls.photom_assembly.laser[0].toggle_emission = False
+                time.sleep(0.5)
+                print('right button released')
 
         return super(LaserMarkerWindow, self).eventFilter(source, event)
 
