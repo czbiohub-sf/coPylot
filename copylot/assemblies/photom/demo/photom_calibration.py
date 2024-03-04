@@ -26,7 +26,8 @@ from PyQt5.QtWidgets import (
     QProgressBar,
     QGraphicsRectItem,
 )
-from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent, QBrush
+from PyQt5.QtGui import QColor, QPen, QFont, QFontMetricsF, QMouseEvent, QBrush, QPixmap
+from pathlib import Path
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )
@@ -36,14 +37,14 @@ from copylot.assemblies.photom.photom import PhotomAssembly
 from typing import Any, Tuple
 import time
 
+from copylot.hardware.cameras.flir.flir_camera import FlirCamera
+
 # DEMO_MODE = True
 DEMO_MODE = False
 
-# TODO fix the right click releaser
 # TODO: deal with the logic when clicking calibrate. Mirror dropdown
-# TODO: update the mock laser and mirror
-# TODO: replace the entry boxes tos et the laser powers
-# TODO: resizeable laser marker window with aspect ratio of the camera sensor
+# TODO: if camera is in use. unload it before calibrating
+# TODO:make sure to update the affine_mat after calibration with the dimensions of laserwindow
 
 
 class LaserWidget(QWidget):
@@ -419,7 +420,11 @@ class PhotomApp(QMainWindow):
         self.calibration_thread = CalibrationThread(
             self.photom_assembly, self._current_mirror_idx
         )
-
+        self.calibration_w_cam_thread = CalibrationWithCameraThread(
+            self.photom_assembly, self._current_mirror_idx
+        )
+        self.calibration_w_cam_thread.finished.connect(self.done_calibration)
+        self.imageWindows = []
         if DEMO_MODE:
             self.demo_window = demo_window
 
@@ -548,18 +553,12 @@ class PhotomApp(QMainWindow):
         main_layout.addWidget(self.recenter_marker_button)
 
         self.calibrate_button = QPushButton("Calibrate")
-        self.calibrate_button.clicked.connect(self.calibrate)
+        self.calibrate_button.clicked.connect(self.calibrate_w_camera)
         main_layout.addWidget(self.calibrate_button)
 
         self.load_calibration_button = QPushButton("Load Calibration")
         self.load_calibration_button.clicked.connect(self.load_calibration)
         main_layout.addWidget(self.load_calibration_button)
-
-        # Add a "Done Calibration" button (initially hidden)
-        self.done_calibration_button = QPushButton("Done Calibration")
-        self.done_calibration_button.clicked.connect(self.done_calibration)
-        self.done_calibration_button.hide()
-        main_layout.addWidget(self.done_calibration_button)
 
         # Add a "Cancel Calibration" button (initially hidden)
         self.cancel_calibration_button = QPushButton("Cancel Calibration")
@@ -632,33 +631,33 @@ class PhotomApp(QMainWindow):
             (self.photom_window.canvas_width / 2, self.photom_window.canvas_height / 2),
         )
 
-    def calibrate(self):
-        # Implement your calibration function here
-        print("Calibrating...")
+    def calibrate_w_camera(self):
+        print("Calibrating with camera...")
         # Hide the calibrate button
         self.calibrate_button.hide()
         self.load_calibration_button.hide()
         # Show the "Cancel Calibration" button
         self.cancel_calibration_button.show()
-        # Display the rectangle
-        self.display_rectangle()
-        # Show the "Done Calibration" button
-        self.done_calibration_button.show()
-        # Get the mirror idx
-        selected_mirror_name = self.mirror_dropdown.currentText()
-        self._current_mirror_idx = next(
-            i
-            for i, mirror in enumerate(self.mirrors)
-            if mirror.name == selected_mirror_name
-        )
         if DEMO_MODE:
             print(f'Calibrating mirror: {self._current_mirror_idx}')
         else:
-            self.photom_assembly._calibrating = True
-            self.calibration_thread.start()
+            # TODO: Hardcoding the camera and coordinates of mirror for calib. Change this after
+            self.setup_calibration()
             self.photom_assembly.mirror[
                 self._current_mirror_idx
             ].affine_transform_obj.reset_T_affine()
+            self.calibration_w_cam_thread.start()
+
+    # TODO: these parameters are currently hardcoded
+    def setup_calibration(self):
+        # Open the camera and add it to the assembly
+        cam = FlirCamera()
+        cam.open()
+        self.photom_assembly.camera = [cam]
+
+        self.photom_assembly.laser[0].power = 0.0
+        self.photom_assembly.laser[0].toggle_emission = True
+        self.photom_assembly.laser[0].power = 30.0
 
     def load_calibration(self):
         self.photom_assembly._calibrating = False
@@ -690,12 +689,8 @@ class PhotomApp(QMainWindow):
             self.photom_window.marker.show()
 
     def cancel_calibration(self):
-        self.photom_assembly._calibrating = False
-
         # Implement your cancel calibration function here
         print("Canceling calibration...")
-        # Hide the "Done Calibration" button
-        self.done_calibration_button.hide()
         # Show the "Calibrate" button
         self.calibrate_button.show()
         self.load_calibration_button.show()
@@ -706,35 +701,21 @@ class PhotomApp(QMainWindow):
         # Switch back to the shooting scene
         self.photom_window.switch_to_shooting_scene()
 
-    def done_calibration(self):
-        self.photom_assembly._calibrating = False
-        # TODO: Logic to return to some position
+    def display_saved_plot(self, plot_path):
+        # This function assumes that a QApplication instance is already running
+        image_window = ImageWindow(plot_path)
+        image_window.show()
+        self.imageWindows.append(image_window)
+        # return image_window
 
-        ## Perform any necessary actions after calibration is done
-        # Get the mirror (target) positions
-        self.target_pts = self.photom_window.get_coordinates()
+    def done_calibration(self, T_affine, plot_save_path):
+        # Unload the camera
+        self.photom_assembly.camera[0].close()
+        self.photom_assembly.camera = []
 
-        # Mirror calibration size
-        mirror_calib_size = self.photom_assembly._calibration_rectangle_boundaries
-        origin = np.array(
-            [[pt.x(), pt.y()] for pt in self.target_pts],
-            dtype=np.float32,
-        )
-        # TODO make the dest points from the mirror calibration size
-        mirror_x = mirror_calib_size[0] / 2
-        mirror_y = mirror_calib_size[1] / 2
-        dest = np.array(
-            [
-                [-mirror_x, -mirror_y],
-                [mirror_x, -mirror_y],
-                [mirror_x, mirror_y],
-                [-mirror_x, mirror_y],
-            ]
-        )
-        T_affine = self.photom_assembly.mirror[
-            self._current_mirror_idx
-        ].affine_transform_obj.compute_affine_matrix(origin, dest)
-        print(f"Affine matrix: {T_affine}")
+        # Show plot and update matrix
+        self.display_saved_plot(plot_save_path)
+        self.T_mirror_cam_matrix = T_affine
 
         # Save the affine matrix to a file
         typed_filename, _ = QFileDialog.getSaveFileName(
@@ -748,34 +729,42 @@ class PhotomApp(QMainWindow):
             self.photom_assembly.mirror[
                 self._current_mirror_idx
             ].affine_transform_obj.save_matrix(
-                matrix=T_affine, config_file=typed_filename
+                matrix=self.T_mirror_cam_matrix, config_file=typed_filename
             )
             self.photom_window.switch_to_shooting_scene()
             self.photom_window.marker.show()
 
             # Hide the "Done Calibration" button
-            self.done_calibration_button.hide()
             self.calibrate_button.show()
             self.cancel_calibration_button.hide()
 
+            # Update the affine to match the photom laser window
+            self.update_laser_window_affine()
+
             if DEMO_MODE:
-                print(f'origin: {origin}')
-                print(f'dest: {dest}')
-                # transformed_coords = self.affine_trans_obj.apply_affine(dest)
-                transformed_coords = self.photom_assembly.mirror[
-                    self._current_mirror_idx
-                ].affine_transform_obj.apply_affine(dest)
-                print(transformed_coords)
-                coords_list = self.photom_assembly.mirror[
-                    self._current_mirror_idx
-                ].affine_transform_obj.trans_pointwise(transformed_coords)
-                print(coords_list)
-                self.demo_window.updateVertices(coords_list)
-                return
+                NotImplementedError("Demo Mode: Calibration not implemented yet.")
         else:
-            print("No file selected")
+            print("No file selected. Skiping Saving the calibration matrix.")
             # Show dialog box saying no file selected
         print("Calibration done")
+
+    def update_laser_window_affine(self):
+        # Update the scaling transform matrix
+        print('updating laser window affine')
+        self.scaling_factor_x = (
+            self.photom_sensor_size_yx[1] / self.photom_window_size_x
+        )
+        self.scaling_factor_y = (
+            self.photom_sensor_size_yx[0] / self.photom_window_size_x
+        )
+        self.scaling_matrix = np.array(
+            [[self.scaling_factor_x, 0, 1], [0, self.scaling_factor_y, 1], [0, 0, 1]]
+        )
+        T_compose_mat = self.T_mirror_cam_matrix @ self.scaling_matrix
+        self.photom_assembly.mirror[
+            self._current_mirror_idx
+        ].affine_transform_obj.set_affine_matrix(T_compose_mat)
+        print(f'Updated affine matrix: {T_compose_mat}')
 
     def update_transparency(self, value):
         transparency_percent = value
@@ -794,6 +783,37 @@ class PhotomApp(QMainWindow):
         self.photom_window.close()
         self.close()
         QApplication.quit()  # Quit the application
+
+
+class ImageWindow(QMainWindow):
+    def __init__(self, image_path, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Calibration Overlay of laser grid and MIP points")
+
+        # Create a label and set its pixmap to the image at image_path
+        self.label = QLabel(self)
+        self.pixmap = QPixmap(image_path)
+
+        # Resize the label to fit the pixmap
+        self.label.setPixmap(self.pixmap)
+        self.label.resize(self.pixmap.width(), self.pixmap.height())
+
+        # Resize the window to fit the label (plus a little margin if desired)
+        self.resize(
+            self.pixmap.width() + 20, self.pixmap.height() + 20
+        )  # Adding a 20-pixel margin
+
+        # Optionally, center the window on the screen
+        self.center()
+
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos()
+        )
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
 
 
 class PWMWorker(QThread):
@@ -840,7 +860,29 @@ class CalibrationThread(QThread):
             rectangle_size_xy=self.photom_assembly._calibration_rectangle_size_xy,
             center=[0.000, 0.000],
         )
-        self.finished.emit()
+
+
+class CalibrationWithCameraThread(QThread):
+    finished = pyqtSignal(np.ndarray, str)
+
+    def __init__(self, photom_assembly, current_mirror_idx):
+        super().__init__()
+        self.photom_assembly = photom_assembly
+        self.current_mirror_idx = current_mirror_idx
+
+    def run(self):
+        # TODO: hardcoding the camera for now
+        mirror_roi = [[-0.01, 0.0], [0.015, 0.018]]  # [x,y]
+        T_mirror_cam_matrix, plot_save_path = self.photom_assembly.calibrate_w_camera(
+            mirror_index=self.current_mirror_idx,
+            camera_index=0,
+            rectangle_boundaries=mirror_roi,
+            grid_n_points=5,
+            # config_file="calib_config.yml",
+            save_calib_stack_path=r"C:\Users\ZebraPhysics\Documents\tmp\test_calib",
+            verbose=True,
+        )
+        self.finished.emit(T_mirror_cam_matrix, str(plot_save_path))
 
 
 class LaserMarkerWindow(QMainWindow):

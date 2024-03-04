@@ -1,6 +1,7 @@
 from re import T
 
 from matplotlib import pyplot as plt
+from vispy import config
 from copylot.hardware.cameras.abstract_camera import AbstractCamera
 from copylot.hardware.mirrors.abstract_mirror import AbstractMirror
 from copylot.hardware.lasers.abstract_laser import AbstractLaser
@@ -40,21 +41,16 @@ class PhotomAssembly:
         self.mirror = mirror
         self.DAC = dac
         self.affine_matrix_path = affine_matrix_path
-        self._calibrating = False
         # TODO: These are hardcoded values. Unsure if they should come from a config file
-        self._calibration_rectangle_boundaries = None
         self.init_mirrors()
 
     def init_mirrors(self):
         assert len(self.mirror) == len(self.affine_matrix_path)
-
-        self._calibration_rectangle_boundaries = np.zeros((len(self.mirror), 2, 2))
         # Apply AffineTransform to each mirror
         for i in range(len(self.mirror)):
             self.mirror[i].affine_transform_obj = AffineTransform(
                 config_file=self.affine_matrix_path[i]
             )
-            # self._calibration_rectangle_boundaries[i] = [[, ], [, ]]
 
     # TODO probably will replace the camera with zyx or yx image array input
     ## Camera Functions
@@ -62,12 +58,6 @@ class PhotomAssembly:
         pass
 
     ## Mirror Functions
-    def stop_mirror(self, mirror_index: int):
-        if mirror_index < len(self.mirror):
-            self._calibrating = False
-        else:
-            raise IndexError("Mirror index out of range.")
-
     def get_position(self, mirror_index: int) -> list[float]:
         if mirror_index < len(self.mirror):
             if self.DAC is not None:
@@ -98,40 +88,17 @@ class PhotomAssembly:
         else:
             raise IndexError("Mirror index out of range.")
 
-    def calibrate(
-        self, mirror_index: int, rectangle_size_xy: tuple[int, int], center=[0.0, 0.0]
-    ):
-        if mirror_index < len(self.mirror):
-            print("Calibrating mirror...")
-            rectangle_coords = calculate_rectangle_corners(rectangle_size_xy, center)
-            # offset the rectangle coords by the center
-            # iterate over each corner and move the mirror
-            i = 0
-            while self._calibrating:
-                # Logic for calibrating the mirror
-                self.set_position(mirror_index, rectangle_coords[i])
-                time.sleep(1)
-                i += 1
-                if i == 4:
-                    i = 0
-                    time.sleep(1)
-            # moving the mirror in a rectangle
-        else:
-            raise IndexError("Mirror index out of range.")
-
     def calibrate_w_camera(
         self,
         mirror_index: int,
         camera_index: int,
         rectangle_boundaries: Tuple[Tuple[int, int], Tuple[int, int]],
         grid_n_points: int = 5,
-        config_file: Path = './affine_matrix.yml',
+        config_file: Path = None,
         save_calib_stack_path: Path = None,
         verbose: bool = False,
-    ):
+    ) -> np.ndarray:
         assert self.camera is not None
-        assert config_file.endswith('.yml') or config_file.endswith('.yaml')
-        # self._calibration_rectangle_boundaries[mirror_index] = rectangle_boundaries
 
         x_min, x_max, y_min, y_max = self.camera[camera_index].image_size_limits
         # assuming the minimum is always zero, which is typically that case
@@ -184,15 +151,11 @@ class PhotomAssembly:
         if verbose:
             if save_calib_stack_path is None:
                 save_calib_stack_path = Path.cwd()
-            # Plot the centroids with the MIP of the image sequence
+
+            plot_save_path = save_calib_stack_path / f'calibration_plot_{timestamp}.png'
 
             ia.plot_centroids(
-                img_sequence,
-                peak_coords,
-                mip=True,
-                save_path=save_calib_stack_path / f'calibration_plot_{timestamp}.png'
-                if save_calib_stack_path is not None
-                else './calibration_plot.png',
+                img_sequence, peak_coords, mip=True, save_path=plot_save_path
             )
 
             ## Save the points
@@ -210,10 +173,15 @@ class PhotomAssembly:
         )
         print(f"Affine matrix: {T_affine}")
 
-        # Save the matrix
-        self.mirror[mirror_index].affine_transform_obj.save_matrix(
-            matrix=T_affine, config_file=config_file
-        )
+        # Save if path is provided
+        if config_file is not None:
+            config_file = Path(config_file)
+            assert config_file.endswith('.yml') or config_file.endswith('.yaml')
+            # Save the matrix
+            self.mirror[mirror_index].affine_transform_obj.save_matrix(
+                matrix=T_affine, config_file=config_file
+            )
+        return T_affine, plot_save_path
 
     ## LASER Fuctions
     def get_laser_power(self, laser_index: int) -> float:

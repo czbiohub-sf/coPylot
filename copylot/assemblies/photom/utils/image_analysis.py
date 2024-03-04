@@ -38,6 +38,7 @@ def find_objects_centroids(
     return coordinates
 
 
+# TODO:this function does not support multithread in qt as it is spawned as subchild process.
 def plot_centroids(image_sequence, centroids, mip=True, save_path=None):
     """
     Plot the centroids of objects on top of the image sequence.
@@ -49,7 +50,7 @@ def plot_centroids(image_sequence, centroids, mip=True, save_path=None):
     import matplotlib.pyplot as plt
 
     if mip:
-        plt.figure()
+        fig = plt.figure()
         plt.imshow(np.max(image_sequence, axis=0), cmap="gray")
         for i, centroid in enumerate(centroids):
             plt.scatter(centroid[1], centroid[0], color="red")
@@ -57,14 +58,14 @@ def plot_centroids(image_sequence, centroids, mip=True, save_path=None):
 
         if save_path is not None:
             plt.savefig(save_path)
-        plt.show()
-
+        # plt.show()
     else:
         for frame, frame_centroids in zip(image_sequence, centroids):
             plt.figure()
             plt.imshow(frame, cmap="gray")
             plt.scatter(frame_centroids[1], frame_centroids[0], color="red")
-            plt.show()
+            # plt.show()
+    plt.close(fig)
 
 
 def calculate_centroids(image_sequence, sigma=5, threshold_rel=0.5, min_distance=10):

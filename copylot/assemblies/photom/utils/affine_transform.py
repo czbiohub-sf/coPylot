@@ -73,7 +73,7 @@ class AffineTransform:
             raise ValueError("dest needs 3 coordinates.")
         self.T_affine = transform.estimate_transform(
             "affine", np.float32(origin), np.float32(dest)
-        )
+        ).params
         return self.T_affine
 
     def get_affine_matrix(self):
