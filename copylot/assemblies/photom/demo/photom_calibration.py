@@ -592,32 +592,33 @@ class PhotomApp(QMainWindow):
         # Calculate the new height to maintain the aspect ratio
         new_height = int(new_width / self.photom_window.aspect_ratio)
 
-        # Resize the LaserMarkerWindow
-        self.photom_window.setFixedSize(new_width, new_height)
-        self.photom_window.shooting_scene.setSceneRect(0, 0, new_width, new_height)
-        self.photom_window.calibration_scene.setSceneRect(0, 0, new_width, new_height)
-        # Resize and reposition the rectangle within the scene
-        # Assuming you have a reference to the rectangle as self.photom_window.myRectangle
-        rect_width = new_width * 2 / 3  # Example: 2/3 of the new width
-        rect_height = new_height * 2 / 3  # Example: 2/3 of the new height
-        rect_x = (new_width - rect_width) / 2
-        rect_y = (new_height - rect_height) / 2
+        self.photom_window.update_window_geometry(new_width, new_height)
+        # # Resize the LaserMarkerWindow
+        # self.photom_window.setFixedSize(new_width, new_height)
+        # self.photom_window.shooting_scene.setSceneRect(0, 0, new_width, new_height)
+        # self.photom_window.calibration_scene.setSceneRect(0, 0, new_width, new_height)
+        # # Resize and reposition the rectangle within the scene
+        # # Assuming you have a reference to the rectangle as self.photom_window.myRectangle
+        # rect_width = new_width * 2 / 3  # Example: 2/3 of the new width
+        # rect_height = new_height * 2 / 3  # Example: 2/3 of the new height
+        # rect_x = (new_width - rect_width) / 2
+        # rect_y = (new_height - rect_height) / 2
 
-        self.photom_window.dashed_rectangle.setRect(
-            rect_x, rect_y, rect_width, rect_height
-        )
-        pen = QPen(
-            QColor(0, 0, 0), 2, Qt.DashLine
-        )  # Example: black color, width 2, dashed line
-        self.photom_window.dashed_rectangle.setPen(pen)
+        # self.photom_window.dashed_rectangle.setRect(
+        #     rect_x, rect_y, rect_width, rect_height
+        # )
+        # pen = QPen(
+        #     QColor(0, 0, 0), 2, Qt.DashLine
+        # )  # Example: black color, width 2, dashed line
+        # self.photom_window.dashed_rectangle.setPen(pen)
 
-        # Re-center the "X" marker
-        marker_center_x = new_width / 2
-        marker_center_y = new_height / 2
-        # self.photom_window.marker.setPos(marker_center_x, marker_center_y)
-        self.photom_window.display_marker_center(
-            self.photom_window.marker, (marker_center_x, marker_center_y)
-        )
+        # # Re-center the "X" marker
+        # marker_center_x = new_width / 2
+        # marker_center_y = new_height / 2
+        # # self.photom_window.marker.setPos(marker_center_x, marker_center_y)
+        # self.photom_window.display_marker_center(
+        #     self.photom_window.marker, (marker_center_x, marker_center_y)
+        # )
 
         # Update the scaling transform matrix
         self.scaling_factor_x = self.photom_sensor_size_yx[1] / new_width
@@ -638,10 +639,7 @@ class PhotomApp(QMainWindow):
         self.photom_assembly.mirror[self._current_mirror_idx].position = [0, 0]
 
     def recenter_marker(self):
-        self.photom_window.display_marker_center(
-            self.photom_window.marker,
-            (self.photom_window.canvas_width / 2, self.photom_window.canvas_height / 2),
-        )
+        self.photom_window.recenter_marker()
 
     def calibrate_w_camera(self):
         print("Calibrating with camera...")
@@ -958,6 +956,48 @@ class LaserMarkerWindow(QMainWindow):
 
         print(f'sidebar size: {self.sidebar_size}, topbar size: {self.topbar_size}')
         print(f'canvas width: {self.canvas_width}, canvas height: {self.canvas_height}')
+
+    def update_window_geometry(self, new_width, new_height):
+        self.setFixedSize(new_width, new_height)
+        self.shooting_scene.setSceneRect(0, 0, new_width, new_height)
+        self.calibration_scene.setSceneRect(0, 0, new_width, new_height)
+
+        rect_width = new_width * 2 / 3  # Example: 2/3 of the new width
+        rect_height = new_height * 2 / 3  # Example: 2/3 of the new height
+        rect_x = (new_width - rect_width) / 2
+        rect_y = (new_height - rect_height) / 2
+
+        # resize the rectangle
+        self.dashed_rectangle.setRect(rect_x, rect_y, rect_width, rect_height)
+        pen = QPen(
+            QColor(0, 0, 0), 2, Qt.DashLine
+        )  # Example: black color, width 2, dashed line
+        self.dashed_rectangle.setPen(pen)
+
+        # Re-center the "X" marker
+        marker_center_x = new_width / 2
+        marker_center_y = new_height / 2
+
+        self.window_geometry = (
+            self.frameGeometry().x(),
+            self.frameGeometry().y(),
+            self.frameGeometry().width(),
+            self.frameGeometry().height(),
+        )
+        # self.sidebar_size = self.frameGeometry().width() - self.window_geometry[2]
+        # self.topbar_size = self.frameGeometry().height() - self.window_geometry[3]
+        # self.canvas_width = self.frameGeometry().width() - self.sidebar_size
+        # self.canvas_height = self.frameGeometry().height() - self.topbar_size
+        self.canvas_width = new_width
+        self.canvas_height = new_height
+
+        self.recenter_marker()
+
+    def recenter_marker(self):
+        self.display_marker_center(
+            self.marker,
+            (self.canvas_width / 2, self.canvas_height / 2),
+        )
 
     def initMarker(self):
         # Generate the shooting scene
