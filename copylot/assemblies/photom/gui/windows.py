@@ -1,8 +1,3 @@
-import sys
-from tokenize import Double
-from matplotlib.pylab import f
-import yaml
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -36,379 +31,26 @@ from PyQt5.QtGui import (
     QPixmap,
     QResizeEvent,
 )
-from pathlib import Path
+from PyQt5.QtCore import Qt, QThread, pyqtSignal
+
+from copylot.assemblies.photom.photom import PhotomAssembly
+from copylot.assemblies.photom.gui.utils import CalibrationWithCameraThread
+
+from typing import Tuple
+import numpy as np
+from copylot.assemblies.photom.gui.widgets import (
+    LaserWidget,
+    MirrorWidget,
+    ArduinoPWMWidget,
+)
+
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )
-from copylot.assemblies.photom.gui.utils import DoubleSlider
-import numpy as np
-from copylot.assemblies.photom.photom import PhotomAssembly
-from typing import Any, Tuple
-import time
 
+
+# TODO: this one is hardcoded for now
 from copylot.hardware.cameras.flir.flir_camera import FlirCamera
-
-# DEMO_MODE = True
-DEMO_MODE = False
-
-# TODO: deal with the logic when clicking calibrate. Mirror dropdown
-# TODO: if camera is in use. unload it before calibrating
-# TODO:make sure to update the affine_mat after calibration with the dimensions of laserwindow
-
-
-class LaserWidget(QWidget):
-    def __init__(self, laser):
-        super().__init__()
-        self.laser = laser
-
-        self.emission_state = 0  # 0 = off, 1 = on
-        self.emission_delay = 0  # 0 =off ,1= 5 sec delay
-
-        self._curr_power = 0
-        self._slider_decimal = 1
-        self._curr_laser_pulse_mode = False
-
-        self.initializer_laser()
-        self.initialize_UI()
-
-    def initializer_laser(self):
-        # Set the power to 0
-        self.laser.toggle_emission = 0
-        self.laser.emission_delay = self.emission_delay
-        self.laser.pulse_power = self._curr_power
-        self.laser.power = self._curr_power
-
-        # Make sure laser is in continuous mode
-        if self.laser.pulse_mode == 1:
-            self.laser.toggle_emission = 1
-            time.sleep(0.2)
-            self.laser.pulse_mode = self._curr_laser_pulse_mode ^ 1
-            time.sleep(0.2)
-            self.laser.toggle_emission = 0
-
-    def initialize_UI(self):
-        layout = QVBoxLayout()
-
-        self.laser_label = QLabel(self.laser.name)
-        layout.addWidget(self.laser_label)
-
-        self.laser_power_slider = DoubleSlider(
-            orientation=Qt.Horizontal, decimals=self._slider_decimal
-        )
-        self.laser_power_slider.setMinimum(0)
-        self.laser_power_slider.setMaximum(100)
-        self.laser_power_slider.setValue(self.laser.power)
-        self.laser_power_slider.valueChanged.connect(self.update_power)
-        layout.addWidget(self.laser_power_slider)
-
-        # Add a QLabel to display the power value
-        self.power_edit = QLineEdit(f"{self._curr_power:.2f}")  # Changed to QLineEdit
-        self.power_edit.returnPressed.connect(
-            self.edit_power
-        )  # Connect the returnPressed signal
-        layout.addWidget(self.power_edit)
-
-        # Set Pulse Mode Button
-        self.pulse_mode_button = QPushButton("Pulse Mode")
-        self.pulse_mode_button.clicked.connect(self.laser_pulse_mode)
-        layout.addWidget(self.pulse_mode_button)
-        self.pulse_mode_button.setStyleSheet("background-color: magenta")
-
-        self.laser_toggle_button = QPushButton("Toggle")
-        self.laser_toggle_button.clicked.connect(self.toggle_laser)
-        # make it background red if laser is off
-        if self.emission_state == 0:
-            self.laser_toggle_button.setStyleSheet("background-color: magenta")
-        layout.addWidget(self.laser_toggle_button)
-
-        self.setLayout(layout)
-
-    def toggle_laser(self):
-        self.emission_state = self.emission_state ^ 1
-        self.laser.toggle_emission = self.emission_state
-        if self.emission_state == 0:
-            self.laser_toggle_button.setStyleSheet("background-color: magenta")
-        else:
-            self.laser_toggle_button.setStyleSheet("background-color: green")
-
-    def update_power(self, value):
-        self._curr_power = value / (10**self._slider_decimal)
-        if self._curr_laser_pulse_mode:
-            self.laser.pulse_power = self._curr_power
-        else:
-            self.laser.power = self._curr_power
-
-        # Update the QLabel with the new power value
-        self.power_edit.setText(f"{self._curr_power:.2f}")
-
-    def edit_power(self):
-        try:
-            # Extract the numerical value from the QLineEdit text
-            power_value_str = self.power_edit.text()
-            power_value = float(power_value_str)
-
-            if (
-                0 <= power_value <= 100
-            ):  # Assuming the power range is 0 to 100 percentages
-                self._curr_power = power_value
-                self.laser.power = self._curr_power
-                self.laser_power_slider.setValue(self._curr_power)
-                self.power_edit.setText(f"{self._curr_power:.2f}")
-            else:
-                self.power_edit.setText(f"{self._curr_power:.2f}")
-            print(f"Power: {self._curr_power}")
-        except ValueError:
-            self.power_edit.setText(f"{self._curr_power:.2f}")
-
-    def laser_pulse_mode(self):
-        self._curr_laser_pulse_mode = not self._curr_laser_pulse_mode
-        self.laser.toggle_emission = 1
-        if self._curr_laser_pulse_mode:
-            self.pulse_mode_button.setStyleSheet("background-color: green")
-            self.laser.pulse_power = self._curr_power
-            self.laser.pulse_mode = 1
-            time.sleep(0.2)
-        else:
-            self.laser.power = self._curr_power
-            self.laser.pulse_mode = 0
-            self.pulse_mode_button.setStyleSheet("background-color: magenta")
-            time.sleep(0.2)
-            self.laser_toggle_button.setStyleSheet("background-color: magenta")
-            self.laser.toggle_emission = 0
-            self.emission_state = 0
-
-        print(f'pulse mode bool: {self._curr_laser_pulse_mode}')
-        print(f'digital modulation = {self.laser.pulse_mode}')
-
-
-# TODO: connect widget to actual abstract mirror calls
-class MirrorWidget(QWidget):
-    def __init__(self, mirror):
-        super().__init__()
-        self.mirror = mirror
-
-        self.check_mirror_limits()
-        self.initialize_UI()
-
-    def initialize_UI(self):
-        layout = QVBoxLayout()
-
-        mirror_x_label = QLabel("Mirror X Position")
-        layout.addWidget(mirror_x_label)
-
-        self.mirror_x_slider = DoubleSlider(orientation=Qt.Horizontal)
-        self.mirror_x_slider.setMinimum(self.movement_limits_x[0])
-        self.mirror_x_slider.setMaximum(self.movement_limits_x[1])
-        self.mirror_x_slider.doubleValueChanged.connect(self.update_mirror_x)
-        layout.addWidget(self.mirror_x_slider)
-
-        # Add a QLabel to display the mirror X value
-        self.mirror_x_label = QLabel(f"X: {self.mirror.position_x}")
-        layout.addWidget(self.mirror_x_label)
-
-        mirror_y_label = QLabel("Mirror Y Position")
-        layout.addWidget(mirror_y_label)
-
-        self.mirror_y_slider = DoubleSlider(orientation=Qt.Horizontal)
-        self.mirror_y_slider.setMinimum(self.movement_limits_y[0])
-        self.mirror_y_slider.setMaximum(self.movement_limits_y[1])
-        self.mirror_y_slider.doubleValueChanged.connect(self.update_mirror_y)
-        layout.addWidget(self.mirror_y_slider)
-
-        # Add a QLabel to display the mirror Y value
-        self.mirror_y_label = QLabel(f"Y: {self.mirror.position_y}")
-        layout.addWidget(self.mirror_y_label)
-
-        self.setLayout(layout)
-
-    def update_mirror_x(self, value):
-        self.mirror.position_x = value
-        # Update the QLabel with the new X value
-        self.mirror_x_label.setText(f"X: {value}")
-
-    def update_mirror_y(self, value):
-        self.mirror.position_y = value
-        # Update the QLabel with the new Y value
-        self.mirror_y_label.setText(f"Y: {value}")
-
-    def check_mirror_limits(self):
-        movement_limits = self.mirror.movement_limits
-        self.movement_limits_x = movement_limits[0:2]
-        self.movement_limits_y = movement_limits[2:4]
-
-
-class ArduinoPWMWidget(QWidget):
-    def __init__(self, photom_assembly, arduino_pwm, parent):
-        super().__init__()
-        self.parent = parent
-        self.arduino_pwm = arduino_pwm
-        self.photom_assembly = photom_assembly
-        # default values
-        self.duty_cycle = 50  # [%] (0-100)
-        self.time_period_ms = 100  # [ms]
-        self.frequency = 1000.0 / self.time_period_ms  # [Hz]
-        self.duration = 5000  # [ms]
-        self.repetitions = 1  # By default it runs once
-        self.time_interval_s = 0  # [s]
-
-        self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
-
-        self._curr_laser_idx = 0
-
-        self.initialize_UI()
-
-    def initialize_UI(self):
-        layout = QGridLayout()  # Use QGridLayout
-
-        # Laser Dropdown Menu
-        self.laser_dropdown = QComboBox()
-        for laser in self.photom_assembly.laser:
-            self.laser_dropdown.addItem(laser.name)
-        layout.addWidget(QLabel("Select Laser:"), 0, 0)
-        layout.addWidget(self.laser_dropdown, 0, 1)
-        self.laser_dropdown.setCurrentIndex(self._curr_laser_idx)
-        self.laser_dropdown.currentIndexChanged.connect(self.current_laser_changed)
-
-        # Duty Cycle
-        layout.addWidget(QLabel("Duty Cycle [%]:"), 1, 0)
-        self.duty_cycle_edit = QLineEdit(f"{self.duty_cycle}")
-        self.duty_cycle_edit.returnPressed.connect(self.edit_duty_cycle)
-        layout.addWidget(self.duty_cycle_edit, 1, 1)
-
-        # Time Period
-        layout.addWidget(QLabel("Time Period [ms]:"), 2, 0)
-        self.time_period_edit = QLineEdit(f"{self.time_period_ms}")
-        self.time_period_edit.returnPressed.connect(self.edit_time_period)
-        layout.addWidget(self.time_period_edit, 2, 1)
-
-        # Duration
-        layout.addWidget(QLabel("Duration [ms]:"), 3, 0)
-        self.duration_edit = QLineEdit(f"{self.duration}")
-        self.duration_edit.returnPressed.connect(self.edit_duration)
-        layout.addWidget(self.duration_edit, 3, 1)
-
-        # Repetitions
-        layout.addWidget(QLabel("Repetitions:"), 4, 0)
-        self.repetitions_edit = QLineEdit(f"{self.repetitions}")
-        self.repetitions_edit.textChanged.connect(self.edit_repetitions)
-        layout.addWidget(self.repetitions_edit, 4, 1)
-
-        # Time interval
-        layout.addWidget(QLabel("Time interval [s]:"), 5, 0)
-        self.time_interval_edit = QLineEdit(f"{self.time_interval_s}")
-        self.time_interval_edit.textChanged.connect(self.edit_time_interval)
-        layout.addWidget(self.time_interval_edit, 5, 1)
-
-        # Apply Button
-        self.apply_button = QPushButton("Apply")
-        self.apply_button.clicked.connect(self.apply_settings)
-        layout.addWidget(self.apply_button, 6, 0, 1, 2)
-
-        # Start Button
-        self.start_button = QPushButton("Start PWM")
-        self.start_button.clicked.connect(self.start_pwm)
-        layout.addWidget(self.start_button, 7, 0, 1, 2)
-
-        # Add Stop Button
-        self.stop_button = QPushButton("Stop PWM")
-        self.stop_button.clicked.connect(self.stop_pwm)
-        layout.addWidget(self.stop_button, 8, 0, 1, 2)  # Adjust position as needed
-
-        # Add Progress Bar
-        self.progressBar = QProgressBar(self)
-        self.progressBar.setMaximum(100)  # Set the maximum value
-        layout.addWidget(self.progressBar, 9, 0, 1, 2)  # Adjust position as needed
-
-        self.setLayout(layout)
-
-    def edit_duty_cycle(self):
-        try:
-            value = float(self.duty_cycle_edit.text())
-            self.duty_cycle = value
-            self.update_command()
-        except ValueError:
-            self.duty_cycle_edit.setText(f"{self.duty_cycle}")
-
-    def edit_time_period(self):
-        try:
-            value = float(self.time_period_edit.text())
-            self.time_period_ms = value
-            self.frequency = 1000.0 / self.time_period_ms
-            self.update_command()
-        except ValueError:
-            self.time_period_edit.setText(f"{self.time_period}")
-
-    def edit_duration(self):
-        try:
-            value = float(self.duration_edit.text())
-            self.duration = value
-            self.update_command()
-        except ValueError:
-            self.duration_edit.setText(f"{self.duration}")
-
-    def edit_repetitions(self):
-        try:
-            value = int(self.repetitions_edit.text())
-            self.repetitions = value
-        except ValueError:
-            self.repetitions_edit.setText(
-                f"{self.repetitions}"
-            )  # Reset to last valid value
-
-    def edit_time_interval(self):
-        try:
-            value = float(self.time_interval_edit.text())
-            self.time_interval_s = value
-        except ValueError:
-            self.time_interval_edit.setText(
-                f"{self.time_interval_s}"
-            )  # Reset to last valid value
-
-    def update_command(self):
-        self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
-        print(f"arduino out: {self.command}")
-        self.arduino_pwm.send_command(self.command)
-
-    def start_pwm(self):
-        if not self.parent.laser_widgets[self._curr_laser_idx]._curr_laser_pulse_mode:
-            print('Setup laser as pulse mode...')
-            self.parent.laser_widgets[self._curr_laser_idx].laser_pulse_mode()
-
-        print("Starting PWM...")
-        self.pwm_worker = PWMWorker(
-            self.arduino_pwm,
-            'S',
-            self.repetitions,
-            self.time_interval_s,
-            self.duration,
-        )
-        # Rest Progress Bar
-        self.progressBar.setValue(0)
-        self.pwm_worker.finished.connect(self.on_pwm_finished)
-        self.pwm_worker.progress.connect(self.update_progress_bar)
-        self.pwm_worker.start()
-
-    def update_progress_bar(self, value):
-        self.progressBar.setValue(value)  # Update the progress bar with the new value
-
-    def stop_pwm(self):
-        if hasattr(self, 'pwm_worker') and self.pwm_worker.isRunning():
-            self.pwm_worker.request_stop()
-
-    def on_pwm_finished(self):
-        print("PWM operation completed.")
-        # self.progressBar.setValue(0)  # Reset the progress bar
-
-    def current_laser_changed(self, index):
-        self._curr_laser_idx = index
-        self.apply_settings()
-
-    def apply_settings(self):
-        # Implement functionality to apply settings to the selected laser
-        self._curr_laser_idx = self.laser_dropdown.currentIndex()
-        # TODO: Need to modify the data struct for command for multiple lasers
-        if hasattr(self, 'command'):
-            self.arduino_pwm.send_command(self.command)
 
 
 class PhotomApp(QMainWindow):
@@ -438,16 +80,14 @@ class PhotomApp(QMainWindow):
         self._laser_window_transparency = 0.7
         self.scaling_matrix = np.eye(3)
         self.T_mirror_cam_matrix = np.eye(3)
-        self.calibration_thread = CalibrationThread(
-            self.photom_assembly, self._current_mirror_idx
-        )
         self.calibration_w_cam_thread = CalibrationWithCameraThread(
             self.photom_assembly, self._current_mirror_idx
         )
         self.calibration_w_cam_thread.finished.connect(self.done_calibration)
         self.imageWindows = []
-        if DEMO_MODE:
-            self.demo_window = demo_window
+
+        # if DEMO_MODE:
+        #     self.demo_window = demo_window
 
         self.initializer_laser_marker_window()
         self.initialize_UI()
@@ -631,15 +271,16 @@ class PhotomApp(QMainWindow):
         self.load_calibration_button.hide()
         # Show the "Cancel Calibration" button
         self.cancel_calibration_button.show()
-        if DEMO_MODE:
-            print(f'Calibrating mirror: {self._current_mirror_idx}')
-        else:
-            # TODO: Hardcoding the camera and coordinates of mirror for calib. Change this after
-            self.setup_calibration()
-            self.photom_assembly.mirror[
-                self._current_mirror_idx
-            ].affine_transform_obj.reset_T_affine()
-            self.calibration_w_cam_thread.start()
+
+        # if DEMO_MODE:
+        #     print(f'Calibrating mirror: {self._current_mirror_idx}')
+        # else:
+        # TODO: Hardcoding the camera and coordinates of mirror for calib. Change this after
+        self.setup_calibration()
+        self.photom_assembly.mirror[
+            self._current_mirror_idx
+        ].affine_transform_obj.reset_T_affine()
+        self.calibration_w_cam_thread.start()
 
     # TODO: these parameters are currently hardcoded
     def setup_calibration(self):
@@ -653,7 +294,6 @@ class PhotomApp(QMainWindow):
         self.photom_assembly.laser[0].power = 30.0
 
     def load_calibration(self):
-        self.photom_assembly._calibrating = False
         print("Loading calibration...")
         # Prompt the user to select a file
         typed_filename, _ = QFileDialog.getOpenFileName(
@@ -734,8 +374,8 @@ class PhotomApp(QMainWindow):
             # Update the affine to match the photom laser window
             self.update_laser_window_affine()
 
-            if DEMO_MODE:
-                NotImplementedError("Demo Mode: Calibration not implemented yet.")
+            # if DEMO_MODE:
+            #     NotImplementedError("Demo Mode: Calibration not implemented yet.")
         else:
             print("No file selected. Skiping Saving the calibration matrix.")
             # Show dialog box saying no file selected
@@ -776,106 +416,6 @@ class PhotomApp(QMainWindow):
         self.photom_window.close()
         self.close()
         QApplication.quit()  # Quit the application
-
-
-class ImageWindow(QMainWindow):
-    def __init__(self, image_path, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Calibration Overlay of laser grid and MIP points")
-
-        # Create a label and set its pixmap to the image at image_path
-        self.label = QLabel(self)
-        self.pixmap = QPixmap(image_path)
-
-        # Resize the label to fit the pixmap
-        self.label.setPixmap(self.pixmap)
-        self.label.resize(self.pixmap.width(), self.pixmap.height())
-
-        # Resize the window to fit the label (plus a little margin if desired)
-        self.resize(
-            self.pixmap.width() + 20, self.pixmap.height() + 20
-        )  # Adding a 20-pixel margin
-
-        # Optionally, center the window on the screen
-        self.center()
-
-    def center(self):
-        frameGm = self.frameGeometry()
-        screen = QApplication.desktop().screenNumber(
-            QApplication.desktop().cursor().pos()
-        )
-        centerPoint = QApplication.desktop().screenGeometry(screen).center()
-        frameGm.moveCenter(centerPoint)
-        self.move(frameGm.topLeft())
-
-
-class PWMWorker(QThread):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)  # Signal to report progress
-    _stop_requested = False
-
-    def request_stop(self):
-        self._stop_requested = True
-
-    def __init__(self, arduino_pwm, command, repetitions, time_interval_s, duration):
-        super().__init__()
-        self.arduino_pwm = arduino_pwm
-        self.command = command
-        self.repetitions = repetitions
-        self.time_interval_s = time_interval_s
-        self.duration = duration
-
-    def run(self):
-        # Simulate sending the command and waiting (replace with actual logic)
-        for i in range(self.repetitions):
-            if self._stop_requested:
-                break
-            self.arduino_pwm.send_command(self.command)
-            # TODO: replace when using a better microcontroller since we dont get signals back rn
-            time.sleep(self.duration / 1000)
-            self.progress.emit(int((i + 1) / self.repetitions * 100))
-            time.sleep(self.time_interval_s)  # Simulate time interval
-
-        self.finished.emit()
-
-
-class CalibrationThread(QThread):
-    finished = pyqtSignal()
-
-    def __init__(self, photom_assembly, current_mirror_idx):
-        super().__init__()
-        self.photom_assembly = photom_assembly
-        self.current_mirror_idx = current_mirror_idx
-
-    def run(self):
-        self.photom_assembly.calibrate(
-            self.current_mirror_idx,
-            rectangle_size_xy=self.photom_assembly._calibration_rectangle_size_xy,
-            center=[0.000, 0.000],
-        )
-
-
-class CalibrationWithCameraThread(QThread):
-    finished = pyqtSignal(np.ndarray, str)
-
-    def __init__(self, photom_assembly, current_mirror_idx):
-        super().__init__()
-        self.photom_assembly = photom_assembly
-        self.current_mirror_idx = current_mirror_idx
-
-    def run(self):
-        # TODO: hardcoding the camera for now
-        mirror_roi = [[-0.01, 0.0], [0.015, 0.018]]  # [x,y]
-        T_mirror_cam_matrix, plot_save_path = self.photom_assembly.calibrate_w_camera(
-            mirror_index=self.current_mirror_idx,
-            camera_index=0,
-            rectangle_boundaries=mirror_roi,
-            grid_n_points=5,
-            # config_file="calib_config.yml",
-            save_calib_stack_path=r"C:\Users\ZebraPhysics\Documents\tmp\test_calib",
-            verbose=True,
-        )
-        self.finished.emit(T_mirror_cam_matrix, str(plot_save_path))
 
 
 class LaserMarkerWindow(QMainWindow):
@@ -1183,106 +723,32 @@ class LaserMarkerWindow(QMainWindow):
         super().closeEvent(event)  # Proceed with the default close event
 
 
-if __name__ == "__main__":
-    import os
+class ImageWindow(QMainWindow):
+    def __init__(self, image_path, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Calibration Overlay of laser grid and MIP points")
 
-    # TODO: grab the actual value if the camera is connected to photom_assmebly
-    CAMERA_SENSOR_YX = (2048, 2448)
+        # Create a label and set its pixmap to the image at image_path
+        self.label = QLabel(self)
+        self.pixmap = QPixmap(image_path)
 
-    if DEMO_MODE:
-        from copylot.assemblies.photom.photom_mock_devices import (
-            MockLaser,
-            MockMirror,
-            MockArduinoPWM,
+        # Resize the label to fit the pixmap
+        self.label.setPixmap(self.pixmap)
+        self.label.resize(self.pixmap.width(), self.pixmap.height())
+
+        # Resize the window to fit the label (plus a little margin if desired)
+        self.resize(
+            self.pixmap.width() + 20, self.pixmap.height() + 20
+        )  # Adding a 20-pixel margin
+
+        # Optionally, center the window on the screen
+        self.center()
+
+    def center(self):
+        frameGm = self.frameGeometry()
+        screen = QApplication.desktop().screenNumber(
+            QApplication.desktop().cursor().pos()
         )
-
-        Laser = MockLaser
-        Mirror = MockMirror
-        ArduinoPWM = MockArduinoPWM
-    else:
-        from copylot.hardware.mirrors.optotune.mirror import OptoMirror as Mirror
-        from copylot.hardware.lasers.vortran.vortran import VortranLaser as Laser
-        from copylot.assemblies.photom.utils.arduino import ArduinoPWM as ArduinoPWM
-
-    config_path = r"./copylot/assemblies/photom/demo/photom_VIS_config.yml"
-
-    # TODO: this should be a function that parses the config_file and returns the photom_assembly
-    # Load the config file and parse it
-    with open(config_path, "r") as config_file:
-        config = yaml.load(config_file, Loader=yaml.FullLoader)
-        lasers = [
-            Laser(
-                name=laser_data["name"],
-                port=laser_data["COM_port"],
-            )
-            for laser_data in config["lasers"]
-        ]
-        mirrors = [
-            Mirror(
-                name=mirror_data["name"],
-                com_port=mirror_data["COM_port"],
-                pos_x=mirror_data["x_position"],
-                pos_y=mirror_data["y_position"],
-            )
-            for mirror_data in config["mirrors"]
-        ]  # Initial mirror position
-        affine_matrix_paths = [
-            mirror['affine_matrix_path'] for mirror in config['mirrors']
-        ]
-        arduino = [ArduinoPWM(serial_port='COM10', baud_rate=115200)]
-
-        # Check that the number of mirrors and affine matrices match
-        assert len(mirrors) == len(affine_matrix_paths)
-
-    # Load photom assembly
-    photom_assembly = PhotomAssembly(
-        laser=lasers, mirror=mirrors, affine_matrix_path=affine_matrix_paths
-    )
-
-    # QT APP
-    app = QApplication(sys.argv)
-
-    # Define the positions and sizes for the windows
-    screen_width = app.desktop().screenGeometry().width()
-    screen_height = app.desktop().screenGeometry().height()
-    ctrl_window_width = screen_width // 3  # Adjust the width as needed
-    ctrl_window_height = screen_height // 3  # Use the full screen height
-
-    if DEMO_MODE:
-        camera_window = LaserMarkerWindow(
-            name="Mock laser dots",
-            sensor_size_yx=(2048, 2048),
-            window_pos=(100, 100),
-            fixed_width=ctrl_window_width,
-        )  # Set the positions of the windows
-        ctrl_window = PhotomApp(
-            photom_assembly=photom_assembly,
-            photom_sensor_size_yx=CAMERA_SENSOR_YX,
-            photom_window_size_x=ctrl_window_width,
-            photom_window_pos=(100, 100),
-            demo_window=camera_window,
-            arduino=arduino,
-        )
-        # Set the camera window to the calibration scene
-        camera_window.switch_to_calibration_scene()
-        rectangle_scaling = 0.2
-        window_size = (camera_window.width(), camera_window.height())
-        rectangle_size = (
-            (window_size[0] * rectangle_scaling),
-            (window_size[1] * rectangle_scaling),
-        )
-        rectangle_coords = calculate_rectangle_corners(rectangle_size)
-        # translate each coordinate by the offset
-        rectangle_coords = [(x + 30, y) for x, y in rectangle_coords]
-        camera_window.update_vertices(rectangle_coords)
-    else:
-        # Set the positions of the windows
-        ctrl_window = PhotomApp(
-            photom_assembly=photom_assembly,
-            photom_sensor_size_yx=CAMERA_SENSOR_YX,
-            photom_window_size_x=ctrl_window_width,
-            photom_window_pos=(100, 100),
-            arduino=arduino,
-        )
-
-    sys.exit(app.exec_())
+        centerPoint = QApplication.desktop().screenGeometry(screen).center()
+        frameGm.moveCenter(centerPoint)
+        self.move(frameGm.topLeft())
