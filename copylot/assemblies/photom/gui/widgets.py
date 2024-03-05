@@ -22,12 +22,12 @@ from PyQt5.QtWidgets import (
     QGraphicsRectItem,
 )
 
-from copylot.assemblies.photom.utils.qt_utils import DoubleSlider
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 import numpy as np
 import time
 import yaml
 from copylot.assemblies.photom.gui.utils import PWMWorker
+from copylot.assemblies.photom.gui.utils import DoubleSlider
 
 
 class LaserWidget(QWidget):

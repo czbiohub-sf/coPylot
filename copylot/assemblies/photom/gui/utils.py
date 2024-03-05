@@ -43,7 +43,7 @@ class CalibrationWithCameraThread(QThread):
 
     def run(self):
         # TODO: hardcoding the camera for now
-        mirror_roi = [[-0.01, 0.0], [0.015, 0.018]]  # [x,y]
+        mirror_roi = [[-0.008, -0.02], [0.019, 0.0]]  # [x,y]
         T_mirror_cam_matrix, plot_save_path = self.photom_assembly.calibrate_w_camera(
             mirror_index=self.current_mirror_idx,
             camera_index=0,

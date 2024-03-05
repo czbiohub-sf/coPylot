@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QProgressBar,
     QGraphicsRectItem,
+    QGraphicsPixmapItem,
 )
 from PyQt5.QtGui import (
     QColor,
@@ -30,8 +31,10 @@ from PyQt5.QtGui import (
     QBrush,
     QPixmap,
     QResizeEvent,
+    QPixmap,
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from networkx import center
 
 from copylot.assemblies.photom.photom import PhotomAssembly
 from copylot.assemblies.photom.gui.utils import CalibrationWithCameraThread
@@ -43,7 +46,7 @@ from copylot.assemblies.photom.gui.widgets import (
     MirrorWidget,
     ArduinoPWMWidget,
 )
-
+import time
 from copylot.assemblies.photom.utils.scanning_algorithms import (
     calculate_rectangle_corners,
 )
@@ -511,15 +514,23 @@ class LaserMarkerWindow(QMainWindow):
 
         # Mouse tracking
         self.shooting_view.installEventFilter(self)
-        self.setMouseTracking(True)
-        self.marker = QGraphicsSimpleTextItem("+")
-        self.marker.setBrush(QColor(255, 0, 0))
-        self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
         self.shooting_view.viewport().installEventFilter(self)
-        # Set larger font size
-        font = self.marker.font()
-        font.setPointSize(30)
-        self.marker.setFont(font)
+        self.setMouseTracking(True)
+        # self.marker = QGraphicsSimpleTextItem("+")
+        # self.marker.setBrush(QColor(255, 0, 0))
+        # Load the PNG image
+        pixmap = QPixmap(r'./copylot/assemblies/photom/utils/images/hit_marker_red.png')
+        assert pixmap.isNull() == False
+        pixmap = pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        # Create a QGraphicsPixmapItem with the loaded image
+        self.marker = QGraphicsPixmapItem(pixmap)
+        self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
+
+        # # Set larger font size
+        # font = self.marker.font()
+        # font.setPointSize(30)
+        # self.marker.setFont(font)
 
         # Position the marker
         self.display_marker_center(
@@ -694,7 +705,10 @@ class LaserMarkerWindow(QMainWindow):
     def _move_marker_and_update_sliders(self):
         # Update the mirror slider values
         if self.photom_controls is not None:
-            marker_position = [self.marker.pos().x(), self.marker.pos().y()]
+            marker_position = self.get_marker_center(
+                self.marker, coords=(self.marker.pos().x(), self.marker.pos().y())
+            )
+            # marker_position = [self.marker.pos().x(), self.marker.pos().y()]
             new_coords = self.photom_controls.mirror_widgets[
                 self.photom_controls._current_mirror_idx
             ].mirror.affine_transform_obj.apply_affine(marker_position)
@@ -705,18 +719,19 @@ class LaserMarkerWindow(QMainWindow):
                 self.photom_controls._current_mirror_idx
             ].mirror_y_slider.setValue(new_coords[1][0])
 
+    def get_marker_center(self, marker, coords=None):
+        if coords is None:
+            coords = (marker.x(), marker.y())
+        center_x = coords[0] + marker.pixmap().width() / 2
+        center_y = coords[1] + marker.pixmap().height() / 2
+        return [center_x, center_y]
+
     def display_marker_center(self, marker, coords=None):
         if coords is None:
             coords = (marker.x(), marker.y())
-        # Obtain font metrics and bounding rectangle
-        fm = QFontMetricsF(marker.font())
-        boundingRect = fm.tightBoundingRect(marker.text())
-
-        # Adjust position based on the bounding rectangle
-        adjustedX = coords[0] - boundingRect.width() / 2
-        adjustedY = coords[1] - boundingRect.height() / 2
-
-        marker.setPos(adjustedX, adjustedY)
+        center_x = coords[0] - marker.pixmap().width() / 2
+        center_y = coords[1] - marker.pixmap().height() / 2
+        marker.setPos(center_x, center_y)
 
     def closeEvent(self, event):
         self.windowClosed.emit()  # Emit the signal when the window is about to close
