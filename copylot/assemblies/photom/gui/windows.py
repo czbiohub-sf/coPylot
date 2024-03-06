@@ -33,7 +33,7 @@ from PyQt5.QtGui import (
     QResizeEvent,
     QPixmap,
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from networkx import center
 
 from copylot.assemblies.photom.photom import PhotomAssembly
@@ -201,6 +201,12 @@ class PhotomApp(QMainWindow):
 
         # Add the laser and mirror group boxes to the main layout
         main_layout = QVBoxLayout()
+
+        self.game_mode_button = QPushButton("Game Mode: OFF", self)
+        self.game_mode_button.setCheckable(True)  # Make the button toggleable
+        self.game_mode_button.clicked.connect(self.toggle_game_mode)
+        main_layout.addWidget(self.game_mode_button)
+
         main_layout.addWidget(transparency_group)
         main_layout.addWidget(laser_group)
         main_layout.addWidget(mirror_group)
@@ -234,6 +240,14 @@ class PhotomApp(QMainWindow):
 
         self.setCentralWidget(main_widget)
         self.show()
+
+    def toggle_game_mode(self, checked):
+        if checked:
+            self.game_mode_button.setText("Game Mode: ON")
+            self.photom_window.game_mode = True
+        else:
+            self.game_mode_button.setText("Game Mode: OFF")
+            self.photom_window.game_mode = False
 
     def resize_laser_marker_window(self):
         # Retrieve the selected resize percentage from the QSpinBox
@@ -442,7 +456,7 @@ class LaserMarkerWindow(QMainWindow):
         self.window_geometry = self.window_pos + (self.fixed_width, calculated_height)
         self.setMouseTracking(True)
         self.setWindowOpacity(self.photom_controls._laser_window_transparency)
-
+        self.game_mode = False  # Default to off
         # Create a QStackedWidget
         # TODO: do we need the stacked widget?
         self.stacked_widget = QStackedWidget()
@@ -669,7 +683,9 @@ class LaserMarkerWindow(QMainWindow):
             elif event.button() == Qt.RightButton:
                 self._right_click_hold = False
                 self.photom_controls.photom_assembly.laser[0].toggle_emission = False
-                time.sleep(0.5)
+                if self.game_mode:
+                    self._game_mode_marker(event)
+                time.sleep(0.3)
                 print('right button released')
 
         return super(LaserMarkerWindow, self).eventFilter(source, event)
@@ -681,6 +697,24 @@ class LaserMarkerWindow(QMainWindow):
         self.shooting_scene.setSceneRect(0, 0, rect.width(), rect.height())
         print(f'resize event: {rect.width()}, {rect.height()}')
         self._update_scene_items(rect.width(), rect.height())
+
+    def remove_score_text(self, text_item):
+        self.shooting_scene.removeItem(text_item)
+
+    def _game_mode_marker(self, event: QMouseEvent):
+        # Show "+100" at click position
+        score_text = QGraphicsSimpleTextItem("+100")
+        score_text.setBrush(QColor(255, 255, 0))  # Yellow color for visibility
+        # Set a larger font size
+        font = QFont()
+        font.setPointSize(30)  # Set the font size to 24 points
+        score_text.setFont(font)
+        score_text.setPos(
+            event.pos().x() + 15, event.pos().y() - 70
+        )  # Position at click
+        self.shooting_scene.addItem(score_text)
+        # Create a QTimer to remove the "+100" after 1 second
+        QTimer.singleShot(1000, lambda: self.remove_score_text(score_text))
 
     def _update_scene_items(self, new_width, new_height):
         # Dahsed rectangle
