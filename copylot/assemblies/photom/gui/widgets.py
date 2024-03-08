@@ -72,7 +72,8 @@ class LaserWidget(QWidget):
         self.laser_power_slider.setMinimum(0)
         self.laser_power_slider.setMaximum(100)
         self.laser_power_slider.setValue(self.laser.power)
-        self.laser_power_slider.valueChanged.connect(self.update_power)
+        self.laser_power_slider.sliderReleased.connect(self.on_slider_released)
+        self.laser_power_slider.valueChanged.connect(self.update_displayed_power)
         layout.addWidget(self.laser_power_slider)
 
         # Add a QLabel to display the power value
@@ -106,13 +107,20 @@ class LaserWidget(QWidget):
             self.laser_toggle_button.setStyleSheet("background-color: green")
 
     def update_power(self, value):
-        self._curr_power = value / (10**self._slider_decimal)
         if self._curr_laser_pulse_mode:
             self.laser.pulse_power = self._curr_power
         else:
             self.laser.power = self._curr_power
+        self.power_edit.setText(f"{self._curr_power:.2f}")
 
-        # Update the QLabel with the new power value
+    def on_slider_released(self):
+        value = self.laser_power_slider.value()
+        self._curr_power = value
+        self.update_power(self._curr_power)
+
+    def update_displayed_power(self, value):
+        # Update the displayed power value (e.g., in a QLabel) without calling the laser power update function
+        self._curr_power = value / (10**self._slider_decimal)
         self.power_edit.setText(f"{self._curr_power:.2f}")
 
     def edit_power(self):
@@ -125,9 +133,7 @@ class LaserWidget(QWidget):
                 0 <= power_value <= 100
             ):  # Assuming the power range is 0 to 100 percentages
                 self._curr_power = power_value
-                self.laser.power = self._curr_power
-                self.laser_power_slider.setValue(self._curr_power)
-                self.power_edit.setText(f"{self._curr_power:.2f}")
+                self.update_power(self._curr_power)
             else:
                 self.power_edit.setText(f"{self._curr_power:.2f}")
             print(f"Power: {self._curr_power}")
@@ -338,6 +344,14 @@ class ArduinoPWMWidget(QWidget):
                 f"{self.time_interval_s}"
             )  # Reset to last valid value
 
+    def get_current_parameters_from_gui(self):
+        self.duty_cycle = float(self.duty_cycle_edit.text())
+        self.time_period_ms = float(self.time_period_edit.text())
+        self.frequency = 1000.0 / self.time_period_ms
+        self.duration = float(self.duration_edit.text())
+        self.repetitions = int(self.repetitions_edit.text())
+        self.time_interval_s = float(self.time_interval_edit.text())
+
     def update_command(self):
         self.command = f"U,{self.duty_cycle},{self.frequency},{self.duration}"
         print(f"arduino out: {self.command}")
@@ -380,6 +394,9 @@ class ArduinoPWMWidget(QWidget):
     def apply_settings(self):
         # Implement functionality to apply settings to the selected laser
         self._curr_laser_idx = self.laser_dropdown.currentIndex()
+        # Update the command with the current settings
+        self.get_current_parameters_from_gui()
+        self.update_command()
         # TODO: Need to modify the data struct for command for multiple lasers
         if hasattr(self, 'command'):
             self.arduino_pwm.send_command(self.command)
