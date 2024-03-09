@@ -21,6 +21,7 @@ from PyQt5.QtWidgets import (
     QProgressBar,
     QGraphicsRectItem,
     QGraphicsPixmapItem,
+    QGraphicsPathItem,
 )
 from PyQt5.QtGui import (
     QColor,
@@ -32,6 +33,8 @@ from PyQt5.QtGui import (
     QPixmap,
     QResizeEvent,
     QPixmap,
+    QPainterPath,
+    QPainter,
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from networkx import center
@@ -91,6 +94,8 @@ class PhotomApp(QMainWindow):
         )
         self.calibration_w_cam_thread.finished.connect(self.done_calibration)
         self.imageWindows = []
+        self.drawingTraces = []  # List to store traces
+        self.currentTrace = []  # Current trace being drawn
 
         # if DEMO_MODE:
         #     self.demo_window = demo_window
@@ -208,9 +213,17 @@ class PhotomApp(QMainWindow):
         self.game_mode_button = QPushButton("Game Mode: OFF", self)
         self.game_mode_button.setCheckable(True)  # Make the button toggleable
         self.game_mode_button.clicked.connect(self.toggle_game_mode)
-        main_layout.addWidget(self.game_mode_button)
+
+        self.toggle_drawing_mode_button = QPushButton("Toggle Drawing Mode", self)
+        self.toggle_drawing_mode_button.clicked.connect(self.toggleDrawingMode)
+        self.playButton = QPushButton("Play", self)
+        self.playButton.clicked.connect(self.play_drawing)
+        self.playButton.hide()  # Initially hide the Play button
 
         main_layout.addWidget(transparency_group)
+        main_layout.addWidget(self.game_mode_button)
+        main_layout.addWidget(self.toggle_drawing_mode_button)
+        main_layout.addWidget(self.playButton)
         main_layout.addWidget(laser_group)
         main_layout.addWidget(mirror_group)
         main_layout.addWidget(arduino_group)  # TODO remove if arduino is removed
@@ -251,6 +264,19 @@ class PhotomApp(QMainWindow):
         else:
             self.game_mode_button.setText("Game Mode: OFF")
             self.photom_window.game_mode = False
+
+    def toggleDrawingMode(self):
+        # Call the method to toggle the drawing scene on the LaserMarkerWindow
+        if (
+            self.photom_window.stacked_widget.currentWidget()
+            == self.photom_window.drawing_view
+        ):
+            # If in drawing mode, clear the drawing before switching
+            self.photom_window.clearDrawing()
+            self.playButton.hide()
+        else:
+            self.playButton.show()
+        self.photom_window.toggleDrawingScene()
 
     def resize_laser_marker_window(self):
         # Retrieve the selected resize percentage from the QSpinBox
@@ -430,6 +456,11 @@ class PhotomApp(QMainWindow):
         opacity = 1.0 - (transparency_percent / 100.0)  # Calculate opacity (0.0 to 1.0)
         self.photom_window.setWindowOpacity(opacity)  # Update photom_window opacity
 
+    def play_drawing(self):
+        for trace in self.photom_window.drawingTraces:
+            print(f'Playing trace: {trace}')
+            self.photom_assembly.set_position(self._current_mirror_idx, trace)
+
     def display_rectangle(self):
         self.photom_window.switch_to_calibration_scene()
 
@@ -471,6 +502,12 @@ class LaserMarkerWindow(QMainWindow):
         # Set the QStackedWidget as the central widget
         self.initialize_UI()
         self.initMarker()
+        self.initDrawingScene()
+
+        self.lastPoint = None
+        self.drawing = False
+        self.drawingTraces = []  # To store lists of traces
+        self.currentTrace = []  # To store points of the current trace being drawn
 
         tetragon_coords = calculate_rectangle_corners(
             [self.window_geometry[-2] / 5, self.window_geometry[-1] / 5],
@@ -626,11 +663,66 @@ class LaserMarkerWindow(QMainWindow):
         # Add the view to the QStackedWidget
         self.stacked_widget.addWidget(self.calibration_view)
 
+    def initDrawingScene(self):
+        # Initialize the drawing scene
+        self.drawing_scene = QGraphicsScene()
+        self.drawing_scene.setSceneRect(
+            0, 0, self.window_geometry[-2], self.window_geometry[-1]
+        )
+
+        # Initialize the drawing view
+        self.drawing_view = QGraphicsView(self.drawing_scene)
+        self.drawing_view.setFixedSize(
+            self.window_geometry[-2], self.window_geometry[-1]
+        )
+
+        # Disable scrollbars
+        self.drawing_view.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.drawing_view.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+
+        # Mouse tracking
+        self.drawing_view.setMouseTracking(True)
+        self.drawing_view.installEventFilter(self)
+        self.drawing_view.viewport().installEventFilter(self)
+
+        # Add a drawable pixmap item to the scene
+        self.drawablePixmapItem = QGraphicsPixmapItem()
+        self.drawing_scene.addItem(self.drawablePixmapItem)
+        # Initialize the pixmap with a transparent background of the same size as the scene
+        self.drawablePixmap = QPixmap(
+            self.window_geometry[-2], self.window_geometry[-1]
+        )
+        self.drawablePixmap.fill(Qt.transparent)  # Fill with transparent color
+        self.drawablePixmapItem.setPixmap(self.drawablePixmap)
+
+        # Add the drawing view to the stacked widget
+        self.stacked_widget.addWidget(self.drawing_view)
+
+    def switchToDrawingScene(self):
+        # Method to switch to the drawing scene
+        self.stacked_widget.setCurrentWidget(self.drawing_view)
+
     def switch_to_shooting_scene(self):
         self.stacked_widget.setCurrentWidget(self.shooting_view)
 
     def switch_to_calibration_scene(self):
         self.stacked_widget.setCurrentWidget(self.calibration_view)
+
+    def toggleDrawingScene(self):
+        # Check which scene is currently active and switch to the other
+        if self.stacked_widget.currentWidget() == self.drawing_view:
+            self.switch_to_shooting_scene()  # Assuming this is the method to switch back to your original scene
+        else:
+            self.switchToDrawingScene()
+
+    def clearDrawing(self):
+        # Clear the drawing by filling the pixmap with transparent color
+        self.drawablePixmap.fill(Qt.transparent)
+        self.drawablePixmapItem.setPixmap(self.drawablePixmap)
+
+        # Reset the traces
+        self.drawingTraces = []
+        self.currentTrace = []
 
     def get_coordinates(self):
         return [vertex.pos() for vertex in self.vertices]
@@ -660,8 +752,22 @@ class LaserMarkerWindow(QMainWindow):
         if event.type() == QMouseEvent.MouseMove:
             pass
             if self._left_click_hold:
-                # Move the mirror around if the left button is clicked
-                self._move_marker_and_update_sliders()
+                if source == self.shooting_view.viewport():
+                    self._move_marker_and_update_sliders()
+                elif self.drawing and source == self.drawing_view.viewport():
+                    painter = QPainter(self.drawablePixmap)
+                    pen = QPen(Qt.black, 2, Qt.SolidLine)
+                    painter.setPen(pen)
+                    # Convert event positions to scene positions
+                    lastScenePos = self.drawing_view.mapToScene(self.lastPoint)
+                    currentScenePos = self.drawing_view.mapToScene(event.pos())
+                    painter.drawLine(lastScenePos, currentScenePos)
+                    painter.end()  # End the painter to apply the drawing
+
+                    self.lastPoint = event.pos()
+                    self.drawablePixmapItem.setPixmap(self.drawablePixmap)
+                    self.currentTrace.append((currentScenePos.x(), currentScenePos.y()))
+
             # Debugging statements
             # print('mouse move')
             # print(f'x1: {event.screenPos().x()}, y1: {event.screenPos().y()}')
@@ -675,10 +781,14 @@ class LaserMarkerWindow(QMainWindow):
             print('mouse button pressed')
             print('shooting mode')
             if event.buttons() == Qt.LeftButton:
-                self._left_click_hold = True
                 print('left button pressed')
                 print(f'x2: {event.pos().x()}, y2: {event.pos().y()}')
-                self._move_marker_and_update_sliders()
+                self._left_click_hold = True
+                if self.stacked_widget.currentWidget() == self.drawing_view:
+                    self.drawing = True
+                    self.lastPoint = event.pos()
+                elif self.stacked_widget.currentWidget() == self.shooting_view:
+                    self._move_marker_and_update_sliders()
             elif event.buttons() == Qt.RightButton:
                 self._right_click_hold = True
                 self.photom_controls.photom_assembly.laser[0].toggle_emission = True
@@ -688,6 +798,10 @@ class LaserMarkerWindow(QMainWindow):
             if event.button() == Qt.LeftButton:
                 print('left button released')
                 self._left_click_hold = False
+                if self.drawing:
+                    self.drawing = False
+                    self.drawingTraces.append(self.currentTrace)
+                    self.currentTrace = []
             elif event.button() == Qt.RightButton:
                 self._right_click_hold = False
                 self.photom_controls.photom_assembly.laser[0].toggle_emission = False
