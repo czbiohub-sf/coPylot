@@ -37,7 +37,10 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from networkx import center
 
 from copylot.assemblies.photom.photom import PhotomAssembly
-from copylot.assemblies.photom.gui.utils import CalibrationWithCameraThread
+from copylot.assemblies.photom.gui.utils import (
+    CalibrationWithCameraThread,
+    ClickablePixmapItem,
+)
 
 from typing import Tuple
 import numpy as np
@@ -397,6 +400,11 @@ class PhotomApp(QMainWindow):
             print("No file selected. Skiping Saving the calibration matrix.")
             # Show dialog box saying no file selected
         print("Calibration done")
+        center_coords = [
+            self.photom_sensor_size_yx[0] / 2,
+            self.photom_sensor_size_yx[1] / 2,
+        ]
+        self.photom_assembly.set_position(self._current_mirror_idx, center_coords)
 
     def update_laser_window_affine(self):
         # Update the scaling transform matrix
@@ -538,7 +546,7 @@ class LaserMarkerWindow(QMainWindow):
         pixmap = pixmap.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation)
 
         # Create a QGraphicsPixmapItem with the loaded image
-        self.marker = QGraphicsPixmapItem(pixmap)
+        self.marker = ClickablePixmapItem(pixmap)
         self.marker.setFlag(QGraphicsItem.ItemIsMovable, True)
 
         # # Set larger font size

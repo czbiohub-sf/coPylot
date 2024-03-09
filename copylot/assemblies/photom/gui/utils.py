@@ -1,6 +1,15 @@
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QRectF
 import time
 import numpy as np
+from PyQt5.QtWidgets import (
+    QSlider,
+    QWidget,
+    QVBoxLayout,
+    QDoubleSpinBox,
+    QLabel,
+    QGraphicsPixmapItem,
+)
+from PyQt5.QtGui import QPainterPath
 
 
 class PWMWorker(QThread):
@@ -56,11 +65,6 @@ class CalibrationWithCameraThread(QThread):
         self.finished.emit(T_mirror_cam_matrix, str(plot_save_path))
 
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QSlider, QWidget, QVBoxLayout, QDoubleSpinBox, QLabel
-from PyQt5.QtCore import pyqtSignal
-
-
 class DoubleSlider(QSlider):
     # create our our signal that we can connect to if necessary
     doubleValueChanged = pyqtSignal(float)
@@ -92,3 +96,19 @@ class DoubleSlider(QSlider):
 
     def setValue(self, value):
         super(DoubleSlider, self).setValue(int(value * self._multi))
+
+
+class ClickablePixmapItem(QGraphicsPixmapItem):
+    def __init__(self, pixmap):
+        super().__init__(pixmap)
+        self.setFlag(QGraphicsPixmapItem.ItemIsMovable, True)  # Make the item movable
+
+    def boundingRect(self):
+        # Override boundingRect to make the whole pixmap area clickable and draggable
+        return QRectF(self.pixmap().rect())
+
+    def shape(self):
+        # Override shape to define the interactable area as the entire bounding rectangle
+        path = QPainterPath()
+        path.addRect(self.boundingRect())
+        return path
