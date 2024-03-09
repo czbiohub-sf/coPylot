@@ -227,7 +227,7 @@ class ArduinoPWMWidget(QWidget):
         self.duty_cycle = 50  # [%] (0-100)
         self.time_period_ms = 100  # [ms]
         self.frequency = 1000.0 / self.time_period_ms  # [Hz]
-        self.duration = 5000  # [ms]
+        self.duration = 1  # number of reps
         self.repetitions = 1  # By default it runs once
         self.time_interval_s = 0  # [s]
 
@@ -256,25 +256,25 @@ class ArduinoPWMWidget(QWidget):
         layout.addWidget(self.duty_cycle_edit, 1, 1)
 
         # Time Period
-        layout.addWidget(QLabel("Time Period [ms]:"), 2, 0)
+        layout.addWidget(QLabel("Pulse Duration [ms]:"), 2, 0)
         self.time_period_edit = QLineEdit(f"{self.time_period_ms}")
         self.time_period_edit.returnPressed.connect(self.edit_time_period)
         layout.addWidget(self.time_period_edit, 2, 1)
 
         # Duration
-        layout.addWidget(QLabel("Duration [ms]:"), 3, 0)
+        layout.addWidget(QLabel("Pulse repetitions:"), 3, 0)
         self.duration_edit = QLineEdit(f"{self.duration}")
         self.duration_edit.returnPressed.connect(self.edit_duration)
         layout.addWidget(self.duration_edit, 3, 1)
 
         # Repetitions
-        layout.addWidget(QLabel("Repetitions:"), 4, 0)
+        layout.addWidget(QLabel("Timelapse - number of timepoints:"), 4, 0)
         self.repetitions_edit = QLineEdit(f"{self.repetitions}")
         self.repetitions_edit.textChanged.connect(self.edit_repetitions)
         layout.addWidget(self.repetitions_edit, 4, 1)
 
         # Time interval
-        layout.addWidget(QLabel("Time interval [s]:"), 5, 0)
+        layout.addWidget(QLabel("Timelapse - Time interval [s]:"), 5, 0)
         self.time_interval_edit = QLineEdit(f"{self.time_interval_s}")
         self.time_interval_edit.textChanged.connect(self.edit_time_interval)
         layout.addWidget(self.time_interval_edit, 5, 1)
@@ -321,6 +321,7 @@ class ArduinoPWMWidget(QWidget):
     def edit_duration(self):
         try:
             value = float(self.duration_edit.text())
+            value = self.time_period_ms * value
             self.duration = value
             self.update_command()
         except ValueError:
@@ -348,7 +349,7 @@ class ArduinoPWMWidget(QWidget):
         self.duty_cycle = float(self.duty_cycle_edit.text())
         self.time_period_ms = float(self.time_period_edit.text())
         self.frequency = 1000.0 / self.time_period_ms
-        self.duration = float(self.duration_edit.text())
+        self.duration = float(self.duration_edit.text()) * self.time_period_ms
         self.repetitions = int(self.repetitions_edit.text())
         self.time_interval_s = float(self.time_interval_edit.text())
 
