@@ -67,17 +67,17 @@ class FlirCamera(AbstractCamera):
         """
         return self._device_id
 
-    @device_id.setter
-    def device_id(self, val):
-        """
-        Set the serial number of the current camera
+    # @device_id.setter
+    # def device_id(self, val):
+    #     """
+    #     Set the serial number of the current camera
 
-        Parameters
-        __________
-        val : string
-            Unique serial number of the current camera
-        """
-        self._device_id = val
+    #     Parameters
+    #     __________
+    #     val : string
+    #         Unique serial number of the current camera
+    #     """
+    #     self._device_id = val
 
     def open(self, index=0):
         """
@@ -137,7 +137,7 @@ class FlirCamera(AbstractCamera):
         # set back to default
         self.system = None
         self.cam_list = None
-        self.device_id = None
+        # self._device_id = None
         self.nodemap_tldevice = None
 
     def list_available_cameras(self):
@@ -545,4 +545,50 @@ class FlirCamera(AbstractCamera):
             logger.error(
                 'Mode input: ', mode, ' is not valid. Enter global or rolling mode'
             )
-        pass
+
+    @property
+    def flip_sensor_X(self):
+        return self.cam.ReverseX.GetValue()
+
+    @flip_sensor_X.setter
+    def flip_sensor_X(self, value):
+        self.cam.ReverseX.SetValue(value)
+
+    @property
+    def flip_sensor_Y(self):
+        return self.cam.ReverseY.GetValue()
+
+    @flip_sensor_Y.setter
+    def flip_sensor_Y(self, value):
+        self.cam.ReverseY.SetValue(value)
+
+    @property
+    def pixel_format(self):
+        """
+        Returns the current pixel format of the camera.
+        """
+        current_format = self.cam.PixelFormat.GetCurrentEntry()
+        return current_format.GetSymbolic()
+
+    @pixel_format.setter
+    def pixel_format(self, format_str):
+        """
+        Sets the camera's pixel format.
+
+        Parameters
+        ----------
+        format_str : str
+            The desired pixel format as a string (e.g., "Mono8", "RGB8Packed").
+        """
+        node_pixel_format = self.cam.PixelFormat
+        if not PySpin.IsWritable(node_pixel_format):
+            logger.error("Pixel Format node is not writable")
+            raise FlirCameraException("Pixel Format node is not writable")
+
+        new_format = node_pixel_format.GetEntryByName(format_str)
+        if new_format is None or not PySpin.IsReadable(new_format):
+            logger.error(f"Pixel format '{format_str}' is not supported")
+            raise FlirCameraException(f"Pixel format '{format_str}' is not supported")
+
+        node_pixel_format.SetIntValue(new_format.GetValue())
+        logger.info(f"Pixel format set to {format_str}")
