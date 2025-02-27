@@ -51,8 +51,10 @@ class PhotomAssembly:
             )
         else:
             # Default values if no camera
-            warn("No camera provided. Using default size (2048, 2448).")
-            self.sensor_size = (2048, 2448, 0, 0)
+            warn(
+                "No camera provided. Using default size (2448, 2048) X,Y and (0,0) offset."
+            )
+            self.sensor_size = (2448, 2048, 0, 0)
         self.init_mirrors()
 
     def init_mirrors(self):
@@ -111,19 +113,20 @@ class PhotomAssembly:
     ) -> np.ndarray:
         assert self.camera is not None
 
-        x_min, x_max, y_min, y_max = self.camera[camera_index].image_size_limits
-        # assuming the minimum is always zero, which is typically that case
-        assert mirror_index < len(self.mirror)
-        assert camera_index < len(self.camera)
-        print("Calibrating mirror_idx <{mirror_idx}> with camera_idx <{camera_idx}>")
-        # TODO: replace these values with something from the config
-        # Generate grid of points
+        # Get current image size from camera (width, height, x_offset, y_offset)
+        current_size = self.camera[camera_index].image_size
+        width, height = current_size[0], current_size[1]
+
+        # Create image array with correct dimensions
+        img_sequence = np.zeros((len(grid_points), height, width), dtype='uint16')
+
+        # Generate grid points
         grid_points = generate_grid_points(
             rectangle_size=rectangle_boundaries,
             n_points=grid_n_points,
         )
+
         # Acquire sequence of images with points
-        img_sequence = np.zeros((len(grid_points), y_max, x_max), dtype='uint16')
         for idx, coord in tqdm(
             enumerate(grid_points),
             total=len(grid_points),
@@ -139,46 +142,17 @@ class PhotomAssembly:
             total=len(img_sequence),
             desc='Finding peak coordinates',
         ):
-            # NOTE: typically the images are returned as (y,x) coords
-            peak_coords[idx] = ia.find_objects_centroids(
+            # Get centroids in (y,x) coordinates
+            centroids = ia.find_objects_centroids(
                 img, sigma=5, threshold_rel=1.0, min_distance=30, max_num_peaks=1
             )
+            # Store coordinates
+            peak_coords[idx] = centroids
+
+        # Convert from (y,x) to (x,y) coordinates for affine transform calculation
         peak_coords_xy = peak_coords[:, [1, 0]]
-        timestamp = time.strftime("%Y%m%d_%H%M%S")
-        if save_calib_stack_path is not None:
-            print('Saving calibration stack')
-            save_calib_stack_path = Path(save_calib_stack_path)
-            save_calib_stack_path = Path(save_calib_stack_path)
-            if not save_calib_stack_path.exists():
-                save_calib_stack_path.mkdir(parents=True, exist_ok=True)
-            output_path_name = (
-                save_calib_stack_path / f'calibration_images_{timestamp}.tif'
-            )
-            tifffile.imwrite(
-                output_path_name, img_sequence, dtype='uint16', imagej=True
-            )
-            print("Saving coordinate and image stack plot")
 
-        if verbose:
-            if save_calib_stack_path is None:
-                save_calib_stack_path = Path.cwd()
-
-            plot_save_path = save_calib_stack_path / f'calibration_plot_{timestamp}.png'
-
-            ia.plot_centroids(
-                img_sequence, peak_coords, mip=True, save_path=plot_save_path
-            )
-
-            ## Save the points
-            grid_points = np.array(grid_points)
-            peak_coords_xy = np.array(peak_coords_xy)
-            # save the array of grid points and peak coordinates
-            np.savez(
-                save_calib_stack_path / f'calibration_points_{timestamp}.npz',
-                grid_points=grid_points,
-                peak_coords_xy=peak_coords_xy,
-            )
-        # Find the affine transform
+        # Calculate affine transform
         T_affine = self.mirror[mirror_index].affine_transform_obj.compute_affine_matrix(
             peak_coords_xy, grid_points
         )
