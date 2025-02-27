@@ -51,8 +51,10 @@ class PhotomAssembly:
             )
         else:
             # Default values if no camera
-            warn("No camera provided. Using default size (2048, 2448).")
-            self.sensor_size = (2048, 2448, 0, 0)
+            warn(
+                "No camera provided. Using default size (2448, 2048) X,Y and (0,0) offset."
+            )
+            self.sensor_size = (2448, 2048, 0, 0)
         self.init_mirrors()
 
     def init_mirrors(self):

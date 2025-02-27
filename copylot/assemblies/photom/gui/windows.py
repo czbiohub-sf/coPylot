@@ -83,8 +83,14 @@ class PhotomApp(QMainWindow):
         self.photom_window_size_x = screen_geometry.width() // 3
 
         # Get sensor size and ROI from assembly
-        self.photom_sensor_size_yx = self.photom_assembly.sensor_size[:2]
-        self.sensor_offset_yx = self.photom_assembly.sensor_size[2:]
+        self.photom_sensor_size_yx = (
+            self.photom_assembly.sensor_size[1],
+            self.photom_assembly.sensor_size[0],
+        )
+        self.sensor_offset_yx = (
+            self.photom_assembly.sensor_size[3],
+            self.photom_assembly.sensor_size[2],
+        )
 
         # Calculate effective dimensions based on ROI
         self.photom_window = None
@@ -744,11 +750,11 @@ class PhotomApp(QMainWindow):
             self.photom_sensor_size_yx = (
                 new_sensor_size[1],
                 new_sensor_size[0],
-            )  # (height, width) - CHANGED order
+            )  # (height, width)
             self.sensor_offset_yx = (
                 new_sensor_size[3],
                 new_sensor_size[2],
-            )  # (y_offset, x_offset) - CHANGED order
+            )  # (y_offset, x_offset)
 
             # Update window dimensions and scaling
             calculated_height = self._update_window_dimensions()
