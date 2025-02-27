@@ -728,9 +728,10 @@ class PhotomApp(QMainWindow):
             cam = self._initialize_camera()
 
             # Update sensor size and offset
+            # Fix: Swap width and height to match camera's expected format
             new_sensor_size = (
-                self.roi_height.value(),  # height (y)
                 self.roi_width.value(),  # width (x)
+                self.roi_height.value(),  # height (y)
                 self.roi_x_offset.value(),  # x offset
                 self.roi_y_offset.value(),  # y offset
             )
@@ -739,9 +740,15 @@ class PhotomApp(QMainWindow):
             self.photom_assembly.camera[0].image_size = new_sensor_size
             self.photom_assembly.sensor_size = new_sensor_size
 
-            # Update local values
-            self.photom_sensor_size_yx = new_sensor_size[:2]  # (height, width)
-            self.sensor_offset_yx = new_sensor_size[2:]  # (x_offset, y_offset)
+            # Update local values - Note: photom_sensor_size_yx expects (height, width)
+            self.photom_sensor_size_yx = (
+                new_sensor_size[1],
+                new_sensor_size[0],
+            )  # (height, width) - CHANGED order
+            self.sensor_offset_yx = (
+                new_sensor_size[3],
+                new_sensor_size[2],
+            )  # (y_offset, x_offset) - CHANGED order
 
             # Update window dimensions and scaling
             calculated_height = self._update_window_dimensions()
