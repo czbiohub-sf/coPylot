@@ -556,7 +556,7 @@ class FlirCamera(AbstractCamera):
                 self.cam.SensorShutterMode.SetValue(2)
         else:
             logger.error(
-                'Mode input: ', mode, ' is not valid. Enter global or rolling mode'
+                'Mode input: %s is not valid. Enter global or rolling mode', mode
             )
 
     @property

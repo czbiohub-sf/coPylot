@@ -111,7 +111,8 @@ class PhotomAssembly:
     ) -> np.ndarray:
         assert self.camera is not None
 
-        x_min, x_max, y_min, y_max = self.camera[camera_index].image_size_limits
+        # Get current image size instead of limits
+        current_width, current_height, _, _ = self.camera[camera_index].image_size
         # assuming the minimum is always zero, which is typically that case
         assert mirror_index < len(self.mirror)
         assert camera_index < len(self.camera)
@@ -122,8 +123,10 @@ class PhotomAssembly:
             rectangle_size=rectangle_boundaries,
             n_points=grid_n_points,
         )
-        # Acquire sequence of images with points
-        img_sequence = np.zeros((len(grid_points), y_max, x_max), dtype='uint16')
+        # Acquire sequence of images with points - use current image size
+        img_sequence = np.zeros(
+            (len(grid_points), current_height, current_width), dtype='uint16'
+        )
         for idx, coord in tqdm(
             enumerate(grid_points),
             total=len(grid_points),
